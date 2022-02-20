@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Eto.Addin.VisualStudio.Mac",
+            "name": "Eto.DevExtension.VisualStudio.Mac",
             "type": "mono",
             "request": "launch",
-            "preLaunchTask": "build-addins",
+            "preLaunchTask": "build-extension",
             "program": ".",
             "runtimeExecutable": "/Applications/Visual Studio.app/Contents/MacOS/VisualStudio",
             "passDebugOptionsViaEnvironmentVariable": true,
@@ -14,15 +14,29 @@
             ],
             "env": {
                 "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
-                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/addin/${config:var.configuration}/VisualStudio.Mac/"
+                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/"
+            }
+        },
+        {
+            "name": "Eto.DevExtension.VisualStudio.Mac (Preview)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-extension",
+            "program": "/Applications/Visual Studio (Preview).app/Contents/MacOS/VisualStudio",
+            "args": [
+                "--no-redirect"
+            ],
+            "env": {
+                "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
+                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/"
             }
         },
         {
             // note you cannot actually debug as omnisharp only supports x64, this is used so we can just run without debugging more easily
-            "name": "Eto.Addin.VisualStudio.Windows",
+            "name": "Eto.DevExtension.VisualStudio.Windows",
             "type": "clr",
             "request": "launch",
-            "preLaunchTask": "build-addins",
+            "preLaunchTask": "build-extension",
             "program": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/devenv.exe",
             "args": [
                 "/RootSuffix",

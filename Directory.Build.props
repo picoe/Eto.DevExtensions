@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\build\Common.Build.props" />
+
   <PropertyGroup>
-    <BaseOutputPath Condition="$(BaseOutputPath) == ''">$(BasePath)artifacts\core\</BaseOutputPath>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+
+    <BasePath>$(MSBuildThisFileDirectory)</BasePath>
+    <BasePath>$([System.IO.Path]::GetFullPath($(BasePath)))</BasePath>
+    <BuildPlatform Condition="$(BuildPlatform) == '' and $([MSBuild]::IsOSPlatform(linux))">Linux</BuildPlatform>
+    <BuildPlatform Condition="$(BuildPlatform) == '' and $([MSBuild]::IsOSPlatform(mac))">Mac</BuildPlatform>
+    <BuildPlatform Condition="$(BuildPlatform) == '' and $([MSBuild]::IsOSPlatform(windows))">Windows</BuildPlatform>
+    
+    <ArtifactsDir Condition="$(BuildOutoutDir) == ''">$(BasePath)artifacts\</ArtifactsDir>
+    <BaseIntermediateOutputPath Condition="$(BaseIntermediateOutputPath) == ''">$(BasePath)artifacts\obj\$(BuildPlatform)\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <SourceDir Condition="$(SourceDir) == ''">$(BasePath)src\</SourceDir>
+    <NugetDir Condition="$(NugetDir) == ''">$(SourceDir)</NugetDir>
+    <PackageOutputPath>$(ArtifactsDir)nuget\$(Configuration)\</PackageOutputPath>
+    <BuildDir>$(MSBuildThisFileDirectory)</BuildDir>
+
+    <BaseOutputPath Condition="$(BaseOutputPath) == ''">$(BasePath)artifacts\</BaseOutputPath>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -19,7 +34,7 @@
     <InformationalVersion Condition="$(InformationalVersion) == ''">$(DevVersion)-dev</InformationalVersion>
 
     <Company>Picoe Software Solutions</Company>
-    <Copyright>(c) 2010-2022 by Curtis Wensley, 2012-2014 by Vivek Jhaveri and contributors</Copyright>
+    <Copyright>(c) 2010-2022 by Curtis Wensley</Copyright>
     
     <PackageVersion>$(InformationalVersion)</PackageVersion>
     <PackageLicenseFile>Eto-LICENSE.txt</PackageLicenseFile>
@@ -30,11 +45,18 @@
     <SecondsOfTodayHalved>$([MSBuild]::Divide($([System.DateTime]::Now.Subtract($([System.DateTime]::Today)).TotalSeconds), 2).ToString('0'))</SecondsOfTodayHalved>
     <FileVersion>$(AssemblyVersionMajorMinor).$(DaysSince2000).$(SecondsOfTodayHalved)</FileVersion>
     
-    <PackageProjectUrl>https://github.com/picoe/Eto</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/picoe/Eto.DevExtensions</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>$(PackageProjectUrl).git</RepositoryUrl>
 
     <!-- add git sha to informational version, after package version is set -->
     <InformationalVersion Condition="$(GITHUB_SHA) != ''">$(InformationalVersion)+$(GITHUB_SHA)</InformationalVersion>
   </PropertyGroup>
+
+	<ItemGroup>
+		<None Include="$(BasePath)LICENSE" PackageCopyToOutput="False" Pack="True" PackagePath="$(PackageLicenseFile)">
+			<Link>Eto-LICENSE.txt</Link>
+		</None>
+	</ItemGroup>
+
 </Project>

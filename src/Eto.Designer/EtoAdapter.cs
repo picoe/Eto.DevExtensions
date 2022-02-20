@@ -27,11 +27,15 @@ namespace Eto.Designer
 	{
 		public static object ToContract(this Control control)
 		{
+			if (control == null)
+				return null;
 			return Platform.Instance.CreateShared<IEtoAdapterHandler>().ToContract(control);
 		}
 
 		public static Control ToControl(object contract)
 		{
+			if (contract == null)
+				return null;
 			return Platform.Instance.CreateShared<IEtoAdapterHandler>().FromContract(contract);
 		}
 

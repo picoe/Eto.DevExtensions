@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-extension",
+            "type": "shell",
+            "osx": {
+                "command": "msbuild /restore /v:Minimal /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
+            },
+            "windows": {
+                "command": "msbuild /restore /v:Minimal ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Windows.sln",
+            },
+            "args": [],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "clear": true
+            },
+            "group": "build"
+        }
+    ]
+}

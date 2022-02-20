@@ -247,6 +247,7 @@ namespace Eto.Designer
 				return false;
 			}
 
+
 			requiresNewDomain = false;
 #pragma warning disable 618
 			// doesn't work without for some reason, and there's no non-obsolete alternative.
@@ -265,11 +266,13 @@ namespace Eto.Designer
 
 				ShadowCopyFiles = "true",
 				ShadowCopyDirectories = shadowCopyDirs,
-				CachePath = Path.Combine(Path.GetDirectoryName(MainAssembly), "Eto.Designer"),
 
 				LoaderOptimization = LoaderOptimization.MultiDomain,
 				//LoaderOptimization = LoaderOptimization.NotSpecified
 			};
+			if (!string.IsNullOrEmpty(MainAssembly))
+				setup.CachePath = Path.Combine(Path.GetDirectoryName(MainAssembly), "Eto.Designer");
+
 
 			proxy = null;
 			domain = AppDomain.CreateDomain("eto.designer." + domainCount++, null, setup);
@@ -328,7 +331,7 @@ namespace Eto.Designer
 		public Control GetContainer()
 		{
 			SetupAppDomain(true);
-			return EtoAdapter.ToControl(proxy.GetContainer());
+			return EtoAdapter.ToControl(proxy?.GetContainer());
 		}
 
 		public void Invalidate()
@@ -341,7 +344,7 @@ namespace Eto.Designer
 		{
 			this.fileName = fileName;
 			SetupAppDomain(false);
-			return proxy.SetBuilder(fileName);
+			return proxy?.SetBuilder(fileName) == true;
 		}
 
 		string code;

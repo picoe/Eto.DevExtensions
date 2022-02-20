@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net472;net6.0</TargetFrameworks>
+    <AssemblySearchPaths>$(AssemblySearchPaths);{gac}</AssemblySearchPaths>
+    <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac\$(TargetFramework)\</OutputPath>
+    <MonoDevelopVersion>8.8</MonoDevelopVersion>
+    <Title>Eto.DevExtension.VisualStudio.Mac</Title>
+    <DefineConstants>$(DefineConstants);MAC</DefineConstants>
+    <NoWarn>MSB3245</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Editor\XetoTextEditorExtension.cs" />
+    <Compile Include="..\Eto.DevExtension.VisualStudio.Windows\Intellisense\*.cs" Link="Intellisense\%(Filename)%(Extension)" />
+    <Compile Include="..\Eto.DevExtension.VisualStudio.Windows\Components.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj" />
+    <ProjectReference Include="..\Eto.DevExtension.Shared\Eto.DevExtension.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework) == 'net472'">
+    <PackageReference Include="MonoDevelop.Addins" Version="0.4.7" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.0.206" ExcludeAssets="runtime">
+      <IncludeAssets>compile;build;native;contentfiles;analyzers;buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework) == 'net6.0'">
+    <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0-preview.7955" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.1.32210.191" ExcludeAssets="runtime" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.ComponentModel.Composition" Version="5.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+    <PackageReference Include="FSharp.Core" Version="6.0.3" />
+    <PackageReference Include="Eto.Forms" Version="2.6.1" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.XamMac2" Version="2.6.1" />
+    <PackageReference Include="Eto.Forms.Templates" Version="2.6.1" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <AddinReference Include="MonoDevelop.Xml" Version="8.8" />
+    <AddinReference Include="MonoDevelop.DesignerSupport" Version="8.8" />
+    <AddinReference Include="MonoDevelop.PackageManagement" Version="8.8" />
+    <AddinReference Include="MonoDevelop.TextEditor" Version="8.8" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Templates\**\*" />
+    <None Remove="Images\project%402x.png" />
+    <None Remove="Images\project.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Templates\**\*" />
+  </ItemGroup>
+  <ItemGroup>
+    <AddinFile Include="Templates\Files\**\*" />
+    <AddinFile Include="$(PkgEto_Forms_Templates)\*.nupkg" Link="Packages\Eto.Forms.Templates.nupkg" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Images\project%402x.png" />
+    <EmbeddedResource Include="Images\project.png" />
+  </ItemGroup>
+  <Target Name="UpdateCoreReferences" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <AddinReference Update="MonoDevelop.Core" Version="$(MonoDevelopVersion)" />
+      <AddinReference Update="MonoDevelop.Ide" Version="$(MonoDevelopVersion)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="RenameMpack" AfterTargets="PackageAddin">
+    <PropertyGroup>
+      <MPackName>$(OutputPath)..\Eto.DevExtension.VisualStudio.Mac-$(PackageVersion).mpack</MPackName>
+    </PropertyGroup>
+    <Delete Files="$(MPackName)" />
+    <Move SourceFiles="$(PackageFile)" DestinationFiles="$(MPackName)" />
+  </Target>
+
+  <Target Name="CopyEtoXml" AfterTargets="Build">
+    <Copy SourceFiles="$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" DestinationFolder="$(OutDir)" />
+  </Target>
+</Project>

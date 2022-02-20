@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eto.DevExtension.VisualStudio.Mac", "Eto.DevExtension.VisualStudio.Mac\Eto.DevExtension.VisualStudio.Mac.csproj", "{54A88D77-39C6-49E5-971E-05451209F2A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eto.DevExtension.Shared", "Eto.DevExtension.Shared\Eto.DevExtension.Shared.csproj", "{EE6AD588-50FE-4C4B-BBFE-AB1C2B120DE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eto.Designer", "Eto.Designer\Eto.Designer.csproj", "{7FAA1841-0869-474C-9D89-87E1B4BAB190}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{54A88D77-39C6-49E5-971E-05451209F2A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54A88D77-39C6-49E5-971E-05451209F2A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54A88D77-39C6-49E5-971E-05451209F2A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54A88D77-39C6-49E5-971E-05451209F2A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7FAA1841-0869-474C-9D89-87E1B4BAB190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FAA1841-0869-474C-9D89-87E1B4BAB190}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FAA1841-0869-474C-9D89-87E1B4BAB190}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FAA1841-0869-474C-9D89-87E1B4BAB190}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE6AD588-50FE-4C4B-BBFE-AB1C2B120DE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE6AD588-50FE-4C4B-BBFE-AB1C2B120DE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE6AD588-50FE-4C4B-BBFE-AB1C2B120DE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE6AD588-50FE-4C4B-BBFE-AB1C2B120DE0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal
