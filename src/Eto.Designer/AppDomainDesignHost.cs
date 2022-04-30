@@ -1,3 +1,4 @@
+#if NETFRAMEWORK
 using Eto.Drawing;
 using Eto.Forms;
 using System;
@@ -14,13 +15,8 @@ using System.Threading.Tasks;
 
 namespace Eto.Designer
 {
-	public class DesignError : MarshalByRefObject
-	{
-		public string Message { get; set; }
-		public string Details { get; set; }
-	}
 
-	class DomainPlatformThemeHandler : IPlatformTheme
+    class DomainPlatformThemeHandler : IPlatformTheme
 	{
 		AppDomainProxy proxy;
 		Dictionary<string, Color> colors = new Dictionary<string, Color>();
@@ -395,3 +391,4 @@ namespace Eto.Designer
 		}
 	}
 }
+#endif

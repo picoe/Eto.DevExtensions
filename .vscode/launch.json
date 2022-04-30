@@ -5,7 +5,7 @@
             "name": "Eto.DevExtension.VisualStudio.Mac",
             "type": "mono",
             "request": "launch",
-            "preLaunchTask": "build-extension",
+            "preLaunchTask": "build-extension-2019",
             "program": ".",
             "runtimeExecutable": "/Applications/Visual Studio.app/Contents/MacOS/VisualStudio",
             "passDebugOptionsViaEnvironmentVariable": true,
@@ -14,21 +14,21 @@
             ],
             "env": {
                 "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
-                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/"
+                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/net472/"
             }
         },
         {
             "name": "Eto.DevExtension.VisualStudio.Mac (Preview)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build-extension",
+            "preLaunchTask": "build-extension-2022",
             "program": "/Applications/Visual Studio (Preview).app/Contents/MacOS/VisualStudio",
             "args": [
                 "--no-redirect"
             ],
             "env": {
                 "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
-                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/"
+                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/net6.0/"
             }
         },
         {

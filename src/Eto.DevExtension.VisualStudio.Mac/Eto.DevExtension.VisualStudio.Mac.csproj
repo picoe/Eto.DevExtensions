@@ -1,13 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;net6.0</TargetFrameworks>
-    <AssemblySearchPaths>$(AssemblySearchPaths);{gac}</AssemblySearchPaths>
-    <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
-    <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac\$(TargetFramework)\</OutputPath>
-    <MonoDevelopVersion>8.8</MonoDevelopVersion>
-    <Title>Eto.DevExtension.VisualStudio.Mac</Title>
+    <TargetFrameworks>net6.0;net472</TargetFrameworks>
+    <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac\</OutputPath>
     <DefineConstants>$(DefineConstants);MAC</DefineConstants>
     <NoWarn>MSB3245</NoWarn>
+    <MonoDevelopVersion>8.8</MonoDevelopVersion>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Editor\XetoTextEditorExtension.cs" />
@@ -19,24 +17,34 @@
     <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj" />
     <ProjectReference Include="..\Eto.DevExtension.Shared\Eto.DevExtension.Shared.csproj" />
   </ItemGroup>
+  
+  <PropertyGroup Condition="$(TargetFramework) == 'net472'">
+    <Title>Eto.DevExtension.VisualStudio.Mac.2019</Title>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework) == 'net6.0'">
+    <Title>Eto.DevExtension.VisualStudio.Mac.2022</Title>
+  </PropertyGroup>
+  
   <ItemGroup Condition="$(TargetFramework) == 'net472'">
     <PackageReference Include="MonoDevelop.Addins" Version="0.4.7" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.0.206" ExcludeAssets="runtime">
       <IncludeAssets>compile;build;native;contentfiles;analyzers;buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework) == 'net6.0'">
     <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0-preview.7955" />
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.1.32210.191" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" ExcludeAssets="runtime" />
+    <Reference Include="$(PkgEto_Platform_XamMac2)\lib\net6.0-macos10.15\Eto.XamMac2.dll" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.ComponentModel.Composition" Version="5.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="FSharp.Core" Version="6.0.3" />
     <PackageReference Include="Eto.Forms" Version="2.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.XamMac2" Version="2.6.1" />
+    <PackageReference Include="Eto.Platform.XamMac2" Version="2.6.1" GeneratePathProperty="true" />
     <PackageReference Include="Eto.Forms.Templates" Version="2.6.1" GeneratePathProperty="true" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <AddinReference Include="MonoDevelop.Xml" Version="8.8" />
@@ -69,7 +77,7 @@
 
   <Target Name="RenameMpack" AfterTargets="PackageAddin">
     <PropertyGroup>
-      <MPackName>$(OutputPath)..\Eto.DevExtension.VisualStudio.Mac-$(PackageVersion).mpack</MPackName>
+      <MPackName>$(ArtifactsDir)$(Configuration)\$(Title)-$(PackageVersion).mpack</MPackName>
     </PropertyGroup>
     <Delete Files="$(MPackName)" />
     <Move SourceFiles="$(PackageFile)" DestinationFiles="$(MPackName)" />

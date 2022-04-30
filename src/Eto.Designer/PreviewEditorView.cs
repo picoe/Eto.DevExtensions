@@ -33,10 +33,14 @@ namespace Eto.Designer
 			MainAssemblyPath = mainAssembly;
 			this.getCode = getCode;
 
+#if NETFRAMEWORK
 			if (EnableAppDomains)
 				designPanel = new AppDomainDesignHost();
 			else
 				designPanel = new InProcessDesignPanel();
+#else
+			designPanel = new InProcessDesignPanel();
+#endif
 
 			designPanel.MainAssembly = mainAssembly;
 			designPanel.References = references;
