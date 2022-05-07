@@ -17,11 +17,13 @@ namespace Eto.DevExtension.VisualStudio.Mac
 
 			initialized = true;
 
+#if VS2019
             Style.Add<Eto.Mac.Forms.Controls.TextBoxHandler>(null, h =>
             {
 				// VS 2019 for Mac is dumb and GC's the cell even though it's still in use.
                 h.Widget.Properties[Cell_Key] = h.Control.Cell;
             });
+#endif
 
             try
 			{

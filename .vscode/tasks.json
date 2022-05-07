@@ -6,9 +6,16 @@
             "type": "shell",
             "osx": {
                 "command": "msbuild /restore /p:TargetFramework=net472 /v:Normal /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
+                // "command": "dotnet build -f net472 /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
             },
             "windows": {
-                "command": "msbuild /restore /v:Minimal ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Windows.sln",
+                "command": "${input:msbuild-16}",
+                "args": [
+                    "/restore",
+                    "/v:Minimal",
+                    "/p:VSVersion=2019",
+                    "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Windows/Eto.DevExtension.VisualStudio.Windows.csproj",
+                ],
             },
             "args": [],
             "problemMatcher": "$msCompile",
@@ -25,7 +32,13 @@
                 "command": "dotnet build -f net6.0 /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
             },
             "windows": {
-                "command": "msbuild /restore /v:Minimal ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Windows.sln",
+                "command": "${input:msbuild-17}",
+                "args": [
+                    "/restore",
+                    "/v:Minimal",
+                    "/p:VSVersion=2022",
+                    "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Windows/Eto.DevExtension.VisualStudio.Windows.csproj",
+                ],
             },
             "args": [],
             "problemMatcher": "$msCompile",
@@ -36,5 +49,25 @@
             "group": "build"
         }
         
+    ],
+    "inputs": [
+        {
+            "id": "msbuild-16",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"16\" -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\amd64\\MSBuild.exe",
+                "useFirstResult": "true"
+            }
+        },
+        {
+            "id": "msbuild-17",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"17\" -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\amd64\\MSBuild.exe",
+                "useFirstResult": "true"
+            }
+        }
     ]
 }

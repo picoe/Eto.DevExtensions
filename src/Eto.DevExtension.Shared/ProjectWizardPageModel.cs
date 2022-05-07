@@ -226,6 +226,7 @@ namespace Eto.DevExtension.Shared
 
 		static readonly FrameworkInfo[] frameworkInformation =
 		{
+			new FrameworkInfo { Text = ".NET 6", Value = "net6.0", CanUseCombined = true },
 			new FrameworkInfo { Text = ".NET 5", Value = "net5.0", CanUseCombined = true },
 			new FrameworkInfo { Text = ".NET Core 3.1", Value = "netcoreapp3.1", CanUseCombined = true },
 			new FrameworkInfo { Text = ".NET Framework 4.8", Value = "net48", CanUseCombined = true },

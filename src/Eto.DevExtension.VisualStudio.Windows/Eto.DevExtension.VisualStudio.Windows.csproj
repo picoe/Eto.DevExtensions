@@ -4,6 +4,7 @@
     <MinimumVisualStudioVersion>16.0</MinimumVisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
+    <VSVersion Condition="$(VSVersion) == ''">2022</VSVersion>
   </PropertyGroup>
   <!-- This gives a warning when building.. but it doesn't work without it. -->
   <Import Project="..\..\Directory.Build.props" />
@@ -16,8 +17,8 @@
     <ProjectGuid>{4A50E311-097A-403F-BEE5-8A4EC3A8230B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Eto.Addin.VisualStudio.Windows</RootNamespace>
-    <AssemblyName>Eto.Addin.VisualStudio.Windows</AssemblyName>
+    <RootNamespace>Eto.DevExtension.VisualStudio.Windows</RootNamespace>
+    <AssemblyName>Eto.DevExtension.VisualStudio.Windows</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup>
@@ -40,8 +41,13 @@
     <DefaultNewProjectNode>CSharp\Eto.Forms</DefaultNewProjectNode>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <TargetFrameworkProfile />
-    <TargetVsixContainerName>Eto.Addin.VisualStudio.Windows-$(PackageVersion).vsix</TargetVsixContainerName>
+    <TargetVsixContainerName>Eto.DevExtension.VisualStudio.Windows.$(VSVersion)-$(PackageVersion).vsix</TargetVsixContainerName>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
+    <BaseIntermediateOutputPath>$(BaseIntermediateOutputPath)$(VSVersion)\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(VSVersion) == '2019'">
+  </PropertyGroup>
+  <PropertyGroup Condition="$(VSVersion) == '2022'">
   </PropertyGroup>
   <PropertyGroup>
     <StartAction>Program</StartAction>
@@ -50,7 +56,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>..\..\artifacts\addin\Debug\VisualStudio.Windows\</OutputPath>
+    <OutputPath>..\..\artifacts\Debug\VisualStudio.Windows.$(VSVersion)\</OutputPath>
     <DefineConstants>TRACE;DEBUG;WINDOWS</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -61,7 +67,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\artifacts\addin\Release\VisualStudio.Windows\</OutputPath>
+    <OutputPath>..\..\artifacts\Release\VisualStudio.Windows.$(VSVersion)\</OutputPath>
     <DefineConstants>TRACE;WINDOWS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -103,8 +109,8 @@
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\LICENSE.txt">
-      <Link>LICENSE.txt</Link>
+    <Content Include="..\..\LICENSE">
+      <Link>LICENSE</Link>
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -117,8 +123,8 @@
     <Content Include="template.pkgdef">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="..\..\artifacts\nuget\$(Configuration)\Eto.Forms.Templates.$(PackageVersion).nupkg">
-      <Link>Eto.Forms.Templates.$(PackageVersion).nupkg</Link>
+    <Content Include="$(PkgEto_Forms_Templates)\*.nupkg">
+      <Link>Eto.Forms.Templates.nupkg</Link>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Resource Include="Templates\File-VisualBasic\File.ico" />
@@ -139,41 +145,18 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="app.config" />
-    <None Include="source.extension.vsixmanifest">
+    <None Include="2019\source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.5">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj">
       <Project>{7faa1841-0869-474c-9d89-87e1b4bab190}</Project>
       <Name>Eto.Designer</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Eto.Addin.Shared\Eto.Addin.Shared.csproj">
+    <ProjectReference Include="..\Eto.DevExtension.Shared\Eto.DevExtension.Shared.csproj">
       <Project>{ee6ad588-50fe-4c4b-bbfe-ab1c2b120de0}</Project>
-      <Name>Eto.Addin.Shared</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Eto.Forms.Templates\Eto.Forms.Templates.csproj">
-      <Project>{f3b5405c-64c3-4eee-b32e-c028f48db745}</Project>
-      <Name>Eto.Forms.Templates</Name>
-      <Private>False</Private>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Name>Eto.DevExtension.Shared</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -222,25 +205,29 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Forms" GeneratePathProperty="True">
-      <Version>2.6.1</Version>
-    </PackageReference>
-    <PackageReference Include="Eto.Platform.Wpf">
-      <Version>2.6.1</Version>
-    </PackageReference>
-    <PackageReference Include="Eto.Serialization.Json">
-      <Version>2.6.1</Version>
-    </PackageReference>
-    <PackageReference Include="Eto.Serialization.Xaml">
-      <Version>2.6.1</Version>
-    </PackageReference>
+    <PackageReference Include="Eto.Forms" GeneratePathProperty="True" Version="2.7.0" />
+    <PackageReference Include="Eto.Platform.Wpf" Version="2.7.0" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.7.0" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.0" />
+    <PackageReference Include="Eto.Forms.Templates" Version="2.7.0" GeneratePathProperty="true" PrivateAssets="all" />
     <PackageReference Include="FSharp.Core" Version="5.0.1" />
     <PackageReference Include="Portable.Xaml" Version="0.26.0" />
     <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" />
+  </ItemGroup>
+  <ItemGroup Condition="$(VSVersion) == '2019'">
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.9.31025.194" ExcludeAssets="runtime">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.9.1050">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="$(VSVersion) == '2022'">
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.32112.339" ExcludeAssets="runtime">
+      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.0.5238">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

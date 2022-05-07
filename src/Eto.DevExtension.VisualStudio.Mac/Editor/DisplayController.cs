@@ -176,8 +176,11 @@ namespace Eto.DevExtension.VisualStudio.Mac.Editor
 			_inner.FileModel.Changed += (sender, e) => preview.Update();
 			preview.SetBuilder(_inner.FilePath);
 
-			// gtk2 only for now.. 
+#if VS2022
+			var nativeControl = Eto.Forms.MacOSHelpers.ToNative(preview, true);
+#elif VS2019
 			var nativeControl = Eto.Forms.XamMac2Helpers.ToNative(preview, true);
+#endif
 			var result = (Control)nativeControl;
 
 			Eto.Forms.Application.Instance.AsyncInvoke(preview.Update);

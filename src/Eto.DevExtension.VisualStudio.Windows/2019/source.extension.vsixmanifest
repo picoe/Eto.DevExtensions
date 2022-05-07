@@ -5,7 +5,7 @@
         <DisplayName>Eto.Forms Visual Studio Addin</DisplayName>
         <Description xml:space="preserve">Eto.Forms Support for Visual Studio.  Eto.Forms is a cross platform GUI framework for desktop and mobile applications in .NET that can target Wpf, WinForms, Direct2D, MonoMac, Xamarin.Mac, Gtk2, and Gtk3 with a single codebase.</Description>
         <MoreInfo>https://github.com/picoe/Eto</MoreInfo>
-        <License>LICENSE.txt</License>
+        <License>LICENSE</License>
         <Icon>Icon.png</Icon>
         <PreviewImage>PreviewImage.png</PreviewImage>
         <Tags>eto wpf mac osx gtk xamarin mono</Tags>

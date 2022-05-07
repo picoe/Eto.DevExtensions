@@ -20,10 +20,12 @@
   
   <PropertyGroup Condition="$(TargetFramework) == 'net472'">
     <Title>Eto.DevExtension.VisualStudio.Mac.2019</Title>
+    <DefineConstants>VS2019</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(TargetFramework) == 'net6.0'">
     <Title>Eto.DevExtension.VisualStudio.Mac.2022</Title>
+    <DefineConstants>VS2022</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup Condition="$(TargetFramework) == 'net472'">
@@ -32,25 +34,26 @@
       <IncludeAssets>compile;build;native;contentfiles;analyzers;buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    <PackageReference Include="Eto.Platform.XamMac2" Version="2.7.0" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework) == 'net6.0'">
     <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0-preview.7955" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" ExcludeAssets="runtime" />
-    <Reference Include="$(PkgEto_Platform_XamMac2)\lib\net6.0-macos10.15\Eto.XamMac2.dll" />
+    <PackageReference Include="Eto.Platform.macOS" Version="2.7.0" GeneratePathProperty="true" />
+    <Reference Include="$(PkgEto_Platform_macOS)\lib\net6.0-macos10.15\Eto.macOS.dll" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.ComponentModel.Composition" Version="5.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="FSharp.Core" Version="6.0.3" />
-    <PackageReference Include="Eto.Forms" Version="2.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.XamMac2" Version="2.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Forms.Templates" Version="2.6.1" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="Eto.Forms" Version="2.7.0" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Forms.Templates" Version="2.7.0" GeneratePathProperty="true" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <AddinReference Include="MonoDevelop.Xml" Version="8.8" />
-    <AddinReference Include="MonoDevelop.DesignerSupport" Version="8.8" />
-    <AddinReference Include="MonoDevelop.PackageManagement" Version="8.8" />
-    <AddinReference Include="MonoDevelop.TextEditor" Version="8.8" />
+    <AddinReference Include="MonoDevelop.Xml" />
+    <AddinReference Include="MonoDevelop.DesignerSupport" />
+    <AddinReference Include="MonoDevelop.PackageManagement" />
+    <AddinReference Include="MonoDevelop.TextEditor" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Templates\**\*" />
@@ -70,8 +73,8 @@
   </ItemGroup>
   <Target Name="UpdateCoreReferences" BeforeTargets="BeforeBuild">
     <ItemGroup>
-      <AddinReference Update="MonoDevelop.Core" Version="$(MonoDevelopVersion)" />
-      <AddinReference Update="MonoDevelop.Ide" Version="$(MonoDevelopVersion)" />
+      <AddinReference Update="@(AddinReference)" Version="$(MonoDevelopVersion)" />
+      <AddinReference Update="MonoDevelop.Ide" Version="8.0" />
     </ItemGroup>
   </Target>
 

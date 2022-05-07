@@ -5,9 +5,9 @@
     <DefineConstants>Roslyn;RoslynCS;RoslynVB</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Forms" Version="2.6.1" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.6.1" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.6.1" />
+    <PackageReference Include="Eto.Forms" Version="2.7.0" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.7.0" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.0" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.CodeDom" Version="6.0.0" />

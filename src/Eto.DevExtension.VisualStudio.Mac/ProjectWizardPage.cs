@@ -38,7 +38,7 @@ namespace Eto.DevExtension.VisualStudio.Mac
             if (view == null)
                 view = new ProjectWizardPageView(model);
 
-            return XamMac2Helpers.ToNative(view, true);
+            return view.ToNative(true);
         }
 
         public void Validate()
