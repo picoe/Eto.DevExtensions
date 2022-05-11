@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net472</TargetFrameworks>
     <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac\</OutputPath>
     <DefineConstants>$(DefineConstants);MAC</DefineConstants>
     <NoWarn>MSB3245</NoWarn>
     <MonoDevelopVersion>8.8</MonoDevelopVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <VSVersion Condition="$(VSVersion) == ''">2019</VSVersion>
   </PropertyGroup>
+  
   <ItemGroup>
     <Compile Remove="Editor\XetoTextEditorExtension.cs" />
     <Compile Include="..\Eto.DevExtension.VisualStudio.Windows\Intellisense\*.cs" Link="Intellisense\%(Filename)%(Extension)" />
@@ -18,12 +19,14 @@
     <ProjectReference Include="..\Eto.DevExtension.Shared\Eto.DevExtension.Shared.csproj" />
   </ItemGroup>
   
-  <PropertyGroup Condition="$(TargetFramework) == 'net472'">
+  <PropertyGroup Condition="$(VSVersion) == '2019'">
+    <TargetFramework>net472</TargetFramework>
     <Title>Eto.DevExtension.VisualStudio.Mac.2019</Title>
     <DefineConstants>VS2019</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(TargetFramework) == 'net6.0'">
+  <PropertyGroup Condition="$(VSVersion) == '2022'">
+    <TargetFramework>net6.0</TargetFramework>
     <Title>Eto.DevExtension.VisualStudio.Mac.2022</Title>
     <DefineConstants>VS2022</DefineConstants>
   </PropertyGroup>
