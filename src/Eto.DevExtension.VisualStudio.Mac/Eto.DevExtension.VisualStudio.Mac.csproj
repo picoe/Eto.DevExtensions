@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <VSVersion Condition="$(VSVersion) == ''">2019</VSVersion>
-    <DefineConstants>$(DefineConstants);MAC</DefineConstants>
+    <DefineConstants>$(DefineConstants);MAC;VS$(VSVersion)</DefineConstants>
     <NoWarn>MSB3245</NoWarn>
     <MonoDevelopVersion>8.8</MonoDevelopVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
     <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac.$(VSVersion)\</OutputPath>
+    <Title>Eto.DevExtension.VisualStudio.Mac.$(VSVersion)</Title>
   </PropertyGroup>
   
   <ItemGroup>
@@ -22,14 +23,10 @@
   
   <PropertyGroup Condition="$(VSVersion) == '2019'">
     <TargetFramework>net472</TargetFramework>
-    <Title>Eto.DevExtension.VisualStudio.Mac.2019</Title>
-    <DefineConstants>$(DefineConstants);VS2019</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(VSVersion) == '2022'">
     <TargetFramework>net6.0</TargetFramework>
-    <Title>Eto.DevExtension.VisualStudio.Mac.2022</Title>
-    <DefineConstants>$(DefineConstants);VS2022</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup Condition="$(VSVersion) == '2019'">

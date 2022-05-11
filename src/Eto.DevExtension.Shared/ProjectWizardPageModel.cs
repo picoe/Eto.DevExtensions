@@ -88,6 +88,7 @@ namespace Eto.DevExtension.Shared
 		public bool SupportsPCL => Source.TargetFrameworkVersion > new Version(4, 0) && Source.IsSupportedParameter("PCL");
 
 		public bool SupportsNetStandard => Source.IsSupportedParameter("NetStandard");
+		public bool SupportsNet6 => Source.IsSupportedParameter("Net6");
 
 		public bool SupportsSAL => Source.IsSupportedParameter("SAL");
 
@@ -222,17 +223,21 @@ namespace Eto.DevExtension.Shared
 			public bool CanUseCombined { get; set; }
 		}
 
-		public FrameworkInfo[] SupportedFrameworks => frameworkInformation;
+		public FrameworkInfo[] SupportedFrameworks => frameworkInformation ?? (frameworkInformation = GetFrameworkInformation().ToArray());
 
-		static readonly FrameworkInfo[] frameworkInformation =
+        FrameworkInfo[] frameworkInformation;
+		
+		IEnumerable<FrameworkInfo> GetFrameworkInformation()
 		{
-			new FrameworkInfo { Text = ".NET 6", Value = "net6.0", CanUseCombined = true },
-			new FrameworkInfo { Text = ".NET 5", Value = "net5.0", CanUseCombined = true },
-			new FrameworkInfo { Text = ".NET Core 3.1", Value = "netcoreapp3.1", CanUseCombined = true },
-			new FrameworkInfo { Text = ".NET Framework 4.8", Value = "net48", CanUseCombined = true },
-			new FrameworkInfo { Text = ".NET Framework 4.7.2", Value = "net472", CanUseCombined = true },
-			new FrameworkInfo { Text = ".NET Framework 4.6.2", Value = "net462", CanUseCombined = true },
-		};
+			if (SupportsNet6)
+				yield return new FrameworkInfo { Text = ".NET 6", Value = "net6.0", CanUseCombined = true };
+				
+            yield return new FrameworkInfo { Text = ".NET 5", Value = "net5.0", CanUseCombined = true };
+            yield return new FrameworkInfo { Text = ".NET Core 3.1", Value = "netcoreapp3.1", CanUseCombined = true };
+			yield return new FrameworkInfo { Text = ".NET Framework 4.8", Value = "net48", CanUseCombined = true };
+			yield return new FrameworkInfo { Text = ".NET Framework 4.7.2", Value = "net472", CanUseCombined = true };
+			yield return new FrameworkInfo { Text = ".NET Framework 4.6.2", Value = "net462", CanUseCombined = true };
+		}
 
 		FrameworkInfo _selectedFramework;
 

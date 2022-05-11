@@ -5,7 +5,7 @@
     <MinimumVisualStudioVersion>16.0</MinimumVisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
-    <VSVersion Condition="$(VSVersion) == ''">2019</VSVersion>
+    <VSVersion Condition="$(VSVersion) == ''">2022</VSVersion>
   </PropertyGroup>
   <!-- This gives a warning when building.. but it doesn't work without it. -->
   <Import Project="..\..\Directory.Build.props" />
