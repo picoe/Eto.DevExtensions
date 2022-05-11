@@ -11,10 +11,12 @@ using Microsoft.VisualStudio.ComponentModelHost;
 using Eto.DevExtension.VisualStudio.Windows.Editor;
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Utilities;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Eto.DevExtension.VisualStudio.Windows
 {
-	[PackageRegistration(UseManagedResourcesOnly = true)]
+	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
 	[InstalledProductRegistration("#110", "#112", Constants.VersionString)]
 	/*
 	[ProvideXmlEditorChooserDesignerView("Eto.Forms preview", ".xeto", LogicalViewID.Designer, 0x1000,
@@ -40,7 +42,7 @@ namespace Eto.DevExtension.VisualStudio.Windows
 	//[ProvideLanguageExtension(VSConstants.VsLanguageServiceGuid.HtmlLanguageService_string, ".jeto")]
 
 	[Guid(Constants.EtoPreviewPackagePkg_string)]
-	public sealed class EtoAddinPackage : Package
+	public sealed class EtoAddinPackage : AsyncPackage
 	{
 		public EtoAddinPackage()
 		{
@@ -50,14 +52,15 @@ namespace Eto.DevExtension.VisualStudio.Windows
 
 		}
 
-		protected override void Initialize()
-		{
+        protected override async System.Threading.Tasks.Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
+        {
 			Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
-			base.Initialize();
+			await base.InitializeAsync(cancellationToken, progress);
 
 			//Create Editor Factory.
 			base.RegisterEditorFactory(new EditorFactory(this));
 		}
+
 
 		public static EtoAddinPackage Instance { get; private set; }
 

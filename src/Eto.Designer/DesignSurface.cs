@@ -147,31 +147,25 @@ namespace Eto.Designer
 			{
 				Location = () => gripRect(SizeBoundsWithPadding.TopLeft),
 				Update = diff => UpdateSize(topLeft: diff),
-				Cursor = Cursors.Move
+				Cursor = Cursors.SizeTopLeft
 			};
 			yield return new Grip
 			{
 				Location = () => gripRect(SizeBoundsWithPadding.TopRight),
 				Update = diff => UpdateSize(topRight: diff),
-				Cursor = Cursors.Move
+				Cursor = Cursors.SizeTopRight
 			};
 			yield return new Grip
 			{
 				Location = () => gripRect(SizeBoundsWithPadding.BottomLeft),
 				Update = diff => UpdateSize(bottomLeft: diff),
-				Cursor = Cursors.Move
+				Cursor = Cursors.SizeBottomLeft
 			};
 			yield return new Grip
 			{
 				Location = () => gripRect(SizeBoundsWithPadding.BottomRight),
 				Update = diff => UpdateSize(bottomRight: diff),
-				Cursor = Cursors.Move
-			};
-			yield return new Grip
-			{
-				Location = () => gripRect(SizeBoundsWithPadding.BottomRight),
-				Update = diff => UpdateSize(bottomRight: diff),
-				Cursor = Cursors.Move
+				Cursor = Cursors.SizeBottomRight
 			};
 			Font font = SystemFonts.Default(8);
 			SizeF gripSize = SizeF.Empty;

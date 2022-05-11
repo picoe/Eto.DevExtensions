@@ -30,7 +30,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 		static EditorFactory()
 		{
-			EtoInitializer.Initialize();
+			Helpers.Initialize();
 		}
 
 		public EditorFactory(EtoAddinPackage package)

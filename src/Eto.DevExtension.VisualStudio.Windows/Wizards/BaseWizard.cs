@@ -12,7 +12,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 
 		static BaseWizard()
 		{
-			EtoInitializer.Initialize();
+			Helpers.Initialize();
 		}
 
 		public virtual bool ShouldAddProjectItem(string filePath)

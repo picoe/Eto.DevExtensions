@@ -32,7 +32,7 @@
             }
         },
         {
-            // note you cannot actually debug as omnisharp only supports x64, this is used so we can just run without debugging more easily
+            // you cannot actually debug VS2019 as omnisharp only supports x64, this is used so we can just run without debugging more easily
             "name": "Eto.DevExtension.VisualStudio.Windows.2019",
             "type": "clr",
             "request": "launch",
@@ -44,7 +44,6 @@
             ],
         },
         {
-            // note you cannot actually debug as omnisharp only supports x64, this is used so we can just run without debugging more easily
             "name": "Eto.DevExtension.VisualStudio.Windows.2022",
             "type": "clr",
             "request": "launch",

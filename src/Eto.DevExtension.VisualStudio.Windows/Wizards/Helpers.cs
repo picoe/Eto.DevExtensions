@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -16,8 +17,26 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 {
 	static class Helpers
 	{
+		static Assembly LoadFromSameFolder(object sender, ResolveEventArgs args)
+		{
+			string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+			string assemblyPath = Path.Combine(folderPath, new AssemblyName(args.Name).Name + ".dll");
+			if (!File.Exists(assemblyPath)) return null;
+			Assembly assembly = Assembly.LoadFrom(assemblyPath);
+			return assembly;
+		}
+
 		static Helpers()
 		{
+#if VS2022
+			// needed in VS 2022 for some reason?!?!
+			AppDomain.CurrentDomain.AssemblyResolve += LoadFromSameFolder;
+#endif
+			Initialize();
+		}
+
+		public static void Initialize()
+        {
 			EtoInitializer.Initialize();
 		}
 
