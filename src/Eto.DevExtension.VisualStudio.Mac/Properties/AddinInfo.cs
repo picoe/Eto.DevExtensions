@@ -5,7 +5,7 @@ using Mono.Addins.Description;
 [assembly:Addin(
 	"Mac", 
 	Namespace = "Eto.DevExtension.VisualStudio",
-	Version = "2.6.0.9999"
+	Version = "2.7.0.0"
 )]
 
 [assembly:AddinName("Eto.Forms VS Extension")]

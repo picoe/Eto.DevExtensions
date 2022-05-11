@@ -73,11 +73,11 @@ jobs:
         xcode-version: latest
     
     - name: Build VS2019
-      run: msbuild /restore /v:Minimal /p:VSVersion=2019 /p:Configuration=Release src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2019.binlog
+      run: msbuild /restore /v:Minimal /t:PackageAddin /p:VSVersion=2019 /p:Configuration=Release src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2019.binlog
 
     # Need to wait until it is installed in Github Actions
     # - name: Build VS2022
-    #   run: dotnet build /p:VSVersion=2022 /p:Configuration=Release src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2022.binlog
+    #   run: dotnet build /p:VSVersion=2022 /t:PackageAddin /p:Configuration=Release src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2022.binlog
 
     - name: Upload extensions
       uses: actions/upload-artifact@v2

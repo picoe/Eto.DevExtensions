@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac\</OutputPath>
+    <VSVersion Condition="$(VSVersion) == ''">2019</VSVersion>
     <DefineConstants>$(DefineConstants);MAC</DefineConstants>
     <NoWarn>MSB3245</NoWarn>
     <MonoDevelopVersion>8.8</MonoDevelopVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <VSVersion Condition="$(VSVersion) == ''">2019</VSVersion>
+    <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac.$(VSVersion)\</OutputPath>
   </PropertyGroup>
   
   <ItemGroup>
@@ -22,16 +23,16 @@
   <PropertyGroup Condition="$(VSVersion) == '2019'">
     <TargetFramework>net472</TargetFramework>
     <Title>Eto.DevExtension.VisualStudio.Mac.2019</Title>
-    <DefineConstants>VS2019</DefineConstants>
+    <DefineConstants>$(DefineConstants);VS2019</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(VSVersion) == '2022'">
     <TargetFramework>net6.0</TargetFramework>
     <Title>Eto.DevExtension.VisualStudio.Mac.2022</Title>
-    <DefineConstants>VS2022</DefineConstants>
+    <DefineConstants>$(DefineConstants);VS2022</DefineConstants>
   </PropertyGroup>
   
-  <ItemGroup Condition="$(TargetFramework) == 'net472'">
+  <ItemGroup Condition="$(VSVersion) == '2019'">
     <PackageReference Include="MonoDevelop.Addins" Version="0.4.7" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.0.206" ExcludeAssets="runtime">
       <IncludeAssets>compile;build;native;contentfiles;analyzers;buildtransitive</IncludeAssets>
@@ -39,7 +40,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
     <PackageReference Include="Eto.Platform.XamMac2" Version="2.7.0" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework) == 'net6.0'">
+  <ItemGroup Condition="$(VSVersion) == '2022'">
     <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0-preview.7955" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" ExcludeAssets="runtime" />
     <PackageReference Include="Eto.Platform.macOS" Version="2.7.0" GeneratePathProperty="true" />
