@@ -115,7 +115,7 @@ namespace Eto.Designer.Completion
 			}
 			else
 			{
-				var filter = completions.Select(r => r.GetFilter(path)).FirstOrDefault(); // r => r != null);
+				var filter = completions.Select(r => r.GetFilter(path)).Where(r => r != null).FirstOrDefault();
 				items = completions.SelectMany(r => r.GetClasses(path, filter));
 			}
 			return items;

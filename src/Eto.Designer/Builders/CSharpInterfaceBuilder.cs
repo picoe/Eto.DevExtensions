@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UseCodeDom
+using System;
 using System.CodeDom.Compiler;
 using System.IO;
 using System.Collections.Generic;
@@ -16,3 +17,4 @@ namespace Eto.Designer.Builders
 	}
 }
 
+#endif

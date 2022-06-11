@@ -24,8 +24,17 @@ namespace Eto.DevExtension.VisualStudio.Mac
                 h.Widget.Properties[Cell_Key] = h.Control.Cell;
             });
 #endif
+#if VS2022
+			AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
+			{
+				var name = new AssemblyName(e.Name);
+				if (name.Name == "Microsoft.macOS")
+					return typeof(AppKit.NSView).Assembly;
+				return null;
+			};
+#endif
 
-            try
+			try
 			{
 				var platform = Platform.Instance;
 				if (platform == null)

@@ -1,20 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net472;net6.0</TargetFrameworks>
-    <OutputPath>..\..\..\artifacts\addin\$(Configuration)\</OutputPath>
     <DefineConstants>Roslyn;RoslynCS;RoslynVB</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Forms" Version="2.7.0" />
+    <PackageReference Include="Eto.Forms" Version="2.7.0" PrivateAssets="all" ExcludeAssets="runtime" />
     <PackageReference Include="Eto.Serialization.Json" Version="2.7.0" />
     <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.CodeDom" Version="6.0.0" />
-    <PackageReference Include="FSharp.Compiler.CodeDom" Version="1.0.0.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0" ExcludeAssets="runtime" />
-    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.10.0" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    <!-- <PackageReference Include="System.CodeDom" Version="6.0.0" Condtion="$(TargetFramework) == 'net472'" />
+    <PackageReference Include="FSharp.Compiler.CodeDom" Version="1.0.0.1" Condtion="$(TargetFramework) == 'net472'" /> -->
+    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.10.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <!-- <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" /> -->
   </ItemGroup>
 </Project>

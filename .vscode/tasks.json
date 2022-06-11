@@ -5,7 +5,7 @@
             "label": "build-extension-2019",
             "type": "shell",
             "osx": {
-                "command": "msbuild /restore /p:VSVersion=2019 /p:TargetFramework=net472 /v:Normal /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
+                "command": "msbuild /restore /p:VSVersion=2019 /v:Minimal /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
                 // "command": "dotnet build -f net472 /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
             },
             "windows": {
@@ -29,7 +29,14 @@
             "label": "build-extension-2022",
             "type": "shell",
             "osx": {
-                "command": "dotnet build -f net6.0 /p:VSVersion=2022 /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
+                "command": "dotnet",
+                "args": [
+                    "build",
+                    "/p:VSVersion=2022",
+                    "/t:PackageAddin", 
+                    "/bl:${workspaceFolder}/artifacts/log/Eto.DevExtension.VisualStudio.Mac.2022.binlog",
+                    "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
+                ],
             },
             "windows": {
                 "command": "${input:msbuild-17}",

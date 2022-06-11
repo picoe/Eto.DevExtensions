@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UseCodeDom
+using System;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.IO;
@@ -52,3 +53,4 @@ namespace Eto.Designer.Builders
 	}
 }
 
+#endif

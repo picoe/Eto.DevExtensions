@@ -64,7 +64,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>..\..\artifacts\Debug\VisualStudio.Windows.$(VSVersion)\</OutputPath>
+    <OutputPath>..\..\artifacts\Eto.DevExtension.VisualStudio.Windows\$(VSVersion)\$(Configuration)\</OutputPath>
     <DefineConstants>TRACE;DEBUG;WINDOWS</DefineConstants>
     <DebugType>portable</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -75,13 +75,13 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\artifacts\Release\VisualStudio.Windows.$(VSVersion)\</OutputPath>
+    <OutputPath>..\..\artifacts\Eto.DevExtension.VisualStudio.Windows\$(VSVersion)\$(Configuration)\</OutputPath>
     <DefineConstants>TRACE;WINDOWS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetVsixContainer>$(OutputPath)..\$(TargetVsixContainerName)</TargetVsixContainer>
+    <TargetVsixContainer>$(ArtifactsDir)$(Configuration)\$(TargetVsixContainerName)</TargetVsixContainer>
     <DefineConstants>$(DefineConstants);VS$(VSVersion)</DefineConstants>
   </PropertyGroup>
   <ItemGroup>

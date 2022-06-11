@@ -28,17 +28,19 @@ namespace Eto.DevExtension.VisualStudio.Mac
             Validate();
         }
 
-        public override string Title
-        {
-            get { return model.Title; }
-        }
+        public override string Title => model.Title;
 
         protected override object CreateNativeWidget<T>()
         {
-            if (view == null)
-                view = new ProjectWizardPageView(model);
+			if (view == null)
+			{
+				view = new ProjectWizardPageView(model);
+#if VS2022
+				view.ClientSize = new Drawing.Size(900, 496);
+#endif
+			}
 
-            return view.ToNative(true);
+			return view.ToNative(true);
         }
 
         public void Validate()

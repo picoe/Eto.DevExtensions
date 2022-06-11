@@ -12,6 +12,7 @@ using MonoDevelop.Ide.Gui;
 using MonoDevelop.Ide.Gui.Documents;
 using MonoDevelop.Projects;
 
+
 namespace Eto.DevExtension.VisualStudio.Mac.Editor
 {
 	[ExportDocumentControllerFactory(Id = "EtoFormsDesigner", MimeType = "*", InsertBefore = "MonoDevelop.TextEditor.CocoaTextViewDisplayBinding")]
@@ -178,10 +179,11 @@ namespace Eto.DevExtension.VisualStudio.Mac.Editor
 
 #if VS2022
 			var nativeControl = Eto.Forms.MacOSHelpers.ToNative(preview, true);
+			var result = (Control)(AppKit.NSView)(object)nativeControl;
 #elif VS2019
 			var nativeControl = Eto.Forms.XamMac2Helpers.ToNative(preview, true);
-#endif
 			var result = (Control)nativeControl;
+#endif
 
 			Eto.Forms.Application.Instance.AsyncInvoke(preview.Update);
 

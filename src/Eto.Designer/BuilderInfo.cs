@@ -52,6 +52,7 @@ namespace Eto.Designer
 			yield return csBuilder;
 			yield return vbBuilder;
 
+#if UseCodeDom
 			yield return new BuilderInfo
 			{
 				Extension = ".eto.fs",
@@ -60,6 +61,7 @@ namespace Eto.Designer
 				GetCodeFile = fileName => Regex.Replace(fileName, @"(.+)[.]eto([.]fs)", "$1$2"),
 				GetDesignFile = fileName => Regex.Replace(fileName, @"(.+)([.]fs)", "$1.eto$2")
 			};
+#endif
 			yield return new BuilderInfo
 			{
 				Extension = ".xeto",
