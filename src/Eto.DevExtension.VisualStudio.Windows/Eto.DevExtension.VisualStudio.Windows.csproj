@@ -287,4 +287,7 @@
   <Target Name="BeforeBuild">
   </Target>
   -->
+  <Target Name="CreateDirectory for vsix" BeforeTargets="CreateVsixContainer" >
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName($(TargetVsixContainer)))"/>
+  </Target>  
 </Project>
