@@ -5,8 +5,15 @@
             "label": "build-extension-2019",
             "type": "shell",
             "osx": {
-                "command": "msbuild /restore /p:VSVersion=2019 /v:Minimal /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
-                // "command": "dotnet build -f net472 /t:PackageAddin ${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
+                "command": "msbuild",
+                "args": [
+                    "/restore",
+                    "/v:Minimal",
+                    "/p:VSVersion=2019",
+                    "/t:PackageAddin", 
+                    "/bl:${workspaceFolder}/artifacts/log/Eto.DevExtension.VisualStudio.Mac.2019.binlog",
+                    "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
+                ],
             },
             "windows": {
                 "command": "${input:msbuild-16}",
@@ -54,6 +61,14 @@
                 "clear": true
             },
             "group": "build"
+        },
+        {
+            "label": "build-extensions",
+            "dependsOn": [ "build-extension-2019", "build-extension-2022" ],
+            "presentation": {
+                "reveal": "never",
+            },
+            "problemMatcher": "$msCompile",
         }
         
     ],

@@ -11,6 +11,7 @@ using System.IO;
 using MonoDevelop.Ide.Gui;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Eto.DevExtension.VisualStudio.Mac
 {
@@ -36,11 +37,10 @@ namespace Eto.DevExtension.VisualStudio.Mac
 
 		public override WizardPage GetPage(int pageNumber) => _page = new ProjectWizardPage(this);
 
-		public override void ItemsCreated(System.Collections.Generic.IEnumerable<IWorkspaceFileObject> items)
-		{
-			base.ItemsCreated(items);
-
 #if OLD
+		public override async Task ItemsCreatedAsync(IEnumerable<IWorkspaceFileObject> items)
+		{
+
 			var model = new ProjectWizardPageModel(new ParameterSource(this), null);
 
 			// hard coded as we can't get at any custom data out of the template..
@@ -87,8 +87,7 @@ namespace Eto.DevExtension.VisualStudio.Mac
 				if (item != null)
 					IdeApp.Workbench.OpenDocument(item.FilePath, proj);
 			}
-#endif
-
 		}
+#endif
 	}
 }
