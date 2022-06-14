@@ -103,13 +103,14 @@
 	
 	<Runtime>
 		<Import assembly="Eto.dll" />
-		<Import assembly="Eto.XamMac2.dll" />
+		<!-- <Import assembly="Eto.XamMac2.dll" /> -->
+		<!-- <Import assembly="Eto.macOS.dll" /> -->
 		<Import assembly="Eto.DevExtension.Shared.dll" />
 		<Import assembly="Eto.Designer.dll" />
 		<Import assembly="Eto.Serialization.Json.dll" />
 		<Import assembly="Eto.Serialization.Xaml.dll" />
 		<Import assembly="Portable.Xaml.dll" />
-		<Import assembly="FSharp.Compiler.CodeDom.dll" />
+		<!-- <Import assembly="FSharp.Compiler.CodeDom.dll" /> -->
 		<Import assembly="Eto.DevExtension.VisualStudio.Mac.dll" />
 		<Import file="Eto.xml" />
 	</Runtime>
@@ -122,9 +123,9 @@
 		<DisplayBinding insertbefore="DefaultDisplayBinding" class="Eto.DevExtension.VisualStudio.Mac.Editor.DisplayBinding" />
 	</Extension>
 	-->
-	<Extension path="/MonoDevelop/Ide/TextEditorExtensions">
-		<!-- <Class fileExtensions=".xeto" class="Eto.DevExtension.VisualStudio.Mac.Editor.XetoTextEditorExtension" insertbefore="XmlTextEditorExtension" /> -->
-	</Extension>
+	<!-- <Extension path="/MonoDevelop/Ide/TextEditorExtensions">
+		<Class fileExtensions=".xeto" class="Eto.DevExtension.VisualStudio.Mac.Editor.XetoTextEditorExtension" insertbefore="XmlTextEditorExtension" />
+	</Extension> -->
 	<Extension path="/MonoDevelop/Core/MimeTypes">
 		<MimeType id="application/x-xeto" _description="Eto Xaml document" icon="md-xml-file-icon" isText="true" baseType="application/xml">
 			<File pattern="*.xeto" />

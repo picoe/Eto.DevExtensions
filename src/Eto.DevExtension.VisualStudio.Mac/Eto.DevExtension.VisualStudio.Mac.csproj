@@ -1,12 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net472</TargetFrameworks>
-    <OutputPath>$(ArtifactsDir)$(Configuration)\VisualStudio.Mac\</OutputPath>
-    <DefineConstants>$(DefineConstants);MAC</DefineConstants>
+    <VSVersion Condition="$(VSVersion) == ''">2022</VSVersion>
+    <DefineConstants>$(DefineConstants);MAC;VS$(VSVersion)</DefineConstants>
     <NoWarn>MSB3245</NoWarn>
-    <MonoDevelopVersion>8.8</MonoDevelopVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
+    <BaseOutputPath>$(BaseOutputPath)$(VSVersion)\</BaseOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(VSVersion)\</IntermediateOutputPath>
+    <Title>Eto.DevExtension.VisualStudio.Mac.$(VSVersion)</Title>
   </PropertyGroup>
+  
   <ItemGroup>
     <Compile Remove="Editor\XetoTextEditorExtension.cs" />
     <Compile Include="..\Eto.DevExtension.VisualStudio.Windows\Intellisense\*.cs" Link="Intellisense\%(Filename)%(Extension)" />
@@ -18,39 +21,43 @@
     <ProjectReference Include="..\Eto.DevExtension.Shared\Eto.DevExtension.Shared.csproj" />
   </ItemGroup>
   
-  <PropertyGroup Condition="$(TargetFramework) == 'net472'">
-    <Title>Eto.DevExtension.VisualStudio.Mac.2019</Title>
+  <PropertyGroup Condition="$(VSVersion) == '2019'">
+    <TargetFramework>net472</TargetFramework>
+    <MonoDevelopVersion>8.0</MonoDevelopVersion>
+    <MDBinDir Condition="$(MDBinDir) == '' AND Exists('/Applications/Visual Studio (2019).app/Contents/Resources/lib/monodevelop/bin')">/Applications/Visual Studio (2019).app/Contents/Resources/lib/monodevelop/bin</MDBinDir>
+    <MDBinDir Condition="$(MDBinDir) == '' AND Exists('/Applications/Visual Studio 2019.app/Contents/Resources/lib/monodevelop/bin')">/Applications/Visual Studio 2019.app/Contents/Resources/lib/monodevelop/bin</MDBinDir>
   </PropertyGroup>
-
-  <PropertyGroup Condition="$(TargetFramework) == 'net6.0'">
-    <Title>Eto.DevExtension.VisualStudio.Mac.2022</Title>
-  </PropertyGroup>
-  
-  <ItemGroup Condition="$(TargetFramework) == 'net472'">
+  <ItemGroup Condition="$(VSVersion) == '2019'">
     <PackageReference Include="MonoDevelop.Addins" Version="0.4.7" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.0.206" ExcludeAssets="runtime">
       <IncludeAssets>compile;build;native;contentfiles;analyzers;buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    <PackageReference Include="Eto.Forms" Version="2.7.0" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.XamMac2" Version="2.7.0" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework) == 'net6.0'">
-    <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0-preview.7955" />
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" ExcludeAssets="runtime" />
-    <Reference Include="$(PkgEto_Platform_XamMac2)\lib\net6.0-macos10.15\Eto.XamMac2.dll" />
+
+  <PropertyGroup Condition="$(VSVersion) == '2022'">
+    <TargetFramework>net6.0-macos</TargetFramework>
+    <MonoDevelopVersion>17.0</MonoDevelopVersion>
+  </PropertyGroup>
+  <ItemGroup Condition="$(VSVersion) == '2022'">
+    <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0" ExcludeAssets="runtime"/>
+    <!-- <PackageReference Include="Eto.Platform.macOS" Version="2.7.0" GeneratePathProperty="true" /> -->
+    <ProjectReference Include="$(BasePath)lib\Eto\src\Eto\Eto.csproj" /> 
+    <ProjectReference Include="$(BasePath)lib\Eto\src\Eto.Mac\Eto.XamMac2.csproj" /> 
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Composition" Version="5.0.0" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="6.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
-    <PackageReference Include="FSharp.Core" Version="6.0.3" />
-    <PackageReference Include="Eto.Forms" Version="2.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.XamMac2" Version="2.6.1" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Forms.Templates" Version="2.6.1" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="FSharp.Core" Version="6.0.4" ExcludeAssets="runtime"  />
+    <PackageReference Include="Eto.Forms.Templates" Version="2.7.0" GeneratePathProperty="true" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <AddinReference Include="MonoDevelop.Xml" Version="8.8" />
-    <AddinReference Include="MonoDevelop.DesignerSupport" Version="8.8" />
-    <AddinReference Include="MonoDevelop.PackageManagement" Version="8.8" />
-    <AddinReference Include="MonoDevelop.TextEditor" Version="8.8" />
+    <AddinReference Include="MonoDevelop.Xml" />
+    <AddinReference Include="MonoDevelop.DesignerSupport" />
+    <AddinReference Include="MonoDevelop.PackageManagement" />
+    <AddinReference Include="MonoDevelop.TextEditor" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Templates\**\*" />
@@ -70,8 +77,13 @@
   </ItemGroup>
   <Target Name="UpdateCoreReferences" BeforeTargets="BeforeBuild">
     <ItemGroup>
-      <AddinReference Update="MonoDevelop.Core" Version="$(MonoDevelopVersion)" />
-      <AddinReference Update="MonoDevelop.Ide" Version="$(MonoDevelopVersion)" />
+      <AddinReference Update="@(AddinReference)" Version="$(MonoDevelopVersion)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="UpdateXamarinMac" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Update="@(Reference)" Aliases="macos" Condition="%(Reference.FrameworkReferenceName) == 'Microsoft.macOS'" />
     </ItemGroup>
   </Target>
 
@@ -84,6 +96,6 @@
   </Target>
 
   <Target Name="CopyEtoXml" AfterTargets="Build">
-    <Copy SourceFiles="$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" DestinationFolder="$(OutDir)" Condition="$(VSVersion) == '2019'" />
   </Target>
 </Project>

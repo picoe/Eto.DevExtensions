@@ -57,7 +57,7 @@ namespace Eto.Designer.Completion
 
 					if (converter?.CanConvertFrom(t) == true)
 						return true;
-					if (GetConverter(t)?.CanConvertTo(contentType) == true)
+					if (GetConverter(t)?.CanConvertTo(contentType) == true && contentType != typeof(string))
 						return true;
 
 					return false;

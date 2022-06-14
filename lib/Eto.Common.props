@@ -1,0 +1,9 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup Condition="$(MSBuildProjectFile) == 'Eto.XamMac2.csproj'">
+    <TargetFramework>net6.0</TargetFramework>
+    <NoWarn>CA1416</NoWarn>
+    <UseXamarinMac>False</UseXamarinMac>
+    <OverrideTargetFrameworks>True</OverrideTargetFrameworks>
+    <DefineConstants>MACOS_NET;VSMAC</DefineConstants>
+  </PropertyGroup>
+</Project>

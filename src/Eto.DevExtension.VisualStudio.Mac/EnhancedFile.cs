@@ -36,7 +36,7 @@ namespace Eto.DevExtension.VisualStudio.Mac
                 return model;
             }
 
-#if NETFRAMEWORK
+#if VS2019
 			public override Stream CreateFileContent (SolutionFolderItem policyParent, Project project, string language, string fileName, string identifier)
 			{
 				if (Outer.FormatCode)

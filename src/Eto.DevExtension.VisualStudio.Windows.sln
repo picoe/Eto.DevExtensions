@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32106.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eto.VisualStudio.Windows", "Eto.VisualStudio.Windows\Eto.VisualStudio.Windows.csproj", "{4A50E311-097A-403F-BEE5-8A4EC3A8230B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eto.DevExtension.VisualStudio.Windows", "Eto.DevExtension.VisualStudio.Windows\Eto.DevExtension.VisualStudio.Windows.csproj", "{4A50E311-097A-403F-BEE5-8A4EC3A8230B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eto.Designer", "Eto.Designer\Eto.Designer.csproj", "{7FAA1841-0869-474C-9D89-87E1B4BAB190}"
 EndProject

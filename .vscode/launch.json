@@ -2,47 +2,79 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Eto.DevExtension.VisualStudio.Mac",
+            "name": "Eto.DevExtension.VisualStudio.Mac.2019",
             "type": "mono",
             "request": "launch",
             "preLaunchTask": "build-extension-2019",
             "program": ".",
-            "runtimeExecutable": "/Applications/Visual Studio.app/Contents/MacOS/VisualStudio",
+            "runtimeExecutable": "/Applications/Visual Studio (2019).app/Contents/MacOS/VisualStudio",
             "passDebugOptionsViaEnvironmentVariable": true,
             "args": [
                 "--no-redirect"
             ],
             "env": {
                 "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
-                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/net472/"
+                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/Eto.DevExtension.VisualStudio.Mac/2019/${config:var.configuration}/"
             }
         },
         {
-            "name": "Eto.DevExtension.VisualStudio.Mac (Preview)",
+            "name": "Eto.DevExtension.VisualStudio.Mac.2022",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build-extension-2022",
-            "program": "/Applications/Visual Studio (Preview).app/Contents/MacOS/VisualStudio",
+            "program": "/Applications/Visual Studio.app/Contents/MacOS/VisualStudio",
             "args": [
                 "--no-redirect"
             ],
             "env": {
                 "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
-                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/${config:var.configuration}/VisualStudio.Mac/net6.0/"
+                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/Eto.DevExtension.VisualStudio.Mac/2022/${config:var.configuration}/"
             }
         },
         {
-            // note you cannot actually debug as omnisharp only supports x64, this is used so we can just run without debugging more easily
-            "name": "Eto.DevExtension.VisualStudio.Windows",
+            // you cannot actually debug VS2019 as omnisharp only supports x64, this is used so we can just run without debugging more easily
+            "name": "Eto.DevExtension.VisualStudio.Windows.2019",
             "type": "clr",
             "request": "launch",
-            "preLaunchTask": "build-extension",
-            "program": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/devenv.exe",
+            "preLaunchTask": "build-extension-2019",
+            "program": "${input:devenv-16}",
+            "args": [
+                "/RootSuffix",
+                "Exp"
+            ],
+        },
+        {
+            "name": "Eto.DevExtension.VisualStudio.Windows.2022",
+            "type": "clr",
+            "request": "launch",
+            "preLaunchTask": "build-extension-2022",
+            "program": "${input:devenv-17}",
             "args": [
                 "/RootSuffix",
                 "Exp"
             ],
         }
     ],
-    "compounds": []
+    "compounds": [],
+    "inputs": [
+        {
+            "id": "devenv-16",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"16\" -products * -requires Microsoft.Component.MSBuild -find Common7\\IDE\\devenv.exe",
+                "useFirstResult": "true"
+            }
+        },
+        {
+            "id": "devenv-17",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"17\" -products * -requires Microsoft.Component.MSBuild -find Common7\\IDE\\devenv.exe",
+                "useFirstResult": "true"
+            }
+        }
+    ]
+    
 }

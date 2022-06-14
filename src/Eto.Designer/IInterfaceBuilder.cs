@@ -3,7 +3,6 @@ using Eto.Forms;
 using Eto.Drawing;
 using Microsoft.CSharp;
 using System.Collections.Generic;
-using System.CodeDom.Compiler;
 using System.Linq;
 using System.Reflection;
 using System.IO;

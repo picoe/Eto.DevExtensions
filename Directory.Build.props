@@ -11,7 +11,8 @@
     <BuildPlatform Condition="$(BuildPlatform) == '' and $([MSBuild]::IsOSPlatform(windows))">Windows</BuildPlatform>
     
     <ArtifactsDir Condition="$(BuildOutoutDir) == ''">$(BasePath)artifacts\</ArtifactsDir>
-    <BaseIntermediateOutputPath Condition="$(BaseIntermediateOutputPath) == ''">$(BasePath)artifacts\obj\$(BuildPlatform)\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath Condition="$(BaseOutputPath) == ''">$(ArtifactsDir)$(MSBuildProjectName)\</BaseOutputPath>
+    <BaseIntermediateOutputPath Condition="$(BaseIntermediateOutputPath) == ''">$(ArtifactsDir)obj\$(BuildPlatform)\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
     <SourceDir Condition="$(SourceDir) == ''">$(BasePath)src\</SourceDir>
     <NugetDir Condition="$(NugetDir) == ''">$(SourceDir)</NugetDir>
     <PackageOutputPath>$(ArtifactsDir)nuget\$(Configuration)\</PackageOutputPath>
@@ -21,9 +22,9 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <DevVersion>2.6.1</DevVersion>
+    <DevVersion>2.7.0</DevVersion>
 
-    <Version Condition="$(Version) == ''">2.6.0.0</Version>
+    <Version Condition="$(Version) == ''">2.7.0.0</Version>
 
     <InformationalVersion Condition="$(SetVersion) != ''">$(SetVersion)</InformationalVersion>
     <!-- set version from tag -->

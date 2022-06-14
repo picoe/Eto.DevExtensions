@@ -17,13 +17,24 @@ namespace Eto.DevExtension.VisualStudio.Mac
 
 			initialized = true;
 
+#if VS2019
             Style.Add<Eto.Mac.Forms.Controls.TextBoxHandler>(null, h =>
             {
 				// VS 2019 for Mac is dumb and GC's the cell even though it's still in use.
                 h.Widget.Properties[Cell_Key] = h.Control.Cell;
             });
+#endif
+#if VS2022
+			AppDomain.CurrentDomain.AssemblyResolve += (sender, e) =>
+			{
+				var name = new AssemblyName(e.Name);
+				if (name.Name == "Microsoft.macOS")
+					return typeof(AppKit.NSView).Assembly;
+				return null;
+			};
+#endif
 
-            try
+			try
 			{
 				var platform = Platform.Instance;
 				if (platform == null)

@@ -17,6 +17,10 @@ namespace Eto.DevExtension.VisualStudio.Mac
 
 		public bool IsSupportedParameter(string parameter)
 		{
+#if VS2022
+			if (string.Equals(parameter, "Net6", StringComparison.OrdinalIgnoreCase))
+				return true;
+#endif
 			return wizard.IsSupportedParameter(parameter);
 		}
 

@@ -17,10 +17,10 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 	public class ParameterSource : IParameterSource
 	{
 		readonly Dictionary<string, string> replacements;
-        public ParameterSource(Dictionary<string, string> replacements)
+		public ParameterSource(Dictionary<string, string> replacements)
 		{
 			this.replacements = replacements;
-        }
+		}
 
 		public bool SeparateMac
 		{
@@ -28,23 +28,27 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 		}
 
 		public Version TargetFrameworkVersion
-        {
-            get
-            {
-//                Version ver;
-//                if (Version.TryParse(replacements["$targetframeworkversion$"], out ver))
-//                    return ver;
-                return new Version(4, 5);
-            }
-        }
+		{
+			get
+			{
+				//                Version ver;
+				//                if (Version.TryParse(replacements["$targetframeworkversion$"], out ver))
+				//                    return ver;
+				return new Version(4, 5);
+			}
+		}
 
-        public string GetParameter(string parameter)
+		public string GetParameter(string parameter)
 		{
 			return replacements.GetParameter(parameter);
-        }
+		}
 
 		public bool IsSupportedParameter(string parameter)
 		{
+#if VS2022
+			if (string.Equals(parameter, "Net6", StringComparison.OrdinalIgnoreCase))
+				return true;
+#endif
 			return replacements.IsSupportedParameter(parameter);
 		}
 
@@ -70,7 +74,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 			if (model.RequiresInput)
 			{
 				var panel = new ProjectWizardPageView(model);
-				var dialog = new BaseDialog { Content = panel, Title = model.Title, ClientSize = new Size(-1, 400), Style="eto.vstheme" };
+				var dialog = new BaseDialog { Content = panel, Title = model.Title, ClientSize = new Size(-1, 400), Style = "eto.vstheme" };
 				if (!dialog.ShowModal(Helpers.MainWindow))
 					throw new WizardBackoutException();
 
