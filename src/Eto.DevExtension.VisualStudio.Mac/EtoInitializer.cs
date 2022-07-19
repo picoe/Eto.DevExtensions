@@ -3,6 +3,7 @@ using System.Linq;
 using Eto.Forms;
 using Eto.Designer;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace Eto.DevExtension.VisualStudio.Mac
 {
@@ -51,7 +52,7 @@ namespace Eto.DevExtension.VisualStudio.Mac
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"{ex}");
+				Debug .WriteLine($"{ex}");
 			}
 		}
 	}

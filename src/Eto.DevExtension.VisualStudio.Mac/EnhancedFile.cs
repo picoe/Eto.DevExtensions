@@ -12,6 +12,7 @@ using MonoDevelop.Projects.Policies;
 using MonoDevelop.Ide.Gui.Content;
 using MonoDevelop.Ide.Editor;
 using md = MonoDevelop;
+using System.Threading.Tasks;
 
 namespace Eto.DevExtension.VisualStudio.Mac
 {
@@ -37,11 +38,11 @@ namespace Eto.DevExtension.VisualStudio.Mac
             }
 
 #if VS2019
-			public override Stream CreateFileContent (SolutionFolderItem policyParent, Project project, string language, string fileName, string identifier)
+			public override async Task<Stream> CreateFileContentAsync (SolutionFolderItem policyParent, Project project, string language, string fileName, string identifier)
 			{
 				if (Outer.FormatCode)
 				{
-					return base.CreateFileContent(policyParent, project, language, fileName, identifier);
+					return await base.CreateFileContentAsync(policyParent, project, language, fileName, identifier);
 				}
 
 				var model = GetTagModel (policyParent, project, language, identifier, fileName);
@@ -50,14 +51,18 @@ namespace Eto.DevExtension.VisualStudio.Mac
 				text = ProcessContent (text, model);
 				var memoryStream = new MemoryStream ();
 				byte[] preamble = Encoding.UTF8.GetPreamble ();
-				memoryStream.Write (preamble, 0, preamble.Length);
+				await memoryStream.WriteAsync (preamble, 0, preamble.Length);
 				if (AddStandardHeader) {
 					string header = StandardHeaderService.GetHeader (policyParent, fileName, true);
 					byte[] bytes = Encoding.UTF8.GetBytes (header);
-					memoryStream.Write (bytes, 0, bytes.Length);
+					await memoryStream.WriteAsync (bytes, 0, bytes.Length);
 				}
 
-				var textDocument = TextEditorFactory.CreateNewDocument ();
+#if VS2019
+				var textDocument = TextEditorFactory.CreateNewDocument();
+#else
+				var textDocument = await TextEditorFactory.CreateNewDocumentAsync();
+#endif
 				//var textDocument = new TextDocument ();
 				textDocument.Text = text;
 				var textStylePolicy = (policyParent == null) ? PolicyService.GetDefaultPolicy<TextStylePolicy> ("text/plain") : policyParent.Policies.Get<TextStylePolicy> ("text/plain");
@@ -70,15 +75,15 @@ namespace Eto.DevExtension.VisualStudio.Mac
 						line = line.Replace ("	", indent);
 					}
 					byte[] bytes = Encoding.UTF8.GetBytes (line);
-					memoryStream.Write (bytes, 0, bytes.Length);
-					memoryStream.Write (eol, 0, eol.Length);
+					await memoryStream.WriteAsync (bytes, 0, bytes.Length);
+					await memoryStream.WriteAsync (eol, 0, eol.Length);
 				}
 				memoryStream.Position = 0;
 				return memoryStream;				
 			}
 #endif
 
-            protected override string ProcessContent(string content, IStringTagModel tags)
+			protected override string ProcessContent(string content, IStringTagModel tags)
             {
                 tags = new TagModel { InnerModels = new[] { tags, Outer.ProjectTagModel }, File = Outer };
                 tagModel = tags;
@@ -169,9 +174,9 @@ namespace Eto.DevExtension.VisualStudio.Mac
             return inner.IsValidName(name, language);
         }
 
-        public override bool AddToProject(SolutionFolderItem policyParent, Project project, string language, string directory, string name)
-        {
-            var file = inner.AddFileToProject(policyParent, project, language, directory, name);
+		public override async Task<bool> AddToProjectAsync(SolutionFolderItem policyParent, Project project, string language, string directory, string name)
+		{
+            var file = await inner.AddFileToProjectAsync(policyParent, project, language, directory, name);
             if (file == null)
                 return false;
 

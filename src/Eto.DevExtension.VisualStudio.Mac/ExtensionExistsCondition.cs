@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Mono.Addins;
 
 namespace Eto.DevExtension.VisualStudio.Mac
@@ -28,7 +29,7 @@ namespace Eto.DevExtension.VisualStudio.Mac
 				var extensionNode = AddinManager.GetExtensionNode(path);
 
 				#if DEBUG
-				Console.WriteLine("Extension '{0}' {1}", path, extensionNode != null ? "Exists" : "Does Not Exist");
+				Debug.WriteLine("Extension '{0}' {1}", path, extensionNode != null ? "Exists" : "Does Not Exist");
 				#endif
 				return invert ? extensionNode == null : extensionNode != null;
 			}
