@@ -72,26 +72,39 @@ namespace Eto.DevExtension.Shared
 					Spacing = radioSpacing,
 					Items =
 					{
-						new ListItem { Text = "Separate projects for each platform", Key = "separate" },
-						new ListItem { Text = "Single Windows, Linux, and Mac desktop project", Key = "combined" }
+						new ListItem { Text = "Combined", Key = "combined" },
+						new ListItem { Text = "Separate per platform", Key = "separate" },
 					}
 				};
 				platformTypeList.BindDataContext(c => c.Visible, (ProjectWizardPageModel m) => m.AllowCombined);
 				platformTypeList.SelectedKeyBinding
 				                .Convert(v => v == "combined", v => v ? "combined" : "separate")
 				                .BindDataContext((ProjectWizardPageModel m) => m.Combined);
-				var heading = HeadingLabel("Launcher:");
+				var heading = HeadingLabel("Project:");
 				heading.BindDataContext(c => c.Visible, (ProjectWizardPageModel m) => m.AllowCombined);
 				content.AddRow(heading, platformTypeList);
+			}
+
+			if (model.SupportsMacosWorkload)
+			{
+				var cb = new CheckBox
+				{
+					ToolTip = "This uses the macos workload to build on Mac. You can only compile this on a Mac"
+				};
+				cb.BindDataContext(c => c.Text, Binding.Property((ProjectWizardPageModel m) => m.Combined).Convert(combined => combined ? "Use MacOS Workload" : "Include MacOS Workload project"));
+				cb.BindDataContext(c => c.Enabled, Binding.Property((ProjectWizardPageModel m) => m.AllowMacosWorkload));
+				cb.CheckedBinding.BindDataContext((ProjectWizardPageModel m) => m.IncludeMacosWorkload);
+				content.AddRow(HeadingLabel(string.Empty), cb);
 			}
 
 			if (model.SupportsXamMac)
 			{
 				var cb = new CheckBox
 				{
-					Text = "Include Xamarin.Mac project",
 					ToolTip = "This enables you to bundle mono with your app so your users don't have to install it separately.  You can only compile this on a Mac"
 				};
+				cb.BindDataContext(c => c.Text, Binding.Property((ProjectWizardPageModel m) => m.Combined).Convert(combined => combined ? "Use Xamarin.Mac" : "Include Xamarin.Mac project"));
+				cb.BindDataContext(c => c.Enabled, Binding.Property((ProjectWizardPageModel m) => m.AllowXamMac));
 				cb.CheckedBinding.BindDataContext((ProjectWizardPageModel m) => m.IncludeXamMac);
 				content.AddRow(HeadingLabel(string.Empty), cb);
 			}

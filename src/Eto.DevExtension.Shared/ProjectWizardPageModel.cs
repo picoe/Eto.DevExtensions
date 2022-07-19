@@ -20,7 +20,7 @@ namespace Eto.DevExtension.Shared
 			UsePCL = SupportsPCL;
 			UseNET = !SupportsPCL;
 			UseSAL = false;
-			Combined = false;
+			Combined = true;
 			Mode = "code";
 			IncludeSolution = false;
 			if (SupportsBase)
@@ -99,6 +99,8 @@ namespace Eto.DevExtension.Shared
 		public bool SupportsCombined => Source.IsSupportedParameter("Combined");
 
 		public bool SupportsXamMac => Source.IsSupportedParameter("XamMac");
+		
+		public bool SupportsMacosWorkload => Source.IsSupportedParameter("macos");
 
 		public bool SupportsXeto => Source.IsSupportedParameter("Xeto");
 
@@ -120,6 +122,8 @@ namespace Eto.DevExtension.Shared
 				Source.SetParameter("Combined", value.ToString());
 				OnPropertyChanged();
 				OnPropertyChanged(nameof(Information));
+				OnPropertyChanged(nameof(AllowMacosWorkload));
+				OnPropertyChanged(nameof(AllowXamMac));
 			}
 		}
 
@@ -129,6 +133,17 @@ namespace Eto.DevExtension.Shared
 			set
 			{
 				Source.SetParameter("IncludeXamMac", value.ToString());
+				OnPropertyChanged();
+				OnPropertyChanged(nameof(Information));
+			}
+		}
+
+		public bool IncludeMacosWorkload
+		{
+			get { return Source.GetParameter("IncludeMacosWorkload").ToBool(); }
+			set
+			{
+				Source.SetParameter("IncludeMacosWorkload", value.ToString());
 				OnPropertyChanged();
 				OnPropertyChanged(nameof(Information));
 			}
@@ -221,6 +236,8 @@ namespace Eto.DevExtension.Shared
 			public string Value { get; set; }
 			public string Description { get; set; }
 			public bool CanUseCombined { get; set; }
+			public bool CanUseMacos { get; set; }
+			public bool CanUseXamMac { get; set; }
 		}
 
 		public FrameworkInfo[] SupportedFrameworks => frameworkInformation ?? (frameworkInformation = GetFrameworkInformation().ToArray());
@@ -230,13 +247,13 @@ namespace Eto.DevExtension.Shared
 		IEnumerable<FrameworkInfo> GetFrameworkInformation()
 		{
 			if (SupportsNet6)
-				yield return new FrameworkInfo { Text = ".NET 6", Value = "net6.0", CanUseCombined = true };
+				yield return new FrameworkInfo { Text = ".NET 6", Value = "net6.0", CanUseCombined = true, CanUseMacos = true };
 				
             yield return new FrameworkInfo { Text = ".NET 5", Value = "net5.0", CanUseCombined = true };
             yield return new FrameworkInfo { Text = ".NET Core 3.1", Value = "netcoreapp3.1", CanUseCombined = true };
-			yield return new FrameworkInfo { Text = ".NET Framework 4.8", Value = "net48", CanUseCombined = true };
-			yield return new FrameworkInfo { Text = ".NET Framework 4.7.2", Value = "net472", CanUseCombined = true };
-			yield return new FrameworkInfo { Text = ".NET Framework 4.6.2", Value = "net462", CanUseCombined = true };
+			yield return new FrameworkInfo { Text = ".NET Framework 4.8", Value = "net48", CanUseCombined = true, CanUseXamMac = true };
+			yield return new FrameworkInfo { Text = ".NET Framework 4.7.2", Value = "net472", CanUseCombined = true, CanUseXamMac = true };
+			yield return new FrameworkInfo { Text = ".NET Framework 4.6.2", Value = "net462", CanUseCombined = true, CanUseXamMac = true };
 		}
 
 		FrameworkInfo _selectedFramework;
@@ -252,13 +269,21 @@ namespace Eto.DevExtension.Shared
 
 				if (!AllowCombined)
 					Combined = false;
+				if (!AllowMacosWorkload)
+					IncludeMacosWorkload = false;
+				if (!AllowXamMac)
+					IncludeXamMac = false;
 				OnPropertyChanged();
 				OnPropertyChanged(nameof(Information));
 				OnPropertyChanged(nameof(AllowCombined));
+				OnPropertyChanged(nameof(AllowMacosWorkload));
+				OnPropertyChanged(nameof(AllowXamMac));
 			}
 		}
 
 		public bool AllowCombined => _selectedFramework?.CanUseCombined == true;
+		public bool AllowMacosWorkload => _selectedFramework?.CanUseMacos == true;
+		public bool AllowXamMac => _selectedFramework?.CanUseXamMac == true || !Combined;
 
 
 		struct TypeInfo
@@ -280,11 +305,13 @@ namespace Eto.DevExtension.Shared
 			public string Text;
 			public bool Combined;
 			public bool? IncludeXamMac;
+			public bool? IncludeMacosWorkload;
 		}
 
 		static CombinedInfo[] combinedInformation = {
-			new CombinedInfo { Combined = true, IncludeXamMac = true, Text = "A single combined project that can build for Windows, Linux and Mac, and a separate Xamarin.Mac project to bundle mono with VS for Mac." },
-			new CombinedInfo { Combined = true, IncludeXamMac = false, Text = "A single combined project that can build for Windows, Linux, and Mac." },
+			new CombinedInfo { Combined = true, IncludeMacosWorkload = true, Text = "A single combined project that can build for Windows, Linux and Mac.\n\nUses .NET's macos workload on Mac." },
+			new CombinedInfo { Combined = true, IncludeXamMac = true, Text = "A single combined project that can build for Windows, Linux and Xamarin.Mac." },
+			new CombinedInfo { Combined = true, IncludeMacosWorkload = false, IncludeXamMac = false, Text = "A single combined project that can build for Windows, Linux, and Mac.\n\nUses Eto's Mac64 platform on Mac." },
 			new CombinedInfo { Combined = false, Text = "A separate project for each platform." },
 		};
 
@@ -324,6 +351,7 @@ namespace Eto.DevExtension.Shared
 					var combinedInfo = from i in combinedInformation
 									   where i.Combined == Combined
 											  && (i.IncludeXamMac == null || i.IncludeXamMac == IncludeXamMac)
+											  && (i.IncludeMacosWorkload == null || i.IncludeMacosWorkload == IncludeMacosWorkload)
 									   select i.Text;
 					text.Add(combinedInfo.FirstOrDefault());
 				}

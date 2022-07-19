@@ -17,6 +17,7 @@ using System.Threading;
 namespace Eto.DevExtension.VisualStudio.Windows
 {
 	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
+	[ProvideBindingPath]
 	[InstalledProductRegistration("#110", "#112", Constants.VersionString)]
 	/*
 	[ProvideXmlEditorChooserDesignerView("Eto.Forms preview", ".xeto", LogicalViewID.Designer, 0x1000,
