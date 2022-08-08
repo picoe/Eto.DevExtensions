@@ -1,5 +1,0 @@
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<ItemGroup Condition="$(MSBuildProjectFile) == 'Eto.XamMac2.csproj'">
-    <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0" ExcludeAssets="runtime"/>
-  </ItemGroup>
-</Project>

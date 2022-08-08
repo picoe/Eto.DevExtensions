@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Eto.VisualStudio")]
 [assembly: AssemblyDescription("")]
 
-[assembly: AssemblyVersion("2.7.0.0")]
+[assembly: AssemblyVersion("2.7.1.0")]
 
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -21,6 +21,6 @@ using System.Runtime.InteropServices;
 
 [assembly: ProvideCodeBase(
 	AssemblyName = "Eto.DevExtension.VisualStudio.Windows",
-	Version = "2.7.0.0",
+	Version = "2.7.1.0",
 	CodeBase = "$PackageFolder$\\Eto.DevExtension.VisualStudio.Windows.dll")]
 

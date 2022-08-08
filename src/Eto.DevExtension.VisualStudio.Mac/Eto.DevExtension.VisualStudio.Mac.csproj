@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <VSVersion Condition="$(VSVersion) == ''">2022</VSVersion>
     <DefineConstants>$(DefineConstants);MAC;VS$(VSVersion)</DefineConstants>
-    <NoWarn>MSB3245</NoWarn>
+    <NoWarn>MSB3245;MSB3270</NoWarn>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
     <BaseOutputPath>$(BaseOutputPath)$(VSVersion)\</BaseOutputPath>
@@ -32,25 +31,24 @@
       <IncludeAssets>compile;build;native;contentfiles;analyzers;buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
-    <PackageReference Include="Eto.Forms" Version="2.7.0" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.XamMac2" Version="2.7.0" />
+    <PackageReference Include="Eto.Platform.XamMac2" Version="2.7.1" />
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
   </ItemGroup>
 
   <PropertyGroup Condition="$(VSVersion) == '2022'">
     <TargetFramework>net6.0-macos</TargetFramework>
-    <MonoDevelopVersion>17.0</MonoDevelopVersion>
+    <MonoDevelopVersion>17.3</MonoDevelopVersion>
   </PropertyGroup>
   <ItemGroup Condition="$(VSVersion) == '2022'">
     <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0" ExcludeAssets="runtime"/>
-    <!-- <PackageReference Include="Eto.Platform.macOS" Version="2.7.0" GeneratePathProperty="true" /> -->
-    <ProjectReference Include="$(BasePath)lib\Eto\src\Eto\Eto.csproj" /> 
-    <ProjectReference Include="$(BasePath)lib\Eto\src\Eto.Mac\Eto.XamMac2.csproj" /> 
+    <PackageReference Include="Eto.Platform.macOS" Version="2.7.1" />
+    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.ComponentModel.Composition" Version="6.0.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="FSharp.Core" Version="6.0.4" ExcludeAssets="runtime"  />
-    <PackageReference Include="Eto.Forms.Templates" Version="2.7.0" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="Eto.Forms" Version="2.7.1" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Forms.Templates" Version="2.7.1" GeneratePathProperty="true" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <AddinReference Include="MonoDevelop.Xml" />
@@ -95,6 +93,6 @@
   </Target>
 
   <Target Name="CopyEtoXml" AfterTargets="Build">
-    <Copy SourceFiles="$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" DestinationFolder="$(OutDir)" Condition="$(VSVersion) == '2019'" />
+    <Copy SourceFiles="$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" DestinationFolder="$(OutDir)" />
   </Target>
 </Project>
