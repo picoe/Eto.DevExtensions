@@ -16,192 +16,192 @@ using System.Threading.Tasks;
 
 namespace Eto.DevExtension.VisualStudio.Mac
 {
-    public class EnhancedFile : FileDescriptionTemplate
-    {
-        readonly ReplacementFile inner;
+	public class EnhancedFile : FileDescriptionTemplate
+	{
+		readonly ReplacementFile inner;
 
-        // why? because TextFileDescriptionTemplate doesn't give us a way to access the generated ProjectFile
-        class ReplacementFile : TextFileDescriptionTemplate
-        {
-            public EnhancedFile Outer { get; set; }
+		// why? because TextFileDescriptionTemplate doesn't give us a way to access the generated ProjectFile
+		class ReplacementFile : TextFileDescriptionTemplate
+		{
+			public EnhancedFile Outer { get; set; }
 
-            IStringTagModel tagModel;
+			IStringTagModel tagModel;
 
-            TagModel GetTagModel(SolutionFolderItem policyParent, Project project, string language, string identifier, string fileName)
-            {
-                var model = new TagModel();
-                var projectModel = ProjectTagModel ?? Outer.ProjectTagModel;
-                if (projectModel != null)
-                    model.InnerModels = new[] { projectModel };
-                ModifyTags(policyParent, project, language, identifier, fileName, ref model.OverrideTags);
-                return model;
-            }
+			TagModel GetTagModel(SolutionFolderItem policyParent, Project project, string language, string identifier, string fileName)
+			{
+				var model = new TagModel();
+				var projectModel = ProjectTagModel ?? Outer.ProjectTagModel;
+				if (projectModel != null)
+					model.InnerModels = new[] { projectModel };
+				ModifyTags(policyParent, project, language, identifier, fileName, ref model.OverrideTags);
+				return model;
+			}
 
 #if VS2019
-			public override async Task<Stream> CreateFileContentAsync (SolutionFolderItem policyParent, Project project, string language, string fileName, string identifier)
+			public override async Task<Stream> CreateFileContentAsync(SolutionFolderItem policyParent, Project project, string language, string fileName, string identifier)
 			{
 				if (Outer.FormatCode)
 				{
 					return await base.CreateFileContentAsync(policyParent, project, language, fileName, identifier);
 				}
 
-				var model = GetTagModel (policyParent, project, language, identifier, fileName);
-				string text = CreateContent (project, model.OverrideTags, language);
+				var model = GetTagModel(policyParent, project, language, identifier, fileName);
+				string text = CreateContent(project, model.OverrideTags, language);
 
-				text = ProcessContent (text, model);
-				var memoryStream = new MemoryStream ();
-				byte[] preamble = Encoding.UTF8.GetPreamble ();
-				await memoryStream.WriteAsync (preamble, 0, preamble.Length);
-				if (AddStandardHeader) {
-					string header = StandardHeaderService.GetHeader (policyParent, fileName, true);
-					byte[] bytes = Encoding.UTF8.GetBytes (header);
-					await memoryStream.WriteAsync (bytes, 0, bytes.Length);
+				text = ProcessContent(text, model);
+				var memoryStream = new MemoryStream();
+				byte[] preamble = Encoding.UTF8.GetPreamble();
+				await memoryStream.WriteAsync(preamble, 0, preamble.Length);
+				if (AddStandardHeader)
+				{
+					string header = StandardHeaderService.GetHeader(policyParent, fileName, true);
+					byte[] bytes = Encoding.UTF8.GetBytes(header);
+					await memoryStream.WriteAsync(bytes, 0, bytes.Length);
 				}
 
-#if VS2019
 				var textDocument = TextEditorFactory.CreateNewDocument();
-#else
-				var textDocument = await TextEditorFactory.CreateNewDocumentAsync();
-#endif
+                
 				//var textDocument = new TextDocument ();
 				textDocument.Text = text;
-				var textStylePolicy = (policyParent == null) ? PolicyService.GetDefaultPolicy<TextStylePolicy> ("text/plain") : policyParent.Policies.Get<TextStylePolicy> ("text/plain");
-				string eolMarker = TextStylePolicy.GetEolMarker (textStylePolicy.EolMarker);
-				byte[] eol = Encoding.UTF8.GetBytes (eolMarker);
-				string indent = (!textStylePolicy.TabsToSpaces) ? null : new string (' ', textStylePolicy.TabWidth);
-				foreach (var current in textDocument.GetLines()) {
-					string line = textDocument.GetTextAt (current.Offset, current.Length);
-					if (indent != null) {
-						line = line.Replace ("	", indent);
+				var textStylePolicy = (policyParent == null) ? PolicyService.GetDefaultPolicy<TextStylePolicy>("text/plain") : policyParent.Policies.Get<TextStylePolicy>("text/plain");
+				string eolMarker = TextStylePolicy.GetEolMarker(textStylePolicy.EolMarker);
+				byte[] eol = Encoding.UTF8.GetBytes(eolMarker);
+				string indent = (!textStylePolicy.TabsToSpaces) ? null : new string(' ', textStylePolicy.TabWidth);
+				foreach (var current in textDocument.GetLines())
+				{
+					string line = textDocument.GetTextAt(current.Offset, current.Length);
+					if (indent != null)
+					{
+						line = line.Replace("	", indent);
 					}
-					byte[] bytes = Encoding.UTF8.GetBytes (line);
-					await memoryStream.WriteAsync (bytes, 0, bytes.Length);
-					await memoryStream.WriteAsync (eol, 0, eol.Length);
+					byte[] bytes = Encoding.UTF8.GetBytes(line);
+					await memoryStream.WriteAsync(bytes, 0, bytes.Length);
+					await memoryStream.WriteAsync(eol, 0, eol.Length);
 				}
 				memoryStream.Position = 0;
-				return memoryStream;				
+				return memoryStream;
 			}
 #endif
 
 			protected override string ProcessContent(string content, IStringTagModel tags)
-            {
-                tags = new TagModel { InnerModels = new[] { tags, Outer.ProjectTagModel }, File = Outer };
-                tagModel = tags;
-                return base.ProcessContent(content, tags);
-            }
+			{
+				tags = new TagModel { InnerModels = new[] { tags, Outer.ProjectTagModel }, File = Outer };
+				tagModel = tags;
+				return base.ProcessContent(content, tags);
+			}
 
-            public string ProcessContent(string content)
-            {
-                if (tagModel == null)
-                    throw new InvalidOperationException("Cannot process content with no tag model defined. Only use this after processing file content");
-                return base.ProcessContent(content, tagModel);
-            }
-        }
+			public string ProcessContent(string content)
+			{
+				if (tagModel == null)
+					throw new InvalidOperationException("Cannot process content with no tag model defined. Only use this after processing file content");
+				return base.ProcessContent(content, tagModel);
+			}
+		}
 
-        public EnhancedFile()
-        {
-            inner = new ReplacementFile { Outer = this };
-        }
+		public EnhancedFile()
+		{
+			inner = new ReplacementFile { Outer = this };
+		}
 
-        public Dictionary<string, Replacement> Replacements { get; set; }
+		public Dictionary<string, Replacement> Replacements { get; set; }
 
-        public string ResourceId { get; set; }
+		public string ResourceId { get; set; }
 
-        public bool FormatCode { get; set; } = true;
+		public bool FormatCode { get; set; } = true;
 
-        public class Replacement
-        {
-            public string Name { get; set; }
+		public class Replacement
+		{
+			public string Name { get; set; }
 
-            public string Value { get; set; }
+			public string Value { get; set; }
 
-            public Replacement(XmlElement element)
-            {
-                Name = element.GetAttribute("name");
-                Value = element.GetAttribute("value");
-            }
-        }
+			public Replacement(XmlElement element)
+			{
+				Name = element.GetAttribute("name");
+				Value = element.GetAttribute("value");
+			}
+		}
 
-        public override void Load(System.Xml.XmlElement filenode, md.Core.FilePath baseDirectory)
-        {
-            var formatCodeString = filenode.GetAttribute("FormatCode");
-            if (!string.IsNullOrEmpty(formatCodeString))
-                FormatCode = bool.Parse(formatCodeString);
-            ResourceId = filenode.GetAttribute("ResourceId");
-            var replacements = filenode.SelectNodes("Replacements/Replacement");
-            Replacements = replacements.OfType<XmlElement>().Select(r => new Replacement(r)).ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
-            inner.Load(filenode, baseDirectory);
-        }
+		public override void Load(System.Xml.XmlElement filenode, md.Core.FilePath baseDirectory)
+		{
+			var formatCodeString = filenode.GetAttribute("FormatCode");
+			if (!string.IsNullOrEmpty(formatCodeString))
+				FormatCode = bool.Parse(formatCodeString);
+			ResourceId = filenode.GetAttribute("ResourceId");
+			var replacements = filenode.SelectNodes("Replacements/Replacement");
+			Replacements = replacements.OfType<XmlElement>().Select(r => new Replacement(r)).ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
+			inner.Load(filenode, baseDirectory);
+		}
 
-        class TagModel : IStringTagModel
-        {
-            public IStringTagModel[] InnerModels { get; set; }
+		class TagModel : IStringTagModel
+		{
+			public IStringTagModel[] InnerModels { get; set; }
 
-            public Dictionary<string, string> OverrideTags = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			public Dictionary<string, string> OverrideTags = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            public EnhancedFile File { get; set; }
+			public EnhancedFile File { get; set; }
 
-            public object GetValue(string name)
-            {
-                Replacement parameter;
-                if (File != null && File.Replacements != null && File.Replacements.TryGetValue(name, out parameter))
-                    return parameter.Value;
+			public object GetValue(string name)
+			{
+				Replacement parameter;
+				if (File != null && File.Replacements != null && File.Replacements.TryGetValue(name, out parameter))
+					return parameter.Value;
 
-                string overrideValue;
-                if (OverrideTags != null && OverrideTags.TryGetValue(name, out overrideValue))
-                    return overrideValue;
+				string overrideValue;
+				if (OverrideTags != null && OverrideTags.TryGetValue(name, out overrideValue))
+					return overrideValue;
 
-                if (InnerModels != null)
-                {
-                    foreach (var inner in InnerModels)
-                    {
-                        var value = inner.GetValue(name);
-                        if (value != null)
-                            return value;
-                    }
-                }
-                return null;
-            }
-        }
+				if (InnerModels != null)
+				{
+					foreach (var inner in InnerModels)
+					{
+						var value = inner.GetValue(name);
+						if (value != null)
+							return value;
+					}
+				}
+				return null;
+			}
+		}
 
-        public override bool SupportsProject(Project project, string projectPath)
-        {
-            return inner.SupportsProject(project, projectPath);
-        }
+		public override bool SupportsProject(Project project, string projectPath)
+		{
+			return inner.SupportsProject(project, projectPath);
+		}
 
-        public override bool IsValidName(string name, string language)
-        {
-            return inner.IsValidName(name, language);
-        }
+		public override bool IsValidName(string name, string language)
+		{
+			return inner.IsValidName(name, language);
+		}
 
 		public override async Task<bool> AddToProjectAsync(SolutionFolderItem policyParent, Project project, string language, string directory, string name)
 		{
-            var file = await inner.AddFileToProjectAsync(policyParent, project, language, directory, name);
-            if (file == null)
-                return false;
+			var file = await inner.AddFileToProjectAsync(policyParent, project, language, directory, name);
+			if (file == null)
+				return false;
 
-            if (!string.IsNullOrEmpty(ResourceId))
-                file.ResourceId = inner.ProcessContent(ResourceId);
+			if (!string.IsNullOrEmpty(ResourceId))
+				file.ResourceId = inner.ProcessContent(ResourceId);
 
-            /* TODO: Add required packages here?
+			/* TODO: Add required packages here?
 			var dnproject = project as DotNetProject;
 			if (dnproject != null)
 			{
 			}
 			*/
 
-            return true;
-        }
+			return true;
+		}
 
-        public override void Show()
-        {
-            inner.Show();
-        }
+		public override void Show()
+		{
+			inner.Show();
+		}
 
-        public override string Name
-        {
-            get { return inner.Name; }
-        }
-    }
+		public override string Name
+		{
+			get { return inner.Name; }
+		}
+	}
 }
 
