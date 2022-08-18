@@ -136,11 +136,14 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v2
 
+      - name: Display structure of downloaded files
+        run: ls -R
+        
       - name: Add extensions to release
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_unmatched_files: true
           files: |
-            extensions-windows\*.vsix
-            extensions-mac\*.mpack
+            extensions-windows/*.vsix
+            extensions-mac/*.mpack
