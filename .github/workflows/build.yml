@@ -10,6 +10,7 @@ on:
 
 env:
   DotNetVersion: "6.0.202"
+  BuildParameters: "/v:Minimal /consoleLoggerParameters:NoSummary /p:Configuration=Release /p:BuildVersion=${{ github.run_id }} /p:BuildBranch=${{ github.ref }}"
 
 jobs:
   build-windows-2022:
@@ -32,7 +33,7 @@ jobs:
         vs-version: '[17.0,18.0)'
 
     - name: Build VS2022
-      run: msbuild /restore /v:Minimal /p:VSVersion=2022 /p:Configuration=Release src\Eto.DevExtension.VisualStudio.Windows\Eto.DevExtension.VisualStudio.Windows.csproj /bl:artifacts/log/Build.Windows.2022.binlog
+      run: msbuild /restore ${{ env.BuildParameters }} /p:VSVersion=2022 src\Eto.DevExtension.VisualStudio.Windows\Eto.DevExtension.VisualStudio.Windows.csproj /bl:artifacts/log/Build.Windows.2022.binlog
 
     - name: Upload extensions
       uses: actions/upload-artifact@v2
@@ -67,7 +68,7 @@ jobs:
         vs-version: '[16.10,17.0)'
 
     - name: Build VS2019
-      run: msbuild /restore /v:Minimal /p:VSVersion=2019 /p:Configuration=Release src\Eto.DevExtension.VisualStudio.Windows\Eto.DevExtension.VisualStudio.Windows.csproj /bl:artifacts/log/Build.Windows.2019.binlog
+      run: msbuild /restore ${{ env.BuildParameters }} /p:VSVersion=2019 src\Eto.DevExtension.VisualStudio.Windows\Eto.DevExtension.VisualStudio.Windows.csproj /bl:artifacts/log/Build.Windows.2019.binlog
 
     - name: Upload extensions
       uses: actions/upload-artifact@v2
@@ -107,10 +108,10 @@ jobs:
         xcode-version: latest
     
     - name: Build VS2019
-      run: msbuild /restore /v:Minimal /t:PackageAddin /p:VSVersion=2019 /p:Configuration=Release src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2019.binlog
+      run: msbuild /restore ${{ env.BuildParameters }} /t:PackageAddin /p:VSVersion=2019 src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2019.binlog
 
     - name: Build VS2022
-      run: dotnet build /p:VSVersion=2022 /t:PackageAddin /p:Configuration=Release src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2022.binlog
+      run: dotnet build ${{ env.BuildParameters }} /p:VSVersion=2022 /t:PackageAddin src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj /bl:artifacts/log/Build.Mac.2022.binlog
 
     - name: Upload extensions
       uses: actions/upload-artifact@v2
