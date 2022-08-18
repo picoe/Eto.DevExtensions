@@ -139,6 +139,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_unmatched_files: true
           files: |
-            '**/*.vsix'
-            '**/*.mpack'
+            '**\*.vsix'
+            '**\*.mpack'
