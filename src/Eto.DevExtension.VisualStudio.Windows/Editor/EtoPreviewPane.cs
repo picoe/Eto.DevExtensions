@@ -259,11 +259,11 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 					RegisterIndependentView(false);
 
+					//previewSplitter?.Dispose();
+					//previewSplitter = null;
+
 					editorControl?.Dispose();
 					editorControl = null;
-
-					previewSplitter?.Dispose();
-					previewSplitter = null;
 
 					GC.SuppressFinalize(this);
 				}

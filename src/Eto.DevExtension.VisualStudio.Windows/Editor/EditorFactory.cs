@@ -270,9 +270,10 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			{
 				if (reference.SourceProject == null)
 				{
-					// skip framework assemblies
-					if (((dynamic)reference).AutoReferenced)
-						continue;
+					//skip framework assemblies
+					//if (((dynamic)reference).AutoReferenced)
+					//	continue;
+
 					// This is an assembly reference
 					if (reference.Path != null)
 						yield return reference.Path;

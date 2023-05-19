@@ -4,9 +4,9 @@
     <DefineConstants>Roslyn;RoslynCS;RoslynVB</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Forms" Version="2.7.1" PrivateAssets="all" ExcludeAssets="runtime" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.7.1" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.1" />
+    <PackageReference Include="Eto.Forms" Version="2.7.5" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.7.5" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.5" />
   </ItemGroup>
   <ItemGroup>
     <!-- <PackageReference Include="System.CodeDom" Version="6.0.0" Condtion="$(TargetFramework) == 'net472'" />
