@@ -24,7 +24,7 @@
 		</CustomParameters>
 	</TemplateContent>
 	<WizardExtension>
-		<Assembly>Eto.DevExtension.VisualStudio.Windows, Version=2.7.1.0, Culture=neutral, PublicKeyToken=null</Assembly>
+		<Assembly>Eto.DevExtension.VisualStudio.Windows, Version=2.7.5.0, Culture=neutral, PublicKeyToken=null</Assembly>
 		<FullClassName>Eto.DevExtension.VisualStudio.Windows.Wizards.ProjectWizard</FullClassName>
 	</WizardExtension>
 	<WizardExtension>

@@ -216,11 +216,11 @@
     </COMReference> -->
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Forms" GeneratePathProperty="True" Version="2.7.1" />
-    <PackageReference Include="Eto.Platform.Wpf" Version="2.7.1" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.7.1" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.1" />
-    <PackageReference Include="Eto.Forms.Templates" Version="2.7.1" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="Eto.Forms" GeneratePathProperty="True" Version="2.7.5" />
+    <PackageReference Include="Eto.Platform.Wpf" Version="2.7.5" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.7.5" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.5" />
+    <PackageReference Include="Eto.Forms.Templates" Version="2.7.5" GeneratePathProperty="true" PrivateAssets="all" />
     <PackageReference Include="FSharp.Core" Version="5.0.1" />
     <PackageReference Include="Portable.Xaml" Version="0.26.0" />
     <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" />
@@ -240,14 +240,14 @@
     </When>
     <When Condition="$(VSVersion) == '2022'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.32112.339" ExcludeAssets="runtime">
+        <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.5.33428.388" ExcludeAssets="runtime">
           <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.3.2093">
+        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.5.4072">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" Version="17.0.31902.203" />
+        <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" Version="17.5.33428.366" />
       </ItemGroup>
     </When>
   </Choose>

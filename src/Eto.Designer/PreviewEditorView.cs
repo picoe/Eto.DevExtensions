@@ -21,7 +21,7 @@ namespace Eto.Designer
 
 		public double RefreshTime { get; set; } = 0.5;
 
-		public double ErrorDisplayTime { get; set; } = 2.0;
+		public double ErrorDisplayTime { get; set; } = 6.0;
 
 		public string MainAssemblyPath { get; set; }
 
