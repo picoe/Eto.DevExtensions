@@ -1,21 +1,16 @@
 using Eto.Designer.Completion;
-using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Operations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
 using mvli = Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Threading;
 using System.Collections.Immutable;
 using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Imaging;
@@ -25,16 +20,19 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 {
 	class XamlCompletionSource : IAsyncCompletionSource
 	{
-		ITextView textView;
+		internal const string ItemKey = "eto";
+
+		readonly string filePath;
 
 		static XamlCompletionSource()
 		{
 			XmlComments.EncodeHtml = false;
-        }
+		}
 
 		public XamlCompletionSource(ITextView textView)
 		{
-			this.textView = textView;
+			if (textView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument document))
+				filePath = document.FilePath;
 		}
 
 		internal static ImageElement GetGlyph(CompletionType type)
@@ -57,76 +55,76 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			}
 		}
 
+		/// <summary>
+		/// Completions from the language server, which also knows the project's own types, or from
+		/// Eto alone when the server can't be started.
+		/// </summary>
+		internal static async Task<List<DocumentCompletionItem>> GetItemsAsync(string filePath, DocumentCompletionContext context, int offset, CancellationToken token)
+		{
+			var assemblies = await ProjectAssemblyPaths.GetAsync(filePath);
+			await TaskScheduler.Default;
+			return await EtoLanguageServer.GetCompletionsAsync(filePath, context.Text, offset, assemblies, token)
+				?? DocumentCompletion.GetItems(context);
+		}
+
 		public void Dispose()
 		{
 		}
 
-		public Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
+		public async Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
 		{
-			//session.Properties["LineNumber"] = triggerLocation.GetContainingLine().LineNumber;
-			var point = applicableToSpan.Start;
-			var text = textView.TextBuffer.CurrentSnapshot.GetText(0, point.Position);
-			return Task.Run(() =>
+			var text = triggerLocation.Snapshot.GetText();
+			var offset = triggerLocation.Position;
+			await TaskScheduler.Default;
+			try
 			{
-				try
+				var context = DocumentCompletion.GetContext(text, offset, CompletionFormat.Xaml);
+				if (context == null)
+					return CompletionContext.Empty;
+
+				// only offer classes straight after '<' or a property element's '.'
+				var prevCh = context.Start > 0 ? text[context.Start - 1] : '\0';
+				if (context.Info.Mode == CompletionMode.Class && prevCh != '<' && prevCh != '.')
+					return CompletionContext.Empty;
+
+				var items = await GetItemsAsync(filePath, context, offset, token);
+
+				// translate to VS completions
+				var completionList = new List<mvli.AsyncCompletion.Data.CompletionItem>();
+				foreach (var cls in items.OrderBy(r => r.Label))
 				{
-					// read XML up to the cursor
-					var info = XmlParser.Read(text);
-					if (info.Mode == CompletionMode.Class)
-					{
-						var prevPoint = point - 1;
-						var prevCh = prevPoint.GetChar();
-						if (prevCh != '<' && prevCh != '.')
-						{
-							return CompletionContext.Empty;
-						}
-					}
-
-					var nodes = info.Nodes;
-					var ns = nodes.SelectMany(r => r.Namespaces ?? Enumerable.Empty<CompletionNamespace>());
-					var path = nodes.Where(r => r.Mode == CompletionMode.Class).Select(r => r.Name).ToList();
-					var last = nodes.LastOrDefault();
-
-					// get available completion items
-					var items = Designer.Completion.Completion.GetCompletionItems(ns, info.Mode, path, last);
-
-					// translate to VS completions
-					var completionList = new List<mvli.AsyncCompletion.Data.CompletionItem>();
-					foreach (var cls in items.OrderBy(r => r.Name))
-					{
-						var displayText = cls.Name;
-						var item = new mvli.AsyncCompletion.Data.CompletionItem(displayText,
-							source: this,
-							filters: ImmutableArray<CompletionFilter>.Empty,
-							icon: GetGlyph(cls.Type),
-							suffix: cls.Suffix ?? string.Empty,
-							attributeIcons: ImmutableArray<ImageElement>.Empty,
-							insertText: displayText, sortText: displayText, filterText: displayText
-							);
-						item.Properties["eto"] = cls;
-						completionList.Add(item);
-					}
-
-					return new CompletionContext(completionList.ToImmutableArray(), null, InitialSelectionHint.RegularSelection);
+					var displayText = cls.Label;
+					var item = new mvli.AsyncCompletion.Data.CompletionItem(displayText,
+						source: this,
+						filters: ImmutableArray<CompletionFilter>.Empty,
+						icon: GetGlyph(cls.Item.Type),
+						suffix: cls.Item.Suffix ?? string.Empty,
+						attributeIcons: ImmutableArray<ImageElement>.Empty,
+						insertText: cls.InsertText, sortText: displayText, filterText: displayText
+						);
+					item.Properties[ItemKey] = cls;
+					completionList.Add(item);
 				}
-				catch (Exception ex)
-				{
-					Debug.WriteLine($"Error doing autocomplete: {ex}");
-					throw;
-				}
-			});
+
+				return new CompletionContext(completionList.ToImmutableArray(), null, InitialSelectionHint.RegularSelection);
+			}
+			catch (Exception ex) when (!(ex is OperationCanceledException))
+			{
+				Debug.WriteLine($"Error doing autocomplete: {ex}");
+				throw;
+			}
 		}
 
 		public Task<object> GetDescriptionAsync(IAsyncCompletionSession session, mvli.AsyncCompletion.Data.CompletionItem item, CancellationToken token)
 		{
-			var etoitem = item.Properties["eto"] as Designer.Completion.CompletionItem;
-			return Task.FromResult<object>(etoitem?.Description);
+			item.Properties.TryGetProperty(ItemKey, out DocumentCompletionItem etoitem);
+			return Task.FromResult<object>(etoitem?.Item.Description);
 		}
 
 		public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
 		{
 			if ((
-					trigger.Reason == CompletionTriggerReason.Insertion 
+					trigger.Reason == CompletionTriggerReason.Insertion
 					|| trigger.Reason == CompletionTriggerReason.Invoke
 				)
 				&& !char.IsControl(trigger.Character))

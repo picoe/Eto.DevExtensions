@@ -36,7 +36,7 @@ namespace Eto.Designer.Completion
 		public string Name
 		{
 			get {
-				return (Prefix ?? "") + LocalName;
+				return string.IsNullOrEmpty(Prefix) ? LocalName : Prefix + ":" + LocalName;
 			}
 		}
 
@@ -97,11 +97,11 @@ namespace Eto.Designer.Completion
 		public const string EtoFormsNamespace = "http://schema.picoe.ca/eto.forms";
 		public const string XamlNamespace2006 = "http://schemas.microsoft.com/winfx/2006/xaml";
 
-		public static IEnumerable<CompletionItem> GetCompletionItems(IEnumerable<CompletionNamespace> namespaces, CompletionMode mode, IEnumerable<string> path, CompletionPathNode context, CompletionFormat format = CompletionFormat.Xaml)
+		public static IEnumerable<CompletionItem> GetCompletionItems(IEnumerable<CompletionNamespace> namespaces, CompletionMode mode, IEnumerable<string> path, CompletionPathNode context, CompletionFormat format = CompletionFormat.Xaml, IList<Assembly> projectAssemblies = null)
 		{
 			if (mode == CompletionMode.None)
 				return Enumerable.Empty<CompletionItem>();
-			var completions = GetCompletions(namespaces, format).ToList();
+			var completions = GetCompletions(namespaces, format, projectAssemblies).ToList();
 			IEnumerable<CompletionItem> items;
 			if (mode == CompletionMode.Property && context != null)
 			{
@@ -158,21 +158,32 @@ namespace Eto.Designer.Completion
 			return effective;
 		}
 
-		public static IEnumerable<Completion> GetCompletions(IEnumerable<CompletionNamespace> namespaces, CompletionFormat format = CompletionFormat.Xaml)
+		/// <param name="projectAssemblies">Built assemblies of the project being edited, its own first.</param>
+		public static IEnumerable<Completion> GetCompletions(IEnumerable<CompletionNamespace> namespaces, CompletionFormat format = CompletionFormat.Xaml, IList<Assembly> projectAssemblies = null)
 		{
+			projectAssemblies = projectAssemblies ?? Array.Empty<Assembly>();
 			if (format == CompletionFormat.Json)
 			{
-				// json has no namespace declarations, everything resolves against Eto.Forms
+				// json has no namespace declarations, Eto.Forms types go by name and anything else by full name
 				yield return new JsonCompletion();
 				yield return new TypeCompletion { Assembly = typeof(Eto.Widget).Assembly, Namespace = "Eto.Forms" };
 				yield return new TypeCompletion { Assembly = typeof(Eto.Widget).Assembly, Namespace = "Eto" };
+				foreach (var assembly in projectAssemblies)
+					yield return new TypeCompletion { Assembly = assembly, UseFullName = true };
 				yield break;
 			}
 
-			yield return new GeneralCompletion();
+			yield return new GeneralCompletion { ProjectAssemblies = projectAssemblies };
 
-			foreach (var ns in GetEffectiveNamespaces(namespaces))
+			var effective = GetEffectiveNamespaces(namespaces).ToList();
+			foreach (var ns in effective)
 			{
+				if (ProjectTypes.TryParseClrNamespace(ns.Namespace, out var clrNamespace, out var assemblyName))
+				{
+					var assembly = ProjectTypes.FindAssembly(assemblyName, projectAssemblies);
+					if (assembly != null)
+						yield return new TypeCompletion { Prefix = ns.Prefix, Assembly = assembly, Namespace = clrNamespace };
+				}
 				if (ns.Namespace == EtoFormsNamespace)
 				{
 					yield return new TypeCompletion
@@ -199,6 +210,9 @@ namespace Eto.Designer.Completion
 					yield return new XamlCompletion { Prefix = ns.Prefix };
 				}
 			}
+
+			if (projectAssemblies.Count > 0)
+				yield return new ProjectTypeCompletion(effective, projectAssemblies);
 		}
 	}
 }

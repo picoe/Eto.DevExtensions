@@ -37,6 +37,7 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 		public string SortText { get; set; }
 		public string FilterText { get; set; }
 		public TextEdit TextEdit { get; set; }
+		public List<TextEdit> AdditionalTextEdits { get; set; }
 	}
 
 	public class CompletionList

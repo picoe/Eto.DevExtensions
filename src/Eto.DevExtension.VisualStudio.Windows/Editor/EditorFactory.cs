@@ -288,7 +288,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 				}
 			}
 		}
-		static string GetAssemblyPath(EnvDTE.Project vsProject)
+		internal static string GetAssemblyPath(EnvDTE.Project vsProject)
 		{
 			Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 			string fullPath = vsProject.Properties?.Item("FullPath")?.Value?.ToString();

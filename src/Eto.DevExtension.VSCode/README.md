@@ -5,6 +5,9 @@ Autocompletion and hover documentation for [Eto.Forms](https://github.com/picoe/
 ## Features
 
 - Completion of control names, properties, events and property values in `.xeto` (xaml) and `.jeto` (json) files
+- Completion of your own controls from the project and the projects it references, once built. In
+  `.xeto` files picking one adds the `xmlns` it needs; in `.jeto` files they complete as
+  `"Namespace.Type, Assembly"`
 - Hover documentation pulled from the Eto.Forms xml docs
 - Syntax highlighting for both file types
 

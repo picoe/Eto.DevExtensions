@@ -17,15 +17,67 @@ namespace Eto.Designer.Completion
 	{
 		public Assembly Assembly { get; set; }
 
+		/// <summary>Namespace to offer types from, or null for every namespace in the assembly.</summary>
 		public string Namespace { get; set; }
+
+		/// <summary>Names types as "Namespace.Type, Assembly", the way a .jeto $type refers to types outside Eto.</summary>
+		public bool UseFullName { get; set; }
 
 		List<Type> exportedTypes;
 
 		List<Type> GetExportedTypes()
 		{
 			if (exportedTypes == null)
-				exportedTypes = Assembly.ExportedTypes.Where(r => !r.IsGenericType && !r.IsAbstract && r.Namespace == Namespace).ToList();
+				exportedTypes = ProjectTypes.GetTypes(Assembly).Where(r => ProjectTypes.IsCreatable(r) && (Namespace == null || r.Namespace == Namespace)).ToList();
 			return exportedTypes;
+		}
+
+		string GetName(Type type) =>
+			UseFullName ? type.FullName + ", " + ProjectTypes.GetAssemblyName(type.Assembly) : PrefixWithColon + type.Name;
+
+		bool IsOwnType(Type type) =>
+			type.Assembly == Assembly && (Namespace == null || type.Namespace == Namespace);
+
+		/// <summary>Type named by an object in the document, or null when it isn't one of ours.</summary>
+		Type FindType(string objectName)
+		{
+			if (string.IsNullOrEmpty(objectName))
+				return null;
+			string fullName;
+			if (UseFullName)
+			{
+				// json paths drop the assembly name, but a $type value being typed may still have it
+				var comma = objectName.IndexOf(',');
+				fullName = (comma >= 0 ? objectName.Substring(0, comma) : objectName).Trim();
+			}
+			else
+			{
+				var prefix = PrefixWithColon;
+				if (!objectName.StartsWith(prefix))
+					return null;
+				fullName = Namespace + "." + objectName.Substring(prefix.Length);
+			}
+			try
+			{
+				return Assembly.GetType(fullName, false);
+			}
+			catch (Exception)
+			{
+				// project types can fail to load when one of their dependencies is missing
+				return null;
+			}
+		}
+
+		static bool Matches(Func<Type, bool> filter, Type type)
+		{
+			try
+			{
+				return filter(type);
+			}
+			catch (Exception)
+			{
+				return false;
+			}
 		}
 
 		public static sc.TypeConverter GetConverter(Type type)
@@ -78,34 +130,34 @@ namespace Eto.Designer.Completion
 			var types = GetExportedTypes();
 			if (filter != null)
 			{
-				foreach (var result in types.Where(filter))
+				foreach (var result in types.Where(r => Matches(filter, r)))
 				{
 					// special case, don't allow windows as a child control
 					if (contentType != null
 					    && typeof(Window).IsAssignableFrom(result))
 						continue;
-						
+
 
 					yield return new CompletionItem
-					{ 
-						Name = prefixWithColon + result.Name, 
+					{
+						Name = GetName(result),
 						Description = XmlComments.GetSummary(result),
 						Type = CompletionType.Class
-					}; 
+					};
 				}
 			}
 
-			if (contentType != null 
-				&& !contentType.IsAbstract 
+			if (contentType != null
+				&& !contentType.IsAbstract
 				&& !types.Contains(contentType)
 				&& contentType.Assembly == Assembly)
 				yield return new CompletionItem
-				{ 
-					Name = prefixWithColon + contentType.Name, 
+				{
+					Name = GetName(contentType),
 					Description = XmlComments.GetSummary(contentType),
 					Type = CompletionType.Class
-				}; 
-			if (nodeType != null && !lastPath.Contains("."))
+				};
+			if (nodeType != null && !UseFullName && !lastPath.Contains("."))
 			{
 				yield return new CompletionItem
 				{
@@ -123,7 +175,7 @@ namespace Eto.Designer.Completion
 			string propertyName;
 			var nodeType = GetNodeType(path?.LastOrDefault(), out propertyName);
 			var contentType = GetContentType(nodeType, propertyName);
-			return contentType != null ? PrefixWithColon + contentType.Name : null;
+			return contentType != null && IsOwnType(contentType) ? GetName(contentType) : null;
 		}
 
 		Type GetNodeType(string last, out string propertyName)
@@ -131,6 +183,23 @@ namespace Eto.Designer.Completion
 			propertyName = null;
 			if (string.IsNullOrEmpty(last))
 				return null;
+
+			var types = GetExportedTypes();
+			if (UseFullName)
+			{
+				// a full name is dotted already, so "My.Panel.Content" is either a type or a type's property
+				var type = FindType(last);
+				if (type == null)
+				{
+					var lastDot = last.LastIndexOf('.');
+					if (lastDot <= 0)
+						return null;
+					propertyName = last.Substring(lastDot + 1);
+					type = FindType(last.Substring(0, lastDot));
+				}
+				return type != null && types.Contains(type) ? type : null;
+			}
+
 			var prefix = PrefixWithColon;
 			if (!string.IsNullOrEmpty(prefix))
 			{
@@ -150,7 +219,6 @@ namespace Eto.Designer.Completion
 				last = last.Substring(0, dotIndex);
 			}
 			last = Namespace + "." + last;
-			var types = GetExportedTypes();
 			return types.FirstOrDefault(r => r.FullName == last);
 		}
 
@@ -189,18 +257,7 @@ namespace Eto.Designer.Completion
 
 		public override bool? HasContent(string objectName, IEnumerable<string> path)
 		{
-			if (string.IsNullOrEmpty(objectName))
-				return null;
-			var prefix = PrefixWithColon;
-			if (prefix != null)
-			{
-				if (!objectName.StartsWith(prefix))
-					return false;
-				objectName = objectName.Substring(prefix.Length);
-			}
-
-			var fullName = Namespace + "." + objectName;
-			var type = Assembly.GetType(fullName, false);
+			var type = FindType(objectName);
 			if (type != null)
 			{
 				return type.GetTypeInfo().GetCustomAttribute<Eto.ContentPropertyAttribute>() != null;
@@ -210,18 +267,7 @@ namespace Eto.Designer.Completion
 
 		public override IEnumerable<CompletionItem> GetProperties(string objectName, IEnumerable<string> path)
 		{
-			if (string.IsNullOrEmpty(objectName))
-				yield break;
-			var prefix = PrefixWithColon;
-			if (prefix != null)
-			{
-				if (!objectName.StartsWith(prefix))
-					yield break;
-				objectName = objectName.Substring(prefix.Length);
-			}
-				
-			var fullName = Namespace + "." + objectName;
-			var type = Assembly.GetType(fullName, false);
+			var type = FindType(objectName);
 			if (type != null)
 			{
 				foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
@@ -234,24 +280,24 @@ namespace Eto.Designer.Completion
 
 					var underlyingType = Nullable.GetUnderlyingType(prop.PropertyType);
 					var suffix = underlyingType != null ? underlyingType.Name + "?" : prop.PropertyType.Name;
-					
+
 					// todo: get friendly names for generic types
 
 					yield return new CompletionItem
-					{ 
+					{
 						Name = prop.Name,
 						Suffix = suffix,
 						Description = XmlComments.GetSummary(prop),
-						Type = CompletionType.Property 
+						Type = CompletionType.Property
 					};
 				}
 				foreach (var evt in type.GetEvents(BindingFlags.Public | BindingFlags.Instance))
 				{
 					yield return new CompletionItem
-					{ 
+					{
 						Name = evt.Name,
 						Description = XmlComments.GetSummary(evt),
-						Type = CompletionType.Event 
+						Type = CompletionType.Event
 					};
 				}
 			}
@@ -259,18 +305,7 @@ namespace Eto.Designer.Completion
 
 		public override IEnumerable<CompletionItem> GetPropertyValues(string objectName, string propertyName, IEnumerable<string> path)
 		{
-			if (string.IsNullOrEmpty(objectName))
-				yield break;
-			var prefix = PrefixWithColon;
-			if (prefix != null)
-			{
-				if (!objectName.StartsWith(prefix))
-					yield break;
-				objectName = objectName.Substring(prefix.Length);
-			}
-
-			var fullName = Namespace + "." + objectName;
-			var type = Assembly.GetType(fullName, false);
+			var type = FindType(objectName);
 			if (type != null)
 			{
 				var prop = type.GetRuntimeProperty(propertyName);
@@ -296,7 +331,7 @@ namespace Eto.Designer.Completion
 						foreach (var name in Enum.GetNames(propertyType))
 						{
 							yield return new CompletionItem
-							{ 
+							{
 								Type = CompletionType.Literal,
 								Name = name,
 								Description = XmlComments.GetEnum(prop, name)

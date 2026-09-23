@@ -48,6 +48,13 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			return new SnapshotSpan(start, end);
 		}
 
+		// avoids a duplicate xmlns, which would make the document invalid
+		static bool DeclaresPrefix(ITextSnapshot snapshot, Designer.Completion.DocumentTextEdit declaration)
+		{
+			var equals = declaration.Text.IndexOf('=');
+			return equals < 0 || snapshot.GetText().Contains(declaration.Text.Substring(0, equals).Trim() + "=");
+		}
+
 		public bool ShouldCommitCompletion(IAsyncCompletionSession session, SnapshotPoint location, char typedChar, CancellationToken token)
 		{
 			return true;
@@ -55,10 +62,11 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 
 		public CommitResult TryCommit(IAsyncCompletionSession session, ITextBuffer buffer, CompletionItem item, char typedChar, CancellationToken token)
 		{
-			var etoitem = item.Properties["eto"] as Designer.Completion.CompletionItem;
+			if (!item.Properties.TryGetProperty(XamlCompletionSource.ItemKey, out Designer.Completion.DocumentCompletionItem etoitem))
+				return CommitResult.Unhandled;
 
 			// only complete on '.' for child properties.
-			if (typedChar == '.' && !etoitem.Behavior.HasFlag(Designer.Completion.CompletionBehavior.ChildProperty))
+			if (typedChar == '.' && !etoitem.Item.Behavior.HasFlag(Designer.Completion.CompletionBehavior.ChildProperty))
 				return CommitResult.Unhandled;
 
 			var span = session.ApplicableToSpan.GetSpan(buffer.CurrentSnapshot);
@@ -80,8 +88,20 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 					result = new CommitResult(true, CommitBehavior.RaiseFurtherReturnKeyAndTabKeyCommandHandlers);
 					break;
 			}
-			var newSnapshot = buffer.Replace(span, text);
-			var endLocation = new SnapshotPoint(newSnapshot, span.End.Position + text.Length - span.Length);
+			// declares the namespace of a project type on the root element, which always comes before the item
+			var declaration = etoitem.NamespaceEdit;
+			if (declaration != null && (declaration.Offset > span.Start.Position || DeclaresPrefix(buffer.CurrentSnapshot, declaration)))
+				declaration = null;
+
+			ITextSnapshot newSnapshot;
+			using (var edit = buffer.CreateEdit())
+			{
+				if (declaration != null)
+					edit.Insert(declaration.Offset, declaration.Text);
+				edit.Replace(span, text);
+				newSnapshot = edit.Apply();
+			}
+			var endLocation = new SnapshotPoint(newSnapshot, span.End.Position + text.Length - span.Length + (declaration?.Text.Length ?? 0));
 			switch (typedChar)
 			{
 				case '.':

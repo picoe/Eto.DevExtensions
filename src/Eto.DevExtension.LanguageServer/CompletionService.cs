@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Eto.Designer.Completion;
 using Eto.DevExtension.LanguageServer.Lsp;
@@ -22,10 +23,10 @@ namespace Eto.DevExtension.LanguageServer
 			XmlComments.EncodeHtml = false;
 		}
 
-		public static List<Lsp.CompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null)
+		public static List<Lsp.CompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null)
 		{
 			var results = new List<Lsp.CompletionItem>();
-			var context = DocumentCompletion.GetContext(text, offset, format, rootTypeName);
+			var context = DocumentCompletion.GetContext(text, offset, format, rootTypeName, projectAssemblies);
 			if (context == null)
 				return results;
 
@@ -40,15 +41,19 @@ namespace Eto.DevExtension.LanguageServer
 					Documentation = ToMarkup(item.Item.Description),
 					SortText = item.Label,
 					FilterText = item.Label,
-					TextEdit = new TextEdit { Range = range, NewText = item.InsertText }
+					TextEdit = new TextEdit { Range = range, NewText = item.InsertText },
+					AdditionalTextEdits = item.NamespaceEdit == null ? null : new List<TextEdit>
+					{
+						new TextEdit { Range = ToRange(text, item.NamespaceEdit.Offset, item.NamespaceEdit.Offset), NewText = item.NamespaceEdit.Text }
+					}
 				});
 			}
 			return results;
 		}
 
-		public static Hover GetHover(string text, int offset, CompletionFormat format, string rootTypeName = null)
+		public static Hover GetHover(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null)
 		{
-			var match = DocumentCompletion.FindItemAt(text, offset, format, rootTypeName, out var start, out var end);
+			var match = DocumentCompletion.FindItemAt(text, offset, format, rootTypeName, out var start, out var end, projectAssemblies);
 			if (match == null || string.IsNullOrWhiteSpace(match.Description))
 				return null;
 

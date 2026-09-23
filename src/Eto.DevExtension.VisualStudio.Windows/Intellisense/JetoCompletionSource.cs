@@ -32,6 +32,7 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			this.filePath = filePath;
 			// pick up base class changes in the code behind each time the file is opened
 			RootTypeLocator.Forget(filePath);
+			EtoLanguageServer.Reset(filePath);
 		}
 
 		public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
@@ -51,7 +52,7 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 
 		public Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
 		{
-			return Task.Run(() =>
+			return Task.Run(async () =>
 			{
 				try
 				{
@@ -62,7 +63,8 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 					var snapshot = triggerLocation.Snapshot;
 					session.Properties[SpanKey] = snapshot.CreateTrackingSpan(context.Start, context.End - context.Start, SpanTrackingMode.EdgeInclusive);
 
-					var items = DocumentCompletion.GetItems(context).Select(r =>
+					var found = await XamlCompletionSource.GetItemsAsync(filePath, context, triggerLocation.Position, token);
+					var items = found.Select(r =>
 					{
 						var item = new CompletionItem(r.Label,
 							source: this,
