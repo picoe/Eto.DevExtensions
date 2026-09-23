@@ -2,30 +2,10 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build-extension-2019",
+            "label": "build-extension",
             "type": "shell",
             "windows": {
-                "command": "${input:msbuild-16}",
-                "args": [
-                    "/restore",
-                    "/v:Minimal",
-                    "/p:VSVersion=2019",
-                    "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Windows/Eto.DevExtension.VisualStudio.Windows.csproj",
-                ],
-            },
-            "args": [],
-            "problemMatcher": "$msCompile",
-            "presentation": {
-                "reveal": "always",
-                "clear": true
-            },
-            "group": "build"
-        },
-        {
-            "label": "build-extension-2022",
-            "type": "shell",
-            "windows": {
-                "command": "${input:msbuild-17}",
+                "command": "${input:msbuild}",
                 "args": [
                     "/restore",
                     "/v:Minimal",
@@ -41,33 +21,15 @@
                 "clear": true
             },
             "group": "build"
-        },
-        {
-            "label": "build-extensions",
-            "dependsOn": [ "build-extension-2019", "build-extension-2022" ],
-            "presentation": {
-                "reveal": "never",
-            },
-            "problemMatcher": "$msCompile",
         }
-        
     ],
     "inputs": [
         {
-            "id": "msbuild-16",
+            "id": "msbuild",
             "type": "command",
             "command": "shellCommand.execute",
             "args": {
-                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"16\" -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\amd64\\MSBuild.exe",
-                "useFirstResult": "true"
-            }
-        },
-        {
-            "id": "msbuild-17",
-            "type": "command",
-            "command": "shellCommand.execute",
-            "args": {
-                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"17\" -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\amd64\\MSBuild.exe",
+                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -version \"17\" -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\amd64\\MSBuild.exe",
                 "useFirstResult": "true"
             }
         }

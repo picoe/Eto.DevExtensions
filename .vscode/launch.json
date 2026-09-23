@@ -2,23 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // you cannot actually debug VS2019 as omnisharp only supports x64, this is used so we can just run without debugging more easily
-            "name": "Eto.DevExtension.VisualStudio.Windows.2019",
+            "name": "Eto.DevExtension.VisualStudio.Windows.2022",
             "type": "clr",
             "request": "launch",
-            "preLaunchTask": "build-extension-2019",
-            "program": "${input:devenv-16}",
+            "preLaunchTask": "build-extension",
+            "program": "${input:devenv-17}",
             "args": [
                 "/RootSuffix",
                 "Exp"
             ],
         },
         {
-            "name": "Eto.DevExtension.VisualStudio.Windows.2022",
+            "name": "Eto.DevExtension.VisualStudio.Windows.2026",
             "type": "clr",
             "request": "launch",
-            "preLaunchTask": "build-extension-2022",
-            "program": "${input:devenv-17}",
+            "preLaunchTask": "build-extension",
+            "program": "${input:devenv-18}",
             "args": [
                 "/RootSuffix",
                 "Exp"
@@ -28,23 +27,23 @@
     "compounds": [],
     "inputs": [
         {
-            "id": "devenv-16",
-            "type": "command",
-            "command": "shellCommand.execute",
-            "args": {
-                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"16\" -products * -requires Microsoft.Component.MSBuild -find Common7\\IDE\\devenv.exe",
-                "useFirstResult": "true"
-            }
-        },
-        {
             "id": "devenv-17",
             "type": "command",
             "command": "shellCommand.execute",
             "args": {
-                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"17\" -products * -requires Microsoft.Component.MSBuild -find Common7\\IDE\\devenv.exe",
+                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"[17,18)\" -products * -requires Microsoft.Component.MSBuild -find Common7\\IDE\\devenv.exe",
+                "useFirstResult": "true"
+            }
+        },
+        {
+            "id": "devenv-18",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                "command": "\"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -version \"[18,19)\" -products * -requires Microsoft.Component.MSBuild -find Common7\\IDE\\devenv.exe",
                 "useFirstResult": "true"
             }
         }
     ]
-    
+
 }

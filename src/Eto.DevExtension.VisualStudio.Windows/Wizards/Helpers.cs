@@ -28,10 +28,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 
 		static Helpers()
 		{
-#if VS2022
-			// needed in VS 2022 for some reason?!?!
+			// needed in VS 2022+ for some reason?!?!
 			AppDomain.CurrentDomain.AssemblyResolve += LoadFromSameFolder;
-#endif
 			Initialize();
 		}
 
