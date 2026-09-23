@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Eto.DevExtension.LanguageServer
+namespace Eto.Designer.Completion
 {
 	/// <summary>
 	/// Finds the Eto type a designer file loads into, by reading the base class of its code behind.
