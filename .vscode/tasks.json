@@ -21,6 +21,29 @@
                 "clear": true
             },
             "group": "build"
+        },
+        {
+            "label": "build-vscode-extension",
+            "type": "shell",
+            "command": "npm",
+            "args": [ "run", "build:server", "--silent" ],
+            "options": {
+                "cwd": "${workspaceFolder}/src/Eto.DevExtension.VSCode"
+            },
+            "dependsOn": [ "compile-vscode-extension" ],
+            "problemMatcher": "$msCompile",
+            "group": "build"
+        },
+        {
+            "label": "compile-vscode-extension",
+            "type": "shell",
+            "command": "npm",
+            "args": [ "run", "compile", "--silent" ],
+            "options": {
+                "cwd": "${workspaceFolder}/src/Eto.DevExtension.VSCode"
+            },
+            "problemMatcher": "$tsc",
+            "group": "build"
         }
     ],
     "inputs": [

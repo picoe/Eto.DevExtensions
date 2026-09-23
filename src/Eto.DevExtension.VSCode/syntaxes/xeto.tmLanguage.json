@@ -1,0 +1,7 @@
+{
+  "scopeName": "text.xml.xeto",
+  "name": "Eto.Forms Xaml",
+  "patterns": [
+    { "include": "text.xml" }
+  ]
+}

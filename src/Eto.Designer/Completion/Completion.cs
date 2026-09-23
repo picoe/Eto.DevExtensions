@@ -69,6 +69,14 @@ namespace Eto.Designer.Completion
 		}
 
 		/// <summary>
+		/// Type name implied by the end of the path, for objects that don't name their own type.
+		/// </summary>
+		public virtual string GetImpliedTypeName(IEnumerable<string> path)
+		{
+			return null;
+		}
+
+		/// <summary>
 		/// Determine whether the specified objectName has content, or null if not known by this completion handler.
 		/// </summary>
 		public virtual bool? HasContent(string objectName, IEnumerable<string> path)
@@ -89,16 +97,21 @@ namespace Eto.Designer.Completion
 		public const string EtoFormsNamespace = "http://schema.picoe.ca/eto.forms";
 		public const string XamlNamespace2006 = "http://schemas.microsoft.com/winfx/2006/xaml";
 
-		public static IEnumerable<CompletionItem> GetCompletionItems(IEnumerable<CompletionNamespace> namespaces, CompletionMode mode, IEnumerable<string> path, CompletionPathNode context)
+		public static IEnumerable<CompletionItem> GetCompletionItems(IEnumerable<CompletionNamespace> namespaces, CompletionMode mode, IEnumerable<string> path, CompletionPathNode context, CompletionFormat format = CompletionFormat.Xaml)
 		{
 			if (mode == CompletionMode.None)
 				return Enumerable.Empty<CompletionItem>();
-			var completions = GetCompletions(namespaces);
+			var completions = GetCompletions(namespaces, format).ToList();
 			IEnumerable<CompletionItem> items;
 			if (mode == CompletionMode.Property && context != null)
 			{
 				var contextName = context.Name;
-				if (contextName.EndsWith("."))
+				if (string.IsNullOrEmpty(contextName))
+				{
+					// json objects may leave out $type, in which case the property they sit in names the type
+					contextName = GetImpliedTypeName(completions, path);
+				}
+				else if (contextName.EndsWith("."))
 				{
 					// if it contains a dot it is a property element. only show completions for the current namespace.
 					contextName = contextName.TrimEnd('.');
@@ -110,7 +123,9 @@ namespace Eto.Designer.Completion
 			}
 			else if (mode == CompletionMode.Value && context != null && context.Mode == CompletionMode.Property)
 			{
-				var lastPath = path.Last();
+				var lastPath = path.LastOrDefault();
+				if (lastPath != null && lastPath.Contains("."))
+					lastPath = GetImpliedTypeName(completions, path) ?? lastPath;
 				items = completions.SelectMany(r => r.GetPropertyValues(lastPath, context.LocalName, path));
 			}
 			else
@@ -118,14 +133,45 @@ namespace Eto.Designer.Completion
 				var filter = completions.Select(r => r.GetFilter(path)).Where(r => r != null).FirstOrDefault();
 				items = completions.SelectMany(r => r.GetClasses(path, filter));
 			}
+			if (format == CompletionFormat.Json)
+			{
+				// property elements are a xaml-only construct
+				items = items.Where(r => !r.Behavior.HasFlag(CompletionBehavior.ChildProperty));
+			}
 			return items;
 		}
 
-		public static IEnumerable<Completion> GetCompletions(IEnumerable<CompletionNamespace> namespaces)
+		static string GetImpliedTypeName(IEnumerable<Completion> completions, IEnumerable<string> path) =>
+			completions.Select(r => r.GetImpliedTypeName(path)).FirstOrDefault(r => !string.IsNullOrEmpty(r));
+
+		/// <summary>
+		/// Declared namespaces plus the ones Eto's xaml reader adds implicitly, so files that omit
+		/// xmlns - the usual case when loading into an existing instance - still complete.
+		/// </summary>
+		static IEnumerable<CompletionNamespace> GetEffectiveNamespaces(IEnumerable<CompletionNamespace> namespaces)
 		{
+			var effective = namespaces?.ToList() ?? new List<CompletionNamespace>();
+			if (!effective.Any(r => string.IsNullOrEmpty(r.Prefix)))
+				effective.Add(new CompletionNamespace { Prefix = string.Empty, Namespace = EtoFormsNamespace });
+			if (!effective.Any(r => r.Prefix == "x"))
+				effective.Add(new CompletionNamespace { Prefix = "x", Namespace = XamlNamespace2006 });
+			return effective;
+		}
+
+		public static IEnumerable<Completion> GetCompletions(IEnumerable<CompletionNamespace> namespaces, CompletionFormat format = CompletionFormat.Xaml)
+		{
+			if (format == CompletionFormat.Json)
+			{
+				// json has no namespace declarations, everything resolves against Eto.Forms
+				yield return new JsonCompletion();
+				yield return new TypeCompletion { Assembly = typeof(Eto.Widget).Assembly, Namespace = "Eto.Forms" };
+				yield return new TypeCompletion { Assembly = typeof(Eto.Widget).Assembly, Namespace = "Eto" };
+				yield break;
+			}
+
 			yield return new GeneralCompletion();
 
-			foreach (var ns in namespaces)
+			foreach (var ns in GetEffectiveNamespaces(namespaces))
 			{
 				if (ns.Namespace == EtoFormsNamespace)
 				{
