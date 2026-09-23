@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RollForward>LatestMajor</RollForward>
+    <!-- always launched as `dotnet <dll>`, same as the language server -->
+    <UseAppHost>false</UseAppHost>
+    <!-- lets the VS Code package, built on Linux, publish it -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>Eto.DevExtension.PreviewHost</AssemblyName>
+    <RootNamespace>Eto.DevExtension.PreviewHost</RootNamespace>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Eto.DevExtension.LanguageServer\Lsp\LspConnection.cs" Link="Shared\LspConnection.cs" />
+    <Compile Include="..\Eto.DevExtension.LanguageServer\EtoAssemblyLocator.cs" Link="Shared\EtoAssemblyLocator.cs" />
+    <Compile Include="..\Eto.DevExtension.LanguageServer\ProjectAssemblyLocator.cs" Link="Shared\ProjectAssemblyLocator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- resolved at runtime from the user's project, so keep them out of the probing path -->
+    <PackageReference Include="Eto.Forms" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Wpf" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Portable.Xaml" Version="0.26.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="runtime" GeneratePathProperty="true" />
+
+    <!-- Eto.Wpf's own dependencies, which don't flow through when its runtime assets are excluded -->
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" NoWarn="NU1701" />
+    <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />
+
+    <!-- the code builders compile .eto.cs/.eto.vb files -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.8.0" />
+  </ItemGroup>
+
+  <!-- fallback Eto used when the open project's copy can't be found -->
+  <ItemGroup>
+    <FallbackEto Include="$(PkgEto_Forms)\lib\netstandard2.0\Eto.dll" />
+    <FallbackEto Include="$(PkgEto_Platform_Wpf)\lib\netcoreapp3.1\Eto.Wpf.dll" />
+    <FallbackEto Include="$(PkgEto_Serialization_Xaml)\lib\netstandard2.0\Eto.Serialization.Xaml.dll" />
+    <FallbackEto Include="$(PkgEto_Serialization_Json)\lib\netstandard2.0\Eto.Serialization.Json.dll" />
+    <FallbackEto Include="$(PkgPortable_Xaml)\lib\netstandard2.0\Portable.Xaml.dll" />
+    <FallbackEto Include="$(PkgNewtonsoft_Json)\lib\netstandard2.0\Newtonsoft.Json.dll" />
+  </ItemGroup>
+
+  <Target Name="CopyFallbackEto" AfterTargets="Build">
+    <Copy SourceFiles="@(FallbackEto)" DestinationFolder="$(OutDir)eto" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishFallbackEto" AfterTargets="Publish">
+    <Copy SourceFiles="@(FallbackEto)" DestinationFolder="$(PublishDir)eto" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -23,35 +23,16 @@ namespace Eto.Designer
 
 		public double ErrorDisplayTime { get; set; } = 6.0;
 
-		public string MainAssemblyPath { get; set; }
-
-		public static bool EnableAppDomains { get; set; } = Platform.Instance.Supports<IEtoAdapterHandler>();
-
-		public PreviewEditorView(string mainAssembly, IEnumerable<string> references, Func<string> getCode)
+		public PreviewEditorView(IDesignHost designHost, Func<string> getCode)
 		{
-			//Size = new Size (200, 200);
-			MainAssemblyPath = mainAssembly;
 			this.getCode = getCode;
 
-#if NETFRAMEWORK
-			if (EnableAppDomains)
-				designPanel = new AppDomainDesignHost();
-			else
-				designPanel = new InProcessDesignPanel();
-#else
-			designPanel = new InProcessDesignPanel();
-#endif
-
-			designPanel.MainAssembly = mainAssembly;
-			designPanel.References = references;
-
+			designPanel = designHost;
 			designPanel.ControlCreating = () => FinishProcessing(null);
 			designPanel.Error = FinishProcessing;
 
 			designPanelHolder = new Panel();
 			designPanelHolder.Content = designPanel.GetContainer();
-
-			designPanel.ContainerChanged = () => designPanelHolder.Content = designPanel.GetContainer();
 
 			errorPanel = new Panel { Padding = new Padding(5), Visible = false, BackgroundColor = new Color(Colors.Red, .4f) };
 

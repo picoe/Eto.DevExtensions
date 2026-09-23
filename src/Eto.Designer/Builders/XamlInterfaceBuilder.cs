@@ -21,6 +21,8 @@ namespace Eto.Designer.Builders
 				var control = XamlReader.Load<Panel>(new StringReader(text), null);
 				if (control != null)
 					controlCreated(control);
+				else
+					error(new FormatException("The document did not create a control."));
 			}
 			catch (Exception ex)
 			{

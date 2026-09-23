@@ -13,6 +13,16 @@ namespace Eto.Designer.Builders
 	{
 		protected virtual IEnumerable<string> GetReferences()
 		{
+#if NETCOREAPP
+			// no reference assemblies on disk to rely on, so compile against the runtime itself
+			var trusted = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
+			if (!string.IsNullOrEmpty(trusted))
+			{
+				foreach (var file in trusted.Split(Path.PathSeparator))
+					yield return file;
+				yield break;
+			}
+#endif
 			string referenceDir = GetReferenceAssembliesFolder();
 
 			if (string.IsNullOrEmpty(referenceDir))

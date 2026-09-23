@@ -21,6 +21,8 @@ namespace Eto.Designer.Builders
 					var control = JsonReader.Load<Panel>(stream);
 					if (control != null)
 						controlCreated(control);
+					else
+						error(new FormatException("The document did not create a control."));
 				}
 			}
 			catch (Exception ex)

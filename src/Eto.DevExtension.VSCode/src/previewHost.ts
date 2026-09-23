@@ -1,0 +1,154 @@
+import { ChildProcess, spawn } from 'child_process';
+import * as vscode from 'vscode';
+import {
+	createMessageConnection,
+	MessageConnection,
+	StreamMessageReader,
+	StreamMessageWriter
+} from 'vscode-jsonrpc/node';
+
+// long enough for a first render that compiles code, short enough to recover from a hung control
+const RENDER_TIMEOUT_MS = 30000;
+
+export interface RenderRequest {
+	fileName: string;
+	text: string;
+	width?: number;
+	height?: number;
+	scale: number;
+}
+
+export interface RenderResult {
+	image?: string;
+	width?: number;
+	height?: number;
+	error?: { message: string; details?: string };
+}
+
+/**
+ * The .NET process that draws designer files to images, so project code runs outside VS Code.
+ * Renders one request at a time, and restarts the process whenever it exits or stops responding.
+ */
+export class PreviewHost implements vscode.Disposable {
+	private process: ChildProcess | undefined;
+	private connection: MessageConnection | undefined;
+	private starting: Promise<MessageConnection | undefined> | undefined;
+	private queue: Promise<unknown> = Promise.resolve();
+	private unavailable = false;
+	private readonly restarted = new vscode.EventEmitter<void>();
+
+	/** Fires after the project is rebuilt, so previews can be redrawn. */
+	readonly onDidRequestRedraw = this.restarted.event;
+
+	constructor(
+		private readonly dotnet: string,
+		private readonly hostPath: string,
+		private readonly output: vscode.OutputChannel
+	) { }
+
+	render(request: RenderRequest): Promise<RenderResult> {
+		const next = this.queue.then(() => this.renderNow(request));
+		this.queue = next.catch(() => undefined);
+		return next;
+	}
+
+	dispose(): void {
+		this.stop();
+		this.restarted.dispose();
+	}
+
+	private async renderNow(request: RenderRequest): Promise<RenderResult> {
+		// a second try covers a host that exited after a rebuild, or that serves another project
+		for (let attempt = 0; attempt < 2; attempt++) {
+			const connection = await this.getConnection();
+			if (!connection) {
+				return error('The preview needs the .NET 8 Desktop Runtime (or newer). See the Eto.Forms Designer output for details.');
+			}
+
+			let timer: NodeJS.Timeout | undefined;
+			try {
+				const timeout = new Promise<'timeout'>(resolve => timer = setTimeout(() => resolve('timeout'), RENDER_TIMEOUT_MS));
+				const result = await Promise.race([
+					connection.sendRequest<RenderResult & { restartRequired?: boolean }>('preview/render', { ...request, assemblies: null }),
+					timeout
+				]);
+				if (result === 'timeout') {
+					this.stop();
+					return error('The preview took too long to draw, so it was stopped.');
+				}
+				if (result?.restartRequired) {
+					this.stop();
+					continue;
+				}
+				return result ?? {};
+			} catch (e) {
+				this.stop();
+				if (attempt > 0) {
+					return error('The preview host stopped unexpectedly.', `${e}`);
+				}
+			} finally {
+				clearTimeout(timer);
+			}
+		}
+		return error('The preview host could not load the project.');
+	}
+
+	private getConnection(): Promise<MessageConnection | undefined> {
+		if (this.connection && this.process && isRunning(this.process)) {
+			return Promise.resolve(this.connection);
+		}
+		if (this.unavailable) {
+			return Promise.resolve(undefined);
+		}
+		this.stop();
+		this.starting ??= this.start().finally(() => this.starting = undefined);
+		return this.starting;
+	}
+
+	private async start(): Promise<MessageConnection | undefined> {
+		try {
+			const child = spawn(this.dotnet, [this.hostPath], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+			const failed = new Promise<never>((_, reject) => child.once('error', reject));
+			child.stderr?.on('data', data => this.output.append(`${data}`));
+
+			const connection = createMessageConnection(new StreamMessageReader(child.stdout!), new StreamMessageWriter(child.stdin!));
+			connection.onNotification('preview/restart', () => {
+				this.output.appendLine('Project rebuilt, restarting the preview host.');
+				this.restarted.fire();
+			});
+			connection.onNotification('window/logMessage', (params: { message: string }) => this.output.appendLine(params.message));
+			connection.listen();
+
+			this.process = child;
+			this.connection = connection;
+			await Promise.race([connection.sendRequest('initialize', { processId: process.pid }), failed]);
+			connection.sendNotification('initialized', {});
+			return connection;
+		} catch (e) {
+			// usually no desktop runtime to run it with, so don't keep trying
+			this.unavailable = true;
+			this.output.appendLine(`Could not start the Eto preview host using "${this.dotnet}": ${e}`);
+			this.stop();
+			return undefined;
+		}
+	}
+
+	private stop(): void {
+		const connection = this.connection;
+		const child = this.process;
+		this.connection = undefined;
+		this.process = undefined;
+		connection?.dispose();
+		if (child && isRunning(child)) {
+			child.kill();
+		}
+	}
+}
+
+function isRunning(child: ChildProcess): boolean {
+	return child.exitCode === null && child.signalCode === null;
+}
+
+function error(message: string, details?: string): RenderResult {
+	return { error: { message, details: details ?? message } };
+}

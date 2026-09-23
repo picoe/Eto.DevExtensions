@@ -212,12 +212,10 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 			try
 			{
-				var outputFile = GetAssemblyPath(proj);
-				var references = GetReferences(proj).ToList();
-				//var outputDir = Path.GetDirectoryName(outputFile);
+				var projectKey = proj?.FullName ?? pszMkDocument;
 
 				// Create the Document (editor)
-				var editor = new EtoPreviewPane(editorPackage, pszMkDocument, textBuffer, outputFile, references, codeEditor);
+				var editor = new EtoPreviewPane(editorPackage, pszMkDocument, textBuffer, projectKey, codeEditor);
 				ppunkDocView = Marshal.GetIUnknownForObject(editor);
 			}
 			catch (Exception ex)
@@ -259,35 +257,6 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			return vsProject;
 		}
 
-		public static IEnumerable<string> GetReferences(EnvDTE.Project project)
-		{
-			Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-			var vsproject = project.Object as VSLangProj.VSProject;
-			if (vsproject == null)
-				yield break;
-			// note: you could also try casting to VsWebSite.VSWebSite
-
-			foreach (VSLangProj.Reference reference in vsproject.References)
-			{
-				if (reference.SourceProject == null)
-				{
-					//skip framework assemblies
-					//if (((dynamic)reference).AutoReferenced)
-					//	continue;
-
-					// This is an assembly reference
-					if (reference.Path != null)
-						yield return reference.Path;
-				}
-				else
-				{
-					// This is a project reference
-					var path = GetAssemblyPath(reference.SourceProject);
-					if (path != null)
-						yield return path;
-				}
-			}
-		}
 		internal static string GetAssemblyPath(EnvDTE.Project vsProject)
 		{
 			Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();

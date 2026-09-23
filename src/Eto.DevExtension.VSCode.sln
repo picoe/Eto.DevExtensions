@@ -5,6 +5,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eto.DevExtension.LanguageSe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eto.Designer", "Eto.Designer\Eto.Designer.csproj", "{7FAA1841-0869-474C-9D89-87E1B4BAB190}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eto.DevExtension.PreviewHost", "Eto.DevExtension.PreviewHost\Eto.DevExtension.PreviewHost.csproj", "{5AF057D2-FE4A-428D-A704-BCC02BFF24C3}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F132CF00-BA1F-41E0-BFD9-0F691C47C5FE}"
 	ProjectSection(SolutionItems) = preProject
 		..\Directory.Build.props = ..\Directory.Build.props
@@ -24,6 +26,10 @@ Global
 		{7FAA1841-0869-474C-9D89-87E1B4BAB190}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7FAA1841-0869-474C-9D89-87E1B4BAB190}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7FAA1841-0869-474C-9D89-87E1B4BAB190}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AF057D2-FE4A-428D-A704-BCC02BFF24C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AF057D2-FE4A-428D-A704-BCC02BFF24C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AF057D2-FE4A-428D-A704-BCC02BFF24C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AF057D2-FE4A-428D-A704-BCC02BFF24C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
