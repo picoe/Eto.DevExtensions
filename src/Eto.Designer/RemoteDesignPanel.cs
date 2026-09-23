@@ -21,6 +21,8 @@ namespace Eto.Designer
 		/// <summary>Size of the image in logical pixels.</summary>
 		public Size Size { get; set; }
 		public DesignError Error { get; set; }
+		/// <summary>Name of the platform it was drawn with, if known.</summary>
+		public string Platform { get; set; }
 	}
 
 	/// <summary>

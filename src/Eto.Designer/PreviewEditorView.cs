@@ -18,8 +18,26 @@ namespace Eto.Designer
 		Func<string> getCode;
 		Control errorContent;
 		Panel designPanelHolder;
+		Panel toolBarHolder;
+		Control toolBar;
 
 		public double RefreshTime { get; set; } = 0.5;
+
+		/// <summary>Controls shown at the top right of the preview, such as a platform picker.</summary>
+		public Control ToolBar
+		{
+			get => toolBar;
+			set
+			{
+				toolBar = value;
+				toolBarHolder.Content = value == null ? null : new StackLayout
+				{
+					Orientation = Orientation.Horizontal,
+					Items = { new StackLayoutItem(null, expand: true), value }
+				};
+				toolBarHolder.Visible = value != null;
+			}
+		}
 
 		public double ErrorDisplayTime { get; set; } = 6.0;
 
@@ -36,11 +54,14 @@ namespace Eto.Designer
 
 			errorPanel = new Panel { Padding = new Padding(5), Visible = false, BackgroundColor = new Color(Colors.Red, .4f) };
 
+			toolBarHolder = new Panel { Padding = new Padding(6, 6, 10, 0), Visible = false, BackgroundColor = Global.Theme.DesignerBackground };
+
 			Content = new StackLayout
 			{
 				HorizontalContentAlignment = HorizontalAlignment.Stretch,
 				Items =
 			 	{
+					toolBarHolder,
 			 		new StackLayoutItem(designPanelHolder, expand: true),
 			 		errorPanel
 			 	}

@@ -33,6 +33,16 @@ namespace Eto.DevExtension.VisualStudio.Windows
 
 		public Color DesignerPanel => Color.FromRgb(0xF0F0F0); // hmm.
 
+		public Color SplitBarBackground => VSColorTheme.GetThemedColor(EnvironmentColors.CommandBarGradientBeginColorKey).ToEto();
+
+		public Color SplitBarForeground => VSColorTheme.GetThemedColor(EnvironmentColors.CommandBarTextActiveColorKey).ToEto();
+
+		public Color SplitBarHoverBackground => VSColorTheme.GetThemedColor(EnvironmentColors.CommandBarMouseOverBackgroundBeginColorKey).ToEto();
+
+		public Color SplitBarSelectedBackground => VSColorTheme.GetThemedColor(EnvironmentColors.FileTabSelectedGradientTopColorKey).ToEto();
+
+		public Color SplitBarSelectedForeground => VSColorTheme.GetThemedColor(EnvironmentColors.FileTabSelectedTextColorKey).ToEto();
+
 		public IEnumerable<PlatformColor> AllColors
 		{
 			get

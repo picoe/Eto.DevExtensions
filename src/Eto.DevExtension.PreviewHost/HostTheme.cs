@@ -24,6 +24,11 @@ namespace Eto.DevExtension.PreviewHost
 		public Color DesignerBackground => Get(nameof(DesignerBackground), SystemColors.Control);
 		// the platform's window colour, so panels look like forms in dark mode, but Gtk can report it as transparent
 		public Color DesignerPanel => Get(nameof(DesignerPanel), SystemColors.WindowBackground is { A: > 0 } window ? window : Color.FromRgb(0xF0F0F0));
+		public Color SplitBarBackground => Get(nameof(SplitBarBackground), SystemColors.Control);
+		public Color SplitBarForeground => Get(nameof(SplitBarForeground), SystemColors.ControlText);
+		public Color SplitBarHoverBackground => Get(nameof(SplitBarHoverBackground), SystemColors.Highlight);
+		public Color SplitBarSelectedBackground => Get(nameof(SplitBarSelectedBackground), SystemColors.Highlight);
+		public Color SplitBarSelectedForeground => Get(nameof(SplitBarSelectedForeground), SystemColors.HighlightText);
 		public IEnumerable<PlatformColor> AllColors => Enumerable.Empty<PlatformColor>();
 	}
 }
