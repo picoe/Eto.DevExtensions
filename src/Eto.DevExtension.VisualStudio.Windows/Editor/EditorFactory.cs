@@ -10,6 +10,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.OLE.Interop;
 using Eto.Designer;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Utilities;
 using Eto.DevExtension.VisualStudio.Windows.Wizards;
 using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
@@ -319,15 +320,21 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 					, dwFlags: (uint)_EDITORREGFLAGS.RIEF_ENABLECACHING
 					, pFactory: null
 					, ppEditor: out invisibleEditor);
-				if (invisibleEditor == null) // sometimes when closing files this will be null?
-					return null;
-				IntPtr docDataPointer;
-				var guidIVsTextLines = typeof(IVsTextLines).GUID;
-				result = invisibleEditor.GetDocData(
-					fEnsureWritable: 1
-					, riid: ref guidIVsTextLines
-					, ppDocData: out docDataPointer);
-				textBuffer = (IVsTextLines)Marshal.GetObjectForIUnknown(docDataPointer);
+				if (invisibleEditor == null)
+				{
+					// on solution reload the RDT holds a deferred placeholder for this file, so load our own buffer
+					textBuffer = CreateTextBuffer(fileName);
+				}
+				else
+				{
+					IntPtr docDataPointer;
+					var guidIVsTextLines = typeof(IVsTextLines).GUID;
+					result = invisibleEditor.GetDocData(
+						fEnsureWritable: 1
+						, riid: ref guidIVsTextLines
+						, ppDocData: out docDataPointer);
+					textBuffer = (IVsTextLines)Marshal.GetObjectForIUnknown(docDataPointer);
+				}
 
 				/* set site for the doc data?
 				var objWSite = docData as IObjectWithSite;
@@ -367,6 +374,15 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			return textBuffer;
 		}
 
+		static IVsTextLines CreateTextBuffer(string fileName)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			var editorSvc = Services.GetComponentService<IVsEditorAdaptersFactoryService>();
+			var textBuffer = (IVsTextLines)editorSvc.CreateVsTextBufferAdapter(Services.ServiceProvider);
+			ErrorHandler.ThrowOnFailure(((IVsPersistDocData)textBuffer).LoadDocData(fileName));
+			return textBuffer;
+		}
+
 		private static void MapLanguage(IVsTextLines textBuffer, string languageSid)
 		{
 			var textManagerSvc = Services.GetService<SVsTextManager, IVsTextManager>();
@@ -384,20 +400,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 				return VSConstants.VS_E_UNSUPPORTEDFORMAT;
 			}
 
+			// don't touch punkDocDataExisting here; on solution reload it's a deferred doc data that throws E_PENDING
 			rguidLogicalView = VSConstants.LOGVIEWID.Designer_guid;
-			object prjItemObject;
-			var projectItemId = VSConstants.VSITEMID_ROOT;
-			pHier.GetProperty(projectItemId, (int)__VSHPROPID.VSHPROPID_ExtObject, out prjItemObject);
-			var proj = prjItemObject as EnvDTE.Project;
-
-			// Get or open text buffer
-			var textBuffer = GetTextBuffer(punkDocDataExisting, pszMkDocument, ToVsProject(proj));
-
-			if (textBuffer == null)
-				return VSConstants.VS_E_INCOMPATIBLEDOCDATA;
-
-
-			
 			return VSConstants.S_OK;
 		}
 

@@ -58,6 +58,9 @@ namespace Eto.DevExtension.VisualStudio.Windows
 			Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
 			await base.InitializeAsync(cancellationToken, progress);
 
+			// EditorFactory's static ctor initializes Eto/WPF, which must happen on the UI thread
+			await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
 			//Create Editor Factory.
 			base.RegisterEditorFactory(new EditorFactory(this));
 		}

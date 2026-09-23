@@ -11,6 +11,7 @@
                     "/v:Minimal",
                     // "/p:Configuration=Release",
                     "/p:VSVersion=2022",
+                    "/p:DeployExtension=true",
                     "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Windows/Eto.DevExtension.VisualStudio.Windows.csproj",
                 ],
             },
