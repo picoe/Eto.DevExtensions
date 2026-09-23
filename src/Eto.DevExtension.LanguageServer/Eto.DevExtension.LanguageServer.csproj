@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RollForward>LatestMajor</RollForward>
+    <!-- always launched as `dotnet <dll>`, so the platform-specific apphost is dead weight -->
+    <UseAppHost>false</UseAppHost>
+    <AssemblyName>Eto.DevExtension.LanguageServer</AssemblyName>
+    <RootNamespace>Eto.DevExtension.LanguageServer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- resolved at runtime from the user's project, so keep it out of the probing path -->
+    <PackageReference Include="Eto.Forms" Version="2.7.5" PrivateAssets="all" ExcludeAssets="runtime" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <!-- fallback Eto used when the open project's copy can't be found -->
+  <Target Name="CopyFallbackEto" AfterTargets="Build">
+    <ItemGroup>
+      <FallbackEto Include="$(PkgEto_Forms)\lib\netstandard2.0\Eto.dll;$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FallbackEto)" DestinationFolder="$(OutDir)eto" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishFallbackEto" AfterTargets="Publish">
+    <ItemGroup>
+      <FallbackEto Include="$(PkgEto_Forms)\lib\netstandard2.0\Eto.dll;$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FallbackEto)" DestinationFolder="$(PublishDir)eto" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

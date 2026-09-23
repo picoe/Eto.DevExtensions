@@ -9,13 +9,6 @@ using System.Xml;
 
 namespace Eto.Designer.Completion
 {
-	public class XmlParseInfo
-	{
-		public IEnumerable<CompletionPathNode> Nodes { get; set; }
-		public CompletionMode Mode { get; set; }
-		public bool IsChildProperty { get; set; }
-	}
-
 	public static class XmlParser
 	{
 		const RegexOptions opts = RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase;
@@ -24,11 +17,49 @@ namespace Eto.Designer.Completion
 		//static readonly Regex propertyReg = new Regex(@"([<]\w+\s+)([^<]*)?(?<!(/|([/][>])|[>])[^<]*)$", opts);
 		static readonly Regex classReg = new Regex(@"([<]\w*)$", opts);
 		static readonly Regex classPropertyReg = new Regex(@"([<]\w*[.])$", opts);
+		static readonly Regex usedPrefixReg = new Regex(@"(?:[<]|\s)(?<p>[A-Za-z_][\w.-]*):", opts);
+		static readonly Regex declaredPrefixReg = new Regex(@"xmlns:(?<p>[\w.-]+)\s*=", opts);
+		static readonly Regex defaultNamespaceReg = new Regex(@"(?<![\w:])xmlns\s*=", opts);
+		static readonly Regex rootElementReg = new Regex(@"[<](?<name>[A-Za-z_][\w.-]*(:[\w.-]+)?)", opts);
 
-		public static XmlParseInfo Read(string text)
+		/// <summary>
+		/// Declares the namespaces Eto's xaml reader adds implicitly, plus any prefix the document
+		/// uses without declaring, so the reader doesn't abort on the first undeclared prefix and
+		/// lose everything after it.
+		/// </summary>
+		static string DeclareNamespaces(string text)
+		{
+			var root = rootElementReg.Match(text);
+			if (!root.Success)
+				return text;
+
+			var declared = new HashSet<string>(declaredPrefixReg.Matches(text).Cast<Match>().Select(r => r.Groups["p"].Value));
+			var sb = new StringBuilder();
+			if (!defaultNamespaceReg.IsMatch(text))
+				sb.Append(" xmlns=\"").Append(Completion.EtoFormsNamespace).Append('"');
+			if (declared.Add("x"))
+				sb.Append(" xmlns:x=\"").Append(Completion.XamlNamespace2006).Append('"');
+
+			foreach (Match used in usedPrefixReg.Matches(text))
+			{
+				var prefix = used.Groups["p"].Value;
+				if (prefix == "xmlns" || prefix == "xml" || !declared.Add(prefix))
+					continue;
+				// enough for the reader to accept the prefix; nothing completes against it
+				sb.Append(" xmlns:").Append(prefix).Append("=\"clr-namespace:\"");
+			}
+
+			if (sb.Length == 0)
+				return text;
+
+			var insertAt = root.Index + root.Length;
+			return text.Substring(0, insertAt) + sb + text.Substring(insertAt);
+		}
+
+		public static ParseInfo Read(string text)
 		{
 			var nodes = new List<CompletionPathNode>();
-			var info = new XmlParseInfo { Nodes = nodes, Mode = CompletionMode.None };
+			var info = new ParseInfo { Nodes = nodes, Mode = CompletionMode.None };
 
 			// check the last part of the xml to see what type of completion we are in
 			// and complete it so we can parse the property or class name.
@@ -67,7 +98,7 @@ namespace Eto.Designer.Completion
 			CompletionPathNode attribute = null;
 			try
 			{
-				using (var reader = XmlReader.Create(new StringReader(text)))
+				using (var reader = XmlReader.Create(new StringReader(DeclareNamespaces(text))))
 				{
 					while (reader.Read())
 					{

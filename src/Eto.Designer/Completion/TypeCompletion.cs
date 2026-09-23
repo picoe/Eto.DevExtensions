@@ -118,9 +118,19 @@ namespace Eto.Designer.Completion
 
 		}
 
+		public override string GetImpliedTypeName(IEnumerable<string> path)
+		{
+			string propertyName;
+			var nodeType = GetNodeType(path?.LastOrDefault(), out propertyName);
+			var contentType = GetContentType(nodeType, propertyName);
+			return contentType != null ? PrefixWithColon + contentType.Name : null;
+		}
+
 		Type GetNodeType(string last, out string propertyName)
 		{
 			propertyName = null;
+			if (string.IsNullOrEmpty(last))
+				return null;
 			var prefix = PrefixWithColon;
 			if (!string.IsNullOrEmpty(prefix))
 			{
@@ -179,6 +189,8 @@ namespace Eto.Designer.Completion
 
 		public override bool? HasContent(string objectName, IEnumerable<string> path)
 		{
+			if (string.IsNullOrEmpty(objectName))
+				return null;
 			var prefix = PrefixWithColon;
 			if (prefix != null)
 			{
@@ -198,6 +210,8 @@ namespace Eto.Designer.Completion
 
 		public override IEnumerable<CompletionItem> GetProperties(string objectName, IEnumerable<string> path)
 		{
+			if (string.IsNullOrEmpty(objectName))
+				yield break;
 			var prefix = PrefixWithColon;
 			if (prefix != null)
 			{
@@ -245,6 +259,8 @@ namespace Eto.Designer.Completion
 
 		public override IEnumerable<CompletionItem> GetPropertyValues(string objectName, string propertyName, IEnumerable<string> path)
 		{
+			if (string.IsNullOrEmpty(objectName))
+				yield break;
 			var prefix = PrefixWithColon;
 			if (prefix != null)
 			{

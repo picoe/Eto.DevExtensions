@@ -2,6 +2,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Eto.DevExtension.VSCode",
+            "type": "extensionHost",
+            "request": "launch",
+            "preLaunchTask": "build-vscode-extension",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/src/Eto.DevExtension.VSCode"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/src/Eto.DevExtension.VSCode/out/**/*.js"
+            ]
+        },
+        {
             "name": "Eto.DevExtension.VisualStudio.Windows.2022",
             "type": "clr",
             "request": "launch",

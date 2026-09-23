@@ -1,0 +1,119 @@
+{
+  "name": "eto-forms-designer",
+  "displayName": "Eto.Forms Designer",
+  "description": "Autocompletion and hover documentation for Eto.Forms .xeto and .jeto designer files.",
+  "version": "2.7.5",
+  "publisher": "picoe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/picoe/Eto.DevExtensions.git"
+  },
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "eto",
+    "eto.forms",
+    "xeto",
+    "jeto"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:xeto",
+    "onLanguage:jeto"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "xeto",
+        "aliases": [
+          "Eto.Forms Xaml",
+          "xeto"
+        ],
+        "extensions": [
+          ".xeto"
+        ],
+        "configuration": "./language-configuration-xeto.json"
+      },
+      {
+        "id": "jeto",
+        "aliases": [
+          "Eto.Forms Json",
+          "jeto"
+        ],
+        "extensions": [
+          ".jeto"
+        ],
+        "configuration": "./language-configuration-jeto.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "xeto",
+        "scopeName": "text.xml.xeto",
+        "path": "./syntaxes/xeto.tmLanguage.json"
+      },
+      {
+        "language": "jeto",
+        "scopeName": "source.json.jeto",
+        "path": "./syntaxes/jeto.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Eto.Forms Designer",
+      "properties": {
+        "eto.dotnetPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the dotnet executable used to run the language server. Uses dotnet from PATH when empty."
+        },
+        "eto.languageServer.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Eto.DevExtension.LanguageServer.dll. Uses the copy bundled with the extension when empty."
+        },
+        "eto.etoAssemblyPath": {
+          "type": "string",
+          "default": "",
+          "description": "Folder containing the Eto.dll to complete against. Detected from the project when empty."
+        },
+        "eto.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Log the traffic between VS Code and the Eto language server."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "eto.restartLanguageServer",
+        "title": "Eto: Restart Language Server"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build:server && npm run compile",
+    "build:server": "dotnet publish ../Eto.DevExtension.LanguageServer/Eto.DevExtension.LanguageServer.csproj -c Release -o server",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "node -e \"require('fs').mkdirSync('../../artifacts/vscode',{recursive:true})\" && vsce package --out ../../artifacts/vscode/"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.82.0",
+    "@vscode/vsce": "^3.2.1",
+    "typescript": "^5.4.5"
+  }
+}

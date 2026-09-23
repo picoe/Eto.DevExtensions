@@ -163,7 +163,8 @@ namespace Eto.Designer.Completion
 				return;
 			var summary = node.SelectSingleNode("summary")?.InnerXml.Trim();
 			var details = node.SelectSingleNode("remarks")?.InnerXml.Trim();
-			sb.Append(TranslateCref(summary));
+			if (!string.IsNullOrEmpty(summary))
+				sb.Append(TranslateCref(summary));
 			if (!string.IsNullOrEmpty(details))
 			{
 				sb.AppendLine();

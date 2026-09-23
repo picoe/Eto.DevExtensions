@@ -1,0 +1,7 @@
+{
+  "scopeName": "source.json.jeto",
+  "name": "Eto.Forms Json",
+  "patterns": [
+    { "include": "source.json" }
+  ]
+}

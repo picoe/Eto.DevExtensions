@@ -51,9 +51,40 @@ jobs:
         name: log-windows-${{ matrix.vs }}
         path: artifacts/log/**/*
 
+  build-vscode:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: |
+          ${{ env.DotNetVersion }}
+          8.0.x
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Build extension
+      working-directory: src/Eto.DevExtension.VSCode
+      run: |
+        npm ci
+        npm run package
+
+    - name: Upload extension
+      uses: actions/upload-artifact@v7
+      with:
+        name: extension-vscode
+        path: artifacts/vscode/*.vsix
 
   publish:
-    needs: [ build-windows ]
+    needs: [ build-windows, build-vscode ]
     runs-on: ubuntu-latest
     if: (github.event_name == 'release' && github.event.action == 'published' && startsWith(github.ref, 'refs/tags/'))
     permissions:
