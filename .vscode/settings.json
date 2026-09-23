@@ -1,10 +1,6 @@
 {
-	"omnisharp.defaultLaunchSolution": "src/Eto.DevExtension.VisualStudio.Mac.sln",
 	"var": {
 		"configuration" : "Debug",
 		"buildProperties" : "/v:Minimal /p:GenerateFullPaths=True /consoleLoggerParameters:NoSummary"
-	},
-	"vssolution.altSolutionFolders": [
-		"src"
-	],
+	}
 }

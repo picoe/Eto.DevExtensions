@@ -2,36 +2,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Eto.DevExtension.VisualStudio.Mac.2019",
-            "type": "mono",
-            "request": "launch",
-            "preLaunchTask": "build-extension-2019",
-            "program": ".",
-            "runtimeExecutable": "/Applications/Visual Studio (2019).app/Contents/MacOS/VisualStudio",
-            "passDebugOptionsViaEnvironmentVariable": true,
-            "args": [
-                "--no-redirect"
-            ],
-            "env": {
-                "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
-                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/Eto.DevExtension.VisualStudio.Mac/2019/${config:var.configuration}/"
-            }
-        },
-        {
-            "name": "Eto.DevExtension.VisualStudio.Mac.2022",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build-extension-2022",
-            "program": "/Applications/Visual Studio.app/Contents/MacOS/VisualStudio",
-            "args": [
-                "--no-redirect"
-            ],
-            "env": {
-                "MONODEVELOP_CONSOLE_LOG_LEVEL": "All",
-                "MONODEVELOP_DEV_ADDINS": "${workspaceFolder}/artifacts/Eto.DevExtension.VisualStudio.Mac/2022/${config:var.configuration}/"
-            }
-        },
-        {
             // you cannot actually debug VS2019 as omnisharp only supports x64, this is used so we can just run without debugging more easily
             "name": "Eto.DevExtension.VisualStudio.Windows.2019",
             "type": "clr",

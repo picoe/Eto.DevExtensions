@@ -4,17 +4,6 @@
         {
             "label": "build-extension-2019",
             "type": "shell",
-            "osx": {
-                "command": "msbuild",
-                "args": [
-                    "/restore",
-                    "/v:Minimal",
-                    "/p:VSVersion=2019",
-                    "/t:PackageAddin", 
-                    "/bl:${workspaceFolder}/artifacts/log/Eto.DevExtension.VisualStudio.Mac.2019.binlog",
-                    "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
-                ],
-            },
             "windows": {
                 "command": "${input:msbuild-16}",
                 "args": [
@@ -35,16 +24,6 @@
         {
             "label": "build-extension-2022",
             "type": "shell",
-            "osx": {
-                "command": "dotnet",
-                "args": [
-                    "build",
-                    "/p:VSVersion=2022",
-                    "/t:PackageAddin", 
-                    "/bl:${workspaceFolder}/artifacts/log/Eto.DevExtension.VisualStudio.Mac.2022.binlog",
-                    "${workspaceFolder}/src/Eto.DevExtension.VisualStudio.Mac/Eto.DevExtension.VisualStudio.Mac.csproj",
-                ],
-            },
             "windows": {
                 "command": "${input:msbuild-17}",
                 "args": [
