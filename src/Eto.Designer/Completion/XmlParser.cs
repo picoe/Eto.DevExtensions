@@ -1,4 +1,3 @@
-using Eto.Designer.Completion;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,16 +7,16 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace Eto.DevExtension.VisualStudio.Intellisense
+namespace Eto.Designer.Completion
 {
-	class XmlParseInfo
+	public class XmlParseInfo
 	{
 		public IEnumerable<CompletionPathNode> Nodes { get; set; }
 		public CompletionMode Mode { get; set; }
 		public bool IsChildProperty { get; set; }
 	}
 
-	static class XmlParser
+	public static class XmlParser
 	{
 		const RegexOptions opts = RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase;
 		static readonly Regex valueReg = new Regex(@"(?<=\w+\s*=\s*)(('[^']*)|(""[^""]*))?$", opts);

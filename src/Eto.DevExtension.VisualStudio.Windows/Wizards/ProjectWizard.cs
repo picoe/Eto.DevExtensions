@@ -45,10 +45,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 
 		public bool IsSupportedParameter(string parameter)
 		{
-#if VS2022
 			if (string.Equals(parameter, "Net6", StringComparison.OrdinalIgnoreCase))
 				return true;
-#endif
 			return replacements.IsSupportedParameter(parameter);
 		}
 

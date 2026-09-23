@@ -19,34 +19,34 @@ jobs:
 
     strategy:
       matrix:
-        # VS2019 builds use the VSSDK NuGet packages, so VS2022's msbuild can build both
-        vs: [ 2019, 2022 ]
+        # 2022 also covers VS 2026
+        vs: [ 2022 ]
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         submodules: true
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: ${{ env.DotNetVersion }}
 
     - name: Setup msbuild
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v3
 
     - name: Build VS${{ matrix.vs }}
       run: msbuild /restore ${{ env.BuildParameters }} /p:VSVersion=${{ matrix.vs }} src\Eto.DevExtension.VisualStudio.Windows\Eto.DevExtension.VisualStudio.Windows.csproj /bl:artifacts/log/Build.Windows.${{ matrix.vs }}.binlog
 
     - name: Upload extensions
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: extensions-windows-${{ matrix.vs }}
         path: artifacts/Release/*.vsix
 
     - name: Upload log files
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: log-windows-${{ matrix.vs }}
         path: artifacts/log/**/*
@@ -60,7 +60,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: extension*
           path: extensions
@@ -70,7 +70,7 @@ jobs:
         run: ls -R
 
       - name: Add extensions to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_unmatched_files: true

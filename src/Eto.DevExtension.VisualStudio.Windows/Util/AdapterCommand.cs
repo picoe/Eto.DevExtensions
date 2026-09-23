@@ -23,6 +23,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Util
 
 		public AdapterCommand(IVsTextView adapter, System.IServiceProvider provider, Guid menuGroup, uint cmdID, Action commandEvent, Func<bool> queryEvent = null)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
 			this.provider = provider;
 			this.menuGroup = menuGroup;
 			this.cmdID = cmdID;
@@ -35,11 +36,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Util
 					cmd.Visible = cmd.Enabled = this.queryEvent();
 				});
 
-			ThreadHelper.JoinableTaskFactory.RunAsync(async delegate
-			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-				ErrorHandler.ThrowOnFailure(adapter.AddCommandFilter(this, out nextCommandTarget));
-			});
+			ErrorHandler.ThrowOnFailure(adapter.AddCommandFilter(this, out nextCommandTarget));
 		}
 
 		public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)

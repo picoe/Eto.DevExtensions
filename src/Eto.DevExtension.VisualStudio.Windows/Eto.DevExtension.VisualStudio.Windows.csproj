@@ -2,7 +2,7 @@
 <Project ToolsVersion="14.0" DefaultTargets="Build"
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MinimumVisualStudioVersion>16.0</MinimumVisualStudioVersion>
+    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
   </PropertyGroup>
@@ -45,10 +45,6 @@
     <TargetVsixContainerName>Eto.DevExtension.VisualStudio.Windows.$(VSVersion)-$(PackageVersion).vsix</TargetVsixContainerName>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
     <BaseIntermediateOutputPath>$(BaseIntermediateOutputPath)$(VSVersion)\</BaseIntermediateOutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(VSVersion) == '2019'">
-  </PropertyGroup>
-  <PropertyGroup Condition="$(VSVersion) == '2022'">
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
     <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
@@ -152,13 +148,8 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup Condition="$(VSVersion) == '2019'">
-    <None Include="2019\source.extension.vsixmanifest">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup Condition="$(VSVersion) == '2022'">
-    <None Include="2022\source.extension.vsixmanifest">
+  <ItemGroup>
+    <None Include="$(VSVersion)\source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
@@ -225,24 +216,15 @@
     <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" />
   </ItemGroup>
   <Choose>
-    <When Condition="$(VSVersion) == '2019'">
-      <ItemGroup>
-        <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.10.31321.278" ExcludeAssets="runtime">
-          <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.10.1055">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" Version="16.10.31320.204" />
-      </ItemGroup>
-    </When>
+    <!-- covers VS 2022 and VS 2026, which loads 17.x extensions -->
     <When Condition="$(VSVersion) == '2022'">
       <ItemGroup>
+        <!-- 17.5 SDK keeps older VS 2022 releases supported -->
         <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.5.33428.388" ExcludeAssets="runtime">
           <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.5.4072">
+        <!-- 18.x build tools are needed to deploy to the VS 2026 experimental instance -->
+        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.9.820">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
@@ -277,9 +259,7 @@
     <Message Text="CopyLocal: %(ReferencePath.Identity), %(Filename)" Condition="%(ReferencePath.CopyLocal) == 'True'" Importance="high" />
   </Target>
   <Target Name="ClearTemplateCache" AfterTargets="AfterBuild">
-    <RemoveDir Directories="$(HOMEDRIVE)$(HOMEPATH)\.templateengine\vs" />
-    <RemoveDir Directories="$(LOCALAPPDATA)\Microsoft\VisualStudio\16.0_aa19621cExp\TemplateEngineHost" />
-  </Target>
+    <RemoveDir Directories="$(HOMEDRIVE)$(HOMEPATH)\.templateengine\vs" />  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
