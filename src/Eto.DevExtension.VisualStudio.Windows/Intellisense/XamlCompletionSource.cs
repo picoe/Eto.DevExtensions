@@ -37,7 +37,7 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			this.textView = textView;
 		}
 
-		ImageElement GetGlyph(CompletionType type)
+		internal static ImageElement GetGlyph(CompletionType type)
 		{
             switch (type)
 			{

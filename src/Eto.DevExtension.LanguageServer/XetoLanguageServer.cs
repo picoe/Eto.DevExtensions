@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json.Nodes;
 using Eto.DevExtension.LanguageServer.Lsp;
+using Eto.Designer.Completion;
 
 namespace Eto.DevExtension.LanguageServer
 {
@@ -121,16 +122,11 @@ namespace Eto.DevExtension.LanguageServer
 			if (position == null)
 				return false;
 			offset = DocumentStore.GetOffset(text, position["line"]?.GetValue<int>() ?? 0, position["character"]?.GetValue<int>() ?? 0);
-			format = GetFormat(uri);
+			format = DocumentCompletion.GetFormat(uri);
 			if (format == Eto.Designer.Completion.CompletionFormat.Json)
 				rootTypeName = RootTypeLocator.Find(ToLocalPath(uri));
 			return true;
 		}
-
-		static Eto.Designer.Completion.CompletionFormat GetFormat(string uri) =>
-			uri.EndsWith(".jeto", StringComparison.OrdinalIgnoreCase)
-				? Eto.Designer.Completion.CompletionFormat.Json
-				: Eto.Designer.Completion.CompletionFormat.Xaml;
 
 		/// <summary>
 		/// Points Eto resolution at the project owning this document. Only the first document

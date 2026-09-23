@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build"
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
@@ -89,6 +89,9 @@
     <Compile Include="EtoAddinPackage.cs" />
     <Compile Include="Editor\EtoPreviewPane.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Intellisense\JetoCompletionManager.cs" />
+    <Compile Include="Intellisense\JetoCompletionProvider.cs" />
+    <Compile Include="Intellisense\JetoCompletionSource.cs" />
     <Compile Include="Intellisense\XamlCompletionHandler.cs" />
     <Compile Include="Intellisense\XamlCompletionManager.cs" />
     <Compile Include="Intellisense\XamlCompletionProvider.cs" />
