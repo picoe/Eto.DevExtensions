@@ -286,7 +286,7 @@
     <PreviewHostPublishDir>$(ArtifactsDir)Eto.DevExtension.PreviewHost\publish\$(Configuration)\</PreviewHostPublishDir>
   </PropertyGroup>
   <Target Name="PublishPreviewHost" BeforeTargets="GetVsixSourceItems">
-    <Exec Command="dotnet publish &quot;$(PreviewHostProject)&quot; -c $(Configuration) -o &quot;$(PreviewHostPublishDir.TrimEnd('\'))&quot; --nologo -v q" />
+    <Exec Command="dotnet publish &quot;$(PreviewHostProject)&quot; -f net8.0-windows -c $(Configuration) -o &quot;$(PreviewHostPublishDir.TrimEnd('\'))&quot; --nologo -v q" />
     <ItemGroup>
       <PreviewHostFile Include="$(PreviewHostPublishDir)**\*" Exclude="$(PreviewHostPublishDir)**\*.pdb" />
       <VSIXSourceItem Include="@(PreviewHostFile)" VSIXSubPath="preview\%(RecursiveDir)" />

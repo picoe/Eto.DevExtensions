@@ -7,11 +7,11 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
+import { HostLauncher } from './hostLaunch';
 import { isPreviewable, PreviewPanel } from './preview';
 import { PreviewHost } from './previewHost';
 
 const SERVER_DLL = 'Eto.DevExtension.LanguageServer.dll';
-const PREVIEW_HOST_DLL = 'Eto.DevExtension.PreviewHost.dll';
 
 let client: LanguageClient | undefined;
 let output: vscode.OutputChannel;
@@ -109,14 +109,8 @@ async function openPreview(context: vscode.ExtensionContext, uri?: vscode.Uri): 
 	}
 
 	if (!previewHost) {
-		const config = vscode.workspace.getConfiguration('eto');
-		const hostPath = resolvePath(context, config.get<string>('previewHost.path'), 'preview', PREVIEW_HOST_DLL,
-			path.join('Eto.DevExtension.PreviewHost', 'Debug', 'net8.0-windows'));
-		if (!hostPath) {
-			vscode.window.showErrorMessage(`Could not find ${PREVIEW_HOST_DLL}. Set "eto.previewHost.path" to point at it.`);
-			return;
-		}
-		previewHost = new PreviewHost(config.get<string>('dotnetPath')?.trim() || 'dotnet', hostPath, output);
+		const launcher = new HostLauncher(context.extensionPath, output);
+		previewHost = new PreviewHost(fileName => launcher.resolve(fileName), output);
 	}
 	PreviewPanel.show(previewHost, document);
 }

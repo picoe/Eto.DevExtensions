@@ -7,15 +7,19 @@ namespace Eto.DevExtension.PreviewHost
 {
 	static class Program
 	{
+		/// <summary>Pass --platform Wpf|Gtk|Mac64|macOS to pick the Eto platform, otherwise the OS's default is used.</summary>
 		[STAThread]
 		static int Main(string[] args)
 		{
+			var index = Array.FindIndex(args, r => r == "--platform");
+			var platform = PreviewPlatform.Get(index >= 0 && index + 1 < args.Length ? args[index + 1] : null);
+
 			var connection = new LspConnection(Console.OpenStandardInput(), Console.OpenStandardOutput());
 
 			// stdout is the protocol channel
 			Console.SetOut(TextWriter.Null);
 
-			var server = new PreviewServer(connection);
+			var server = new PreviewServer(connection, platform);
 			var reader = new Thread(() =>
 			{
 				try

@@ -6,6 +6,7 @@ import {
 	StreamMessageReader,
 	StreamMessageWriter
 } from 'vscode-jsonrpc/node';
+import { HostLaunch } from './hostLaunch';
 
 // long enough for a first render that compiles code, short enough to recover from a hung control
 const RENDER_TIMEOUT_MS = 30000;
@@ -34,15 +35,16 @@ export class PreviewHost implements vscode.Disposable {
 	private connection: MessageConnection | undefined;
 	private starting: Promise<MessageConnection | undefined> | undefined;
 	private queue: Promise<unknown> = Promise.resolve();
-	private unavailable = false;
+	private launchKey: string | undefined;
+	// hosts that couldn't start, usually for want of a runtime, so they aren't tried again
+	private readonly unavailable = new Set<string>();
 	private readonly restarted = new vscode.EventEmitter<void>();
 
 	/** Fires after the project is rebuilt, so previews can be redrawn. */
 	readonly onDidRequestRedraw = this.restarted.event;
 
 	constructor(
-		private readonly dotnet: string,
-		private readonly hostPath: string,
+		private readonly resolveLaunch: (fileName: string) => Promise<HostLaunch | undefined>,
 		private readonly output: vscode.OutputChannel
 	) { }
 
@@ -60,9 +62,13 @@ export class PreviewHost implements vscode.Disposable {
 	private async renderNow(request: RenderRequest): Promise<RenderResult> {
 		// a second try covers a host that exited after a rebuild, or that serves another project
 		for (let attempt = 0; attempt < 2; attempt++) {
-			const connection = await this.getConnection();
+			const launch = await this.resolveLaunch(request.fileName);
+			if (!launch) {
+				return error('Could not find the Eto preview host. Set "eto.previewHost.path" to point at it.');
+			}
+			const connection = await this.getConnection(launch);
 			if (!connection) {
-				return error('The preview needs the .NET 8 Desktop Runtime (or newer). See the Eto.Forms Designer output for details.');
+				return error(`${launch.requirement} See the Eto.Forms Designer output for details.`);
 			}
 
 			let timer: NodeJS.Timeout | undefined;
@@ -93,21 +99,23 @@ export class PreviewHost implements vscode.Disposable {
 		return error('The preview host could not load the project.');
 	}
 
-	private getConnection(): Promise<MessageConnection | undefined> {
-		if (this.connection && this.process && isRunning(this.process)) {
+	private getConnection(launch: HostLaunch): Promise<MessageConnection | undefined> {
+		const key = JSON.stringify([launch.command, ...launch.args]);
+		if (this.launchKey === key && this.connection && this.process && isRunning(this.process)) {
 			return Promise.resolve(this.connection);
 		}
-		if (this.unavailable) {
+		if (this.unavailable.has(key)) {
 			return Promise.resolve(undefined);
 		}
 		this.stop();
-		this.starting ??= this.start().finally(() => this.starting = undefined);
+		this.launchKey = key;
+		this.starting ??= this.start(launch, key).finally(() => this.starting = undefined);
 		return this.starting;
 	}
 
-	private async start(): Promise<MessageConnection | undefined> {
+	private async start(launch: HostLaunch, key: string): Promise<MessageConnection | undefined> {
 		try {
-			const child = spawn(this.dotnet, [this.hostPath], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+			const child = spawn(launch.command, launch.args, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
 			const failed = new Promise<never>((_, reject) => child.once('error', reject));
 			child.stderr?.on('data', data => this.output.append(`${data}`));
 
@@ -125,9 +133,8 @@ export class PreviewHost implements vscode.Disposable {
 			connection.sendNotification('initialized', {});
 			return connection;
 		} catch (e) {
-			// usually no desktop runtime to run it with, so don't keep trying
-			this.unavailable = true;
-			this.output.appendLine(`Could not start the Eto preview host using "${this.dotnet}": ${e}`);
+			this.unavailable.add(key);
+			this.output.appendLine(`Could not start the Eto preview host using "${launch.command}": ${e}`);
 			this.stop();
 			return undefined;
 		}
@@ -138,6 +145,7 @@ export class PreviewHost implements vscode.Disposable {
 		const child = this.process;
 		this.connection = undefined;
 		this.process = undefined;
+		this.launchKey = undefined;
 		connection?.dispose();
 		if (child && isRunning(child)) {
 			child.kill();

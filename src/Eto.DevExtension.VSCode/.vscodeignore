@@ -6,3 +6,4 @@ tsconfig.json
 .gitignore
 server/**/*.pdb
 preview/**/*.pdb
+scripts/**

@@ -79,7 +79,22 @@
         "eto.previewHost.path": {
           "type": "string",
           "default": "",
-          "description": "Path to Eto.DevExtension.PreviewHost.dll. Uses the copy bundled with the extension when empty."
+          "description": "Path to Eto.DevExtension.PreviewHost.dll. Uses the copy bundled with the extension when empty. Not used for Eto.macOS previews."
+        },
+        "eto.preview.macPlatform": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "macOS",
+            "Mac64"
+          ],
+          "enumDescriptions": [
+            "Eto.macOS when a project in the solution references Eto.Platform.macOS, otherwise Eto.Mac64.",
+            "Always preview with Eto.macOS.",
+            "Always preview with Eto.Mac64."
+          ],
+          "default": "auto",
+          "description": "The Eto platform used for previews on macOS."
         },
         "eto.etoAssemblyPath": {
           "type": "string",
@@ -114,20 +129,20 @@
         {
           "command": "eto.openPreview",
           "group": "navigation",
-          "when": "isWindows && resourceFilename =~ /\\.(xeto|jeto|eto\\.cs|eto\\.vb)$/i"
+          "when": "resourceFilename =~ /\\.(xeto|jeto|eto\\.cs|eto\\.vb)$/i"
         }
       ],
       "commandPalette": [
         {
           "command": "eto.openPreview",
-          "when": "isWindows && resourceFilename =~ /\\.(xeto|jeto|eto\\.cs|eto\\.vb)$/i"
+          "when": "resourceFilename =~ /\\.(xeto|jeto|eto\\.cs|eto\\.vb)$/i"
         }
       ]
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run build:server && npm run compile",
-    "build:server": "dotnet publish ../Eto.DevExtension.LanguageServer/Eto.DevExtension.LanguageServer.csproj -c Release -o server && dotnet publish ../Eto.DevExtension.PreviewHost/Eto.DevExtension.PreviewHost.csproj -c Release -o preview",
+    "build:server": "node scripts/build-server.js",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "node -e \"require('fs').mkdirSync('../../artifacts/vscode',{recursive:true})\" && vsce package --out ../../artifacts/vscode/"

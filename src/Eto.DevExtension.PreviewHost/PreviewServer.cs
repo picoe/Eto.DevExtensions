@@ -17,15 +17,17 @@ namespace Eto.DevExtension.PreviewHost
 	class PreviewServer
 	{
 		readonly LspConnection connection;
+		readonly PreviewPlatform platform;
 		readonly ManualResetEventSlim startUI = new ManualResetEventSlim();
 		readonly TaskCompletionSource<bool> uiReady = new TaskCompletionSource<bool>();
 		Dictionary<string, string> theme = new Dictionary<string, string>();
 		bool configured;
 		object renderer;
 
-		public PreviewServer(LspConnection connection)
+		public PreviewServer(LspConnection connection, PreviewPlatform platform)
 		{
 			this.connection = connection;
+			this.platform = platform;
 			connection.OnRequest("initialize", Initialize);
 			connection.OnRequest("shutdown", _ => null);
 			connection.OnNotification("initialized", _ => { });
@@ -55,7 +57,7 @@ namespace Eto.DevExtension.PreviewHost
 
 			if (!configured)
 			{
-				ProjectAssemblies.Configure(assemblies, request.FileName, connection.Log);
+				ProjectAssemblies.Configure(platform, assemblies, request.FileName, connection.Log);
 				configured = true;
 				startUI.Set();
 				uiReady.Task.Wait();
@@ -66,7 +68,7 @@ namespace Eto.DevExtension.PreviewHost
 			return RenderOnUI(request);
 		}
 
-		/// <summary>Runs the UI on the calling thread, which must be the process's main STA thread.</summary>
+		/// <summary>Runs the UI on the calling thread, which must be the process's main thread.</summary>
 		public void RunUI()
 		{
 			startUI.Wait();
@@ -77,18 +79,17 @@ namespace Eto.DevExtension.PreviewHost
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		void StartEto()
 		{
-			var platform = new Eto.Wpf.Platform();
-			platform.Add<Eto.Designer.IPlatformTheme>(() => new HostTheme(theme));
+			var etoPlatform = (Eto.Platform)platform.CreatePlatform();
+			etoPlatform.Add<Eto.Designer.IPlatformTheme>(() => new HostTheme(theme));
 			Eto.Designer.Builders.BaseCompiledInterfaceBuilder.EtoAssemblyPath = ProjectAssemblies.EtoFile;
 
-			var app = new Eto.Forms.Application(platform);
+			var app = new Eto.Forms.Application(etoPlatform);
 			app.Initialized += (sender, e) =>
 			{
-				// the offscreen forms come and go, and must not end the process
-				System.Windows.Application.Current.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
+				platform.Initialized();
 				ProjectAssemblies.LoadProject();
 				ProjectAssemblies.WatchForChanges(Restart);
-				renderer = new PreviewRenderer();
+				renderer = new PreviewRenderer(platform);
 				uiReady.TrySetResult(true);
 			};
 			app.UnhandledException += (sender, e) => connection.Log($"Unhandled exception: {e.ExceptionObject}");

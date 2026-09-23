@@ -12,7 +12,7 @@ using Eto.DevExtension.LanguageServer;
 namespace Eto.DevExtension.PreviewHost
 {
 	/// <summary>
-	/// Resolves the project's assemblies and a matching Eto + Eto.Wpf for this process.
+	/// Resolves the project's assemblies and a matching Eto + Eto platform for this process.
 	/// Call <see cref="Configure"/> once, before anything touches an Eto type.
 	/// </summary>
 	/// <remarks>
@@ -21,7 +21,7 @@ namespace Eto.DevExtension.PreviewHost
 	static class ProjectAssemblies
 	{
 		// Eto and the libraries it shares with the project, which must all come from the same place
-		static readonly string[] EtoNames = { "Eto", "Eto.Wpf", "Eto.Serialization.Xaml", "Eto.Serialization.Json" };
+		static readonly string[] SerializationNames = { "Eto.Serialization.Xaml", "Eto.Serialization.Json" };
 		static readonly string[] SharedNames = { "Portable.Xaml", "Newtonsoft.Json" };
 
 		static readonly Dictionary<string, string> namedFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -33,8 +33,14 @@ namespace Eto.DevExtension.PreviewHost
 		static readonly object loadLock = new object();
 		static AssemblyDependencyResolver dependencyResolver;
 		static Action<string> log;
+		static PreviewPlatform platform;
 
-		static string FallbackDirectory => Path.Combine(AppContext.BaseDirectory, "eto");
+#if MACOS
+		// Contents/Resources/eto in the app bundle, beside Contents/MonoBundle
+		static readonly string FallbackDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Resources", "eto"));
+#else
+		static readonly string FallbackDirectory = Path.Combine(AppContext.BaseDirectory, "eto");
+#endif
 
 		/// <summary>Project assembly files, its own first.</summary>
 		public static IReadOnlyList<string> Paths { get; private set; } = Array.Empty<string>();
@@ -49,8 +55,9 @@ namespace Eto.DevExtension.PreviewHost
 
 		public static string GetKey(IEnumerable<string> paths) => string.Join("|", paths ?? Enumerable.Empty<string>());
 
-		public static void Configure(IList<string> paths, string documentPath, Action<string> logger)
+		public static void Configure(PreviewPlatform previewPlatform, IList<string> paths, string documentPath, Action<string> logger)
 		{
+			platform = previewPlatform;
 			log = logger;
 			Paths = (paths ?? new List<string>()).Where(File.Exists).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 			Key = GetKey(paths);
@@ -124,28 +131,37 @@ namespace Eto.DevExtension.PreviewHost
 				?? EtoAssemblyLocator.Find(documentPath, log);
 			var eto = etoDirectory != null ? Path.Combine(etoDirectory, "Eto.dll") : null;
 			var version = eto != null && File.Exists(eto) ? GetPackageVersion(eto) : null;
-			var wpf = version != null ? FindEtoWpf(version, etoDirectory) : null;
+			var platformFile = version != null ? FindPlatform(version, etoDirectory) : null;
 
-			if (wpf == null)
+			if (platformFile == null)
 			{
 				if (eto != null)
-					log?.Invoke($"No Eto.Wpf {version} found for {eto}, so using Eto bundled with the extension.");
-				foreach (var name in EtoNames.Concat(SharedNames))
+					log?.Invoke($"No {platform.AssemblyName} {version} found for {eto}, so using Eto bundled with the extension.");
+				foreach (var name in new[] { "Eto", platform.AssemblyName }.Concat(platform.CompanionNames).Concat(SerializationNames).Concat(SharedNames).Concat(platform.SharedNames))
 					SetFallback(name);
 				return;
 			}
 
-			namedFiles["Eto"] = eto;
-			namedFiles["Eto.Wpf"] = wpf;
-			foreach (var name in EtoNames.Skip(2))
+			// the located copy may be built for a newer runtime than this one
+			namedFiles["Eto"] = FindPackage("Eto", version, RuntimeFrameworks(), "eto.forms") ?? eto;
+			namedFiles[platform.AssemblyName] = platformFile;
+			foreach (var name in platform.CompanionNames)
 			{
-				var file = FindBeside(name, etoDirectory) ?? FindPackage(name, version, new[] { "netstandard2.0" });
+				var file = FindBeside(name, Path.GetDirectoryName(platformFile));
 				if (file != null)
 					namedFiles[name] = file;
 				else
 					SetFallback(name);
 			}
-			foreach (var name in SharedNames)
+			foreach (var name in SerializationNames)
+			{
+				var file = FindBeside(name, etoDirectory) ?? FindPackage(name, version, RuntimeFrameworks());
+				if (file != null)
+					namedFiles[name] = file;
+				else
+					SetFallback(name);
+			}
+			foreach (var name in SharedNames.Concat(platform.SharedNames))
 			{
 				var file = probeDirectories.Select(r => FindBeside(name, r)).FirstOrDefault(r => r != null);
 				if (file != null)
@@ -153,7 +169,7 @@ namespace Eto.DevExtension.PreviewHost
 				else
 					SetFallback(name);
 			}
-			log?.Invoke($"Using Eto {version} from {eto} with {wpf}");
+			log?.Invoke($"Using Eto {version} from {namedFiles["Eto"]} with {platformFile}");
 		}
 
 		static void SetFallback(string name)
@@ -171,29 +187,31 @@ namespace Eto.DevExtension.PreviewHost
 			return File.Exists(file) ? file : null;
 		}
 
-		/// <summary>Eto.Wpf of the same version as Eto, preferring a .NET Core build from the package over one next to the project.</summary>
-		static string FindEtoWpf(string version, string etoDirectory)
+		/// <summary>Eto platform of the same version as Eto, preferring a build for this runtime from the package over one next to the project.</summary>
+		static string FindPlatform(string version, string etoDirectory)
 		{
-			var fromPackage = FindPackage("Eto.Wpf", version, GetWindowsFrameworks(), "eto.platform.wpf");
+			var name = platform.AssemblyName;
+			var fromPackage = FindPackage(name, version, platform.GetFrameworks, platform.PackageId);
 			if (fromPackage != null)
 				return fromPackage;
 
-			var beside = FindBeside("Eto.Wpf", etoDirectory) ?? probeDirectories.Select(r => FindBeside("Eto.Wpf", r)).FirstOrDefault(r => r != null);
+			var beside = FindBeside(name, etoDirectory) ?? probeDirectories.Select(r => FindBeside(name, r)).FirstOrDefault(r => r != null);
 			return beside != null && GetPackageVersion(beside) == version ? beside : null;
 		}
 
 		// newest first, but never newer than the runtime we're on
-		static IEnumerable<string> GetWindowsFrameworks()
+		public static IEnumerable<string> RuntimeFrameworks()
 		{
 			for (var major = Environment.Version.Major; major >= 5; major--)
-			{
-				yield return $"net{major}.0-windows7.0";
-				yield return $"net{major}.0-windows";
-			}
-			yield return "netcoreapp3.1";
+				yield return $"net{major}.0";
+			yield return "netstandard2.0";
 		}
 
-		static string FindPackage(string name, string version, IEnumerable<string> frameworks, string packageId = null)
+		static string FindPackage(string name, string version, IEnumerable<string> frameworks, string packageId = null) =>
+			FindPackage(name, version, _ => frameworks, packageId);
+
+		/// <param name="getFrameworks">Given the lib folders in the package, returns the ones to use, best first.</param>
+		static string FindPackage(string name, string version, Func<IEnumerable<string>, IEnumerable<string>> getFrameworks, string packageId = null)
 		{
 			packageId = (packageId ?? name).ToLowerInvariant();
 			foreach (var folder in GetPackageFolders())
@@ -201,7 +219,8 @@ namespace Eto.DevExtension.PreviewHost
 				var lib = Path.Combine(folder, packageId, version.ToLowerInvariant(), "lib");
 				if (!Directory.Exists(lib))
 					continue;
-				foreach (var framework in frameworks)
+				var available = Directory.EnumerateDirectories(lib).Select(Path.GetFileName).ToList();
+				foreach (var framework in getFrameworks(available))
 				{
 					var file = Path.Combine(lib, framework, name + ".dll");
 					if (File.Exists(file))
