@@ -81,21 +81,6 @@
           "default": "",
           "description": "Path to Eto.DevExtension.PreviewHost.dll. Uses the copy bundled with the extension when empty. Not used for Eto.macOS previews."
         },
-        "eto.preview.macPlatform": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "macOS",
-            "Mac64"
-          ],
-          "enumDescriptions": [
-            "Eto.macOS when a project in the solution references Eto.Platform.macOS, otherwise Eto.Mac64.",
-            "Always preview with Eto.macOS.",
-            "Always preview with Eto.Mac64."
-          ],
-          "default": "auto",
-          "description": "The Eto platform used for previews on macOS."
-        },
         "eto.etoAssemblyPath": {
           "type": "string",
           "default": "",

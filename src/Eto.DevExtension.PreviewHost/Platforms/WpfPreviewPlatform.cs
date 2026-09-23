@@ -40,7 +40,7 @@ namespace Eto.DevExtension.PreviewHost
 				form.Show();
 				await Dispatcher.Yield(DispatcherPriority.ContextIdle);
 
-				var element = content.ToNative();
+				var element = WpfHelpers.ToNative(content);
 				element.UpdateLayout();
 				var width = (int)Math.Ceiling(element.ActualWidth);
 				var height = (int)Math.Ceiling(element.ActualHeight);

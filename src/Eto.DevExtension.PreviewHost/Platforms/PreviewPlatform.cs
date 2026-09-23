@@ -56,6 +56,8 @@ namespace Eto.DevExtension.PreviewHost
 #if WINDOWS
 				case "wpf":
 					return new WpfPreviewPlatform();
+				case "winforms":
+					return new WinFormsPreviewPlatform();
 #elif MACOS
 				case "macos":
 					return new MacPreviewPlatform();

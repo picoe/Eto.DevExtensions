@@ -24,6 +24,8 @@ export interface RenderResult {
 	width?: number;
 	height?: number;
 	error?: { message: string; details?: string };
+	/** Label of the platform it was drawn with. */
+	platform?: string;
 }
 
 /**
@@ -86,7 +88,7 @@ export class PreviewHost implements vscode.Disposable {
 					this.stop();
 					continue;
 				}
-				return result ?? {};
+				return { ...result, platform: launch.platform };
 			} catch (e) {
 				this.stop();
 				if (attempt > 0) {
@@ -115,7 +117,7 @@ export class PreviewHost implements vscode.Disposable {
 
 	private async start(launch: HostLaunch, key: string): Promise<MessageConnection | undefined> {
 		try {
-			const child = spawn(launch.command, launch.args, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+			const child = spawn(launch.command, launch.args, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true, env: launch.env });
 			const failed = new Promise<never>((_, reject) => child.once('error', reject));
 			child.stderr?.on('data', data => this.output.append(`${data}`));
 

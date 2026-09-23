@@ -9,49 +9,113 @@ const MAC_EXECUTABLE = path.join(MAC_APP, 'Contents', 'MacOS', 'Eto.DevExtension
 // scanning projects on every keystroke is too slow, but an edited project should still be noticed
 const CACHE_MS = 10000;
 
-type MacPlatform = 'macOS' | 'Mac64';
+export const AUTO = 'auto';
+
+/** A platform the preview can draw with. */
+export interface PlatformOption {
+	id: string;
+	label: string;
+}
 
 /** How to start a preview host process. */
 export interface HostLaunch {
 	command: string;
 	args: string[];
+	env?: NodeJS.ProcessEnv;
+	/** Label of the platform it draws with. */
+	platform: string;
 	/** Shown when the process can't be started. */
 	requirement: string;
 }
 
+interface Platform extends PlatformOption {
+	/** Matches a project that uses this platform, from a package or project reference. */
+	reference: RegExp;
+	launch(): HostLaunch | undefined;
+}
+
 /**
- * Picks the preview host for a document: Wpf on Windows, Gtk on Linux, and on macOS either the
- * Eto.macOS app bundle or Mac64, depending on what the solution uses.
+ * Picks the preview host for a document. The platforms offered depend on the OS and what's installed,
+ * and Auto picks the first one the solution references, otherwise the OS's usual one.
  */
 export class HostLauncher {
-	private readonly macCache = new Map<string, { time: number; platform: MacPlatform }>();
+	private readonly autoCache = new Map<string, { time: number; platform: Platform }>();
 	private lastMessage: string | undefined;
 
 	constructor(private readonly extensionPath: string, private readonly output: vscode.OutputChannel) { }
 
-	async resolve(fileName: string): Promise<HostLaunch | undefined> {
+	/** Platforms available on this machine, best first. */
+	getPlatforms(): PlatformOption[] {
+		return this.getAvailable().map(r => ({ id: r.id, label: r.label }));
+	}
+
+	/** @param choice A platform id, or {@link AUTO}. */
+	async resolve(fileName: string, choice: string): Promise<HostLaunch | undefined> {
+		const platforms = this.getAvailable();
+		const platform = platforms.find(r => r.id === choice) ?? await this.detect(fileName, platforms);
+		return platform?.launch();
+	}
+
+	private getAvailable(): Platform[] {
 		const config = vscode.workspace.getConfiguration('eto');
 		const dotnet = config.get<string>('dotnetPath')?.trim() || 'dotnet';
 		const configured = config.get<string>('previewHost.path')?.trim();
+		const netHost = () => this.find(configured, path.join('preview', 'net', HOST_DLL), path.join('Eto.DevExtension.PreviewHost', 'Debug', 'net8.0', HOST_DLL));
+		const platforms: Platform[] = [];
 
 		if (process.platform === 'win32') {
-			const dll = this.find(configured, path.join('preview', 'win', HOST_DLL), path.join('Eto.DevExtension.PreviewHost', 'Debug', 'net8.0-windows', HOST_DLL));
-			return withDotnet(dotnet, dll, [], 'The preview needs the .NET 8 Desktop Runtime (or newer).');
+			const windowsHost = () => this.find(configured, path.join('preview', 'win', HOST_DLL), path.join('Eto.DevExtension.PreviewHost', 'Debug', 'net8.0-windows', HOST_DLL));
+			const requirement = 'The preview needs the .NET 8 Desktop Runtime (or newer).';
+			platforms.push(
+				{ id: 'Wpf', label: 'WPF', reference: /Eto\.Platform\.Wpf\b|Eto\.Wpf\.csproj/i, launch: () => withDotnet(dotnet, windowsHost(), 'Wpf', 'WPF', requirement) },
+				{ id: 'WinForms', label: 'WinForms', reference: /Eto\.Platform\.Windows\b|Eto\.WinForms\.csproj/i, launch: () => withDotnet(dotnet, windowsHost(), 'WinForms', 'WinForms', requirement) }
+			);
 		}
-
-		const dll = this.find(configured, path.join('preview', 'net', HOST_DLL), path.join('Eto.DevExtension.PreviewHost', 'Debug', 'net8.0', HOST_DLL));
-		if (process.platform !== 'darwin') {
-			return withDotnet(dotnet, dll, ['--platform', 'Gtk'], 'The preview needs the .NET 8 runtime (or newer) and GTK 3.');
-		}
-
-		if (await this.getMacPlatform(fileName) === 'macOS') {
+		if (process.platform === 'darwin') {
 			const app = this.find(undefined, path.join('preview', 'macos', MAC_EXECUTABLE), path.join('Eto.DevExtension.PreviewHost.macOS', 'Debug', 'net10.0-macos', MAC_EXECUTABLE));
 			if (app) {
-				return { command: app, args: [], requirement: 'The Eto.macOS preview host could not be started.' };
+				platforms.push({
+					id: 'macOS', label: 'macOS', reference: /Eto\.Platform\.macOS\b|Eto\.macOS\.csproj/i,
+					launch: () => ({ command: app, args: [], platform: 'macOS', requirement: 'The Eto.macOS preview host could not be started.' })
+				});
 			}
-			this.log('This copy of the extension has no Eto.macOS preview host, so previewing with Mac64 instead.');
+			platforms.push({
+				id: 'Mac64', label: 'Mac64', reference: /Eto\.Platform\.Mac64\b|Eto\.Mac64\.csproj/i,
+				launch: () => withDotnet(dotnet, netHost(), 'Mac64', 'Mac64', 'The preview needs the .NET 8 runtime (or newer).')
+			});
 		}
-		return withDotnet(dotnet, dll, ['--platform', 'Mac64'], 'The preview needs the .NET 8 runtime (or newer).');
+
+		const gtk = findGtk();
+		if (gtk) {
+			platforms.push({
+				id: 'Gtk', label: 'Gtk', reference: /Eto\.Platform\.Gtk\b|Eto\.Gtk\.csproj/i,
+				launch: () => {
+					const launch = withDotnet(dotnet, netHost(), 'Gtk', 'Gtk', 'The preview needs the .NET 8 runtime (or newer) and GTK 3.');
+					return launch && { ...launch, env: gtk.env };
+				}
+			});
+		}
+		return platforms;
+	}
+
+	private async detect(fileName: string, platforms: Platform[]): Promise<Platform | undefined> {
+		const key = path.dirname(fileName);
+		const cached = this.autoCache.get(key);
+		if (cached && Date.now() - cached.time < CACHE_MS && platforms.some(r => r.id === cached.platform.id)) {
+			return cached.platform;
+		}
+		if (platforms.length === 0) {
+			return undefined;
+		}
+
+		const texts = (findSolutionProjects(fileName) ?? await findWorkspaceProjects()).map(readText);
+		const referenced = platforms.find(platform => texts.some(text => platform.reference.test(text)));
+		const platform = referenced ?? platforms[0];
+		this.autoCache.set(key, { time: Date.now(), platform });
+		this.log(referenced
+			? `Previewing with ${platform.label}, as the solution uses it.`
+			: `Previewing with ${platform.label}, as the solution doesn't reference an Eto platform available here.`);
+		return platform;
 	}
 
 	/**
@@ -76,34 +140,6 @@ export class HostLauncher {
 		return undefined;
 	}
 
-	private async getMacPlatform(fileName: string): Promise<MacPlatform> {
-		const configured = vscode.workspace.getConfiguration('eto').get<string>('preview.macPlatform');
-		if (configured === 'macOS' || configured === 'Mac64') {
-			return configured;
-		}
-
-		const key = path.dirname(fileName);
-		const cached = this.macCache.get(key);
-		if (cached && Date.now() - cached.time < CACHE_MS) {
-			return cached.platform;
-		}
-
-		const projects = findSolutionProjects(fileName) ?? await findWorkspaceProjects();
-		let platform: MacPlatform = 'Mac64';
-		let reason = 'no project in the solution references Eto.Platform.macOS';
-		for (const project of projects) {
-			const text = readText(project);
-			if (/Eto\.Platform\.macOS\b|Eto\.macOS\.csproj/i.test(text)) {
-				platform = 'macOS';
-				reason = `${path.basename(project)} references it`;
-				break;
-			}
-		}
-		this.macCache.set(key, { time: Date.now(), platform });
-		this.log(`Previewing with ${platform === 'macOS' ? 'Eto.macOS' : 'Eto.Mac64'}, as ${reason}. Set "eto.preview.macPlatform" to choose.`);
-		return platform;
-	}
-
 	private log(message: string): void {
 		if (message !== this.lastMessage) {
 			this.lastMessage = message;
@@ -112,8 +148,29 @@ export class HostLauncher {
 	}
 }
 
-function withDotnet(dotnet: string, dll: string | undefined, args: string[], requirement: string): HostLaunch | undefined {
-	return dll ? { command: dotnet, args: [dll, ...args], requirement } : undefined;
+function withDotnet(dotnet: string, dll: string | undefined, id: string, label: string, requirement: string): HostLaunch | undefined {
+	return dll ? { command: dotnet, args: [dll, '--platform', id], platform: label, requirement } : undefined;
+}
+
+/** GTK 3, and the environment the host needs to find it, or undefined when it isn't installed. */
+function findGtk(): { env?: NodeJS.ProcessEnv } | undefined {
+	if (process.platform === 'darwin') {
+		// Homebrew (Apple silicon, then Intel) or MacPorts, none of which are on the default library path
+		const dir = ['/opt/homebrew/lib', '/usr/local/lib', '/opt/local/lib'].find(r => fs.existsSync(path.join(r, 'libgtk-3.0.dylib')));
+		return dir ? { env: { ...process.env, DYLD_FALLBACK_LIBRARY_PATH: joinPath(dir, process.env.DYLD_FALLBACK_LIBRARY_PATH) } } : undefined;
+	}
+	if (process.platform === 'win32') {
+		// where GtkSharp's build installs it, or anywhere on PATH such as MSYS2
+		const installed = process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Gtk', '3.24.24') : undefined;
+		const dir = [installed, ...(process.env.PATH ?? '').split(path.delimiter)].find(r => r && fs.existsSync(path.join(r, 'libgtk-3-0.dll')));
+		return dir ? { env: { ...process.env, PATH: joinPath(dir, process.env.PATH) } } : undefined;
+	}
+	// the desktop's own toolkit, so assume it's there
+	return {};
+}
+
+function joinPath(first: string, rest: string | undefined): string {
+	return rest ? `${first}${path.delimiter}${rest}` : first;
 }
 
 /** Projects in the nearest solution above the file, or undefined when there's none. */

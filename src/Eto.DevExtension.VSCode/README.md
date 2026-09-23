@@ -27,8 +27,10 @@ The [.NET 8 runtime](https://dotnet.microsoft.com/download) or newer, used to ru
 On Windows the preview also needs the .NET Desktop Runtime 8 or newer, and on Linux it needs GTK 3.
 
 The preview runs your project's code in a separate process, drawing with the Eto.Forms version the
-project uses and the platform for your OS: Eto.Wpf on Windows, Eto.Gtk on Linux, and on macOS
-Eto.macOS when a project in the solution references `Eto.Platform.macOS`, otherwise Eto.Mac64.
+project uses. Pick the platform to draw with from the drop down at the top of the preview: WPF or
+WinForms on Windows, macOS or Mac64 on macOS, and Gtk anywhere GTK 3 is installed (on macOS, from
+Homebrew or MacPorts). **Auto** uses the first of these that a project in the solution references,
+otherwise WPF, macOS or Gtk.
 
 ## Settings
 
@@ -37,7 +39,6 @@ Eto.macOS when a project in the solution references `Eto.Platform.macOS`, otherw
 | `eto.dotnetPath` | Path to the `dotnet` executable. Uses `dotnet` from `PATH` when empty. |
 | `eto.languageServer.path` | Path to `Eto.DevExtension.LanguageServer.dll`. Uses the bundled copy when empty. |
 | `eto.previewHost.path` | Path to `Eto.DevExtension.PreviewHost.dll`. Uses the bundled copy when empty. Not used for Eto.macOS previews. |
-| `eto.preview.macPlatform` | `auto`, `macOS` or `Mac64`: the platform used for previews on macOS. |
 | `eto.etoAssemblyPath` | Folder containing the `Eto.dll` to complete against. Detected from the project when empty. |
 | `eto.trace.server` | Logs the traffic between VS Code and the language server. |
 

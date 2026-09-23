@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { AUTO, PlatformOption } from './hostLaunch';
 import { PreviewHost, RenderResult } from './previewHost';
 
 const REFRESH_DELAY_MS = 500;
@@ -7,6 +8,14 @@ const REFRESH_DELAY_MS = 500;
 /** Designer files the preview can draw. */
 export function isPreviewable(document: vscode.TextDocument): boolean {
 	return document.uri.scheme === 'file' && /\.(xeto|jeto|eto\.cs|eto\.vb)$/i.test(document.fileName);
+}
+
+/** The platform chosen in the preview's drop down. */
+export interface PlatformPicker {
+	getPlatforms(): PlatformOption[];
+	/** A platform id, or {@link AUTO}. */
+	get(): string;
+	set(id: string): Thenable<void>;
 }
 
 /**
@@ -25,16 +34,16 @@ export class PreviewPanel implements vscode.Disposable {
 	private renderPending = false;
 	private timer: NodeJS.Timeout | undefined;
 
-	static show(host: PreviewHost, document: vscode.TextDocument): void {
+	static show(host: PreviewHost, picker: PlatformPicker, document: vscode.TextDocument): void {
 		if (PreviewPanel.current) {
 			PreviewPanel.current.panel.reveal(vscode.ViewColumn.Beside, true);
 		} else {
-			PreviewPanel.current = new PreviewPanel(host);
+			PreviewPanel.current = new PreviewPanel(host, picker);
 		}
 		PreviewPanel.current.setDocument(document);
 	}
 
-	private constructor(private readonly host: PreviewHost) {
+	private constructor(private readonly host: PreviewHost, private readonly picker: PlatformPicker) {
 		this.panel = vscode.window.createWebviewPanel('eto.preview', 'Eto Preview', { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true }, {
 			enableScripts: true,
 			localResourceRoots: []
@@ -75,12 +84,19 @@ export class PreviewPanel implements vscode.Disposable {
 		this.render();
 	}
 
-	private onMessage(message: { type: string; scale?: number; width?: number; height?: number }): void {
+	private onMessage(message: { type: string; scale?: number; width?: number; height?: number; id?: string }): void {
 		switch (message.type) {
-			case 'ready':
+			case 'ready': {
 				this.ready = true;
 				this.scale = message.scale || 1;
+				const options = [{ id: AUTO, label: 'Auto' }, ...this.picker.getPlatforms()];
+				const selected = options.some(r => r.id === this.picker.get()) ? this.picker.get() : AUTO;
+				this.panel.webview.postMessage({ type: 'platforms', options, selected });
 				this.render();
+				break;
+			}
+			case 'platform':
+				this.picker.set(message.id || AUTO).then(() => this.render());
 				break;
 			case 'scale':
 				this.scale = message.scale || 1;
@@ -129,8 +145,8 @@ export class PreviewPanel implements vscode.Disposable {
 				// results for a file the user already moved away from would only flicker
 				if (document === this.document) {
 					this.panel.webview.postMessage(result.error
-						? { type: 'error', message: result.error.message, details: result.error.details }
-						: { type: 'image', image: result.image, width: result.width, height: result.height, sized: !!this.size });
+						? { type: 'error', message: result.error.message, details: result.error.details, platform: result.platform }
+						: { type: 'image', image: result.image, width: result.width, height: result.height, sized: !!this.size, platform: result.platform });
 				}
 			} while (this.renderPending);
 		} finally {
@@ -150,6 +166,9 @@ function getHtml(): string {
 <style nonce="${nonce}">
 	html, body { height: 100%; margin: 0; }
 	body { background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); display: flex; flex-direction: column; }
+	#toolbar { display: flex; justify-content: flex-end; padding: 6px 10px 0; }
+	#platform { font: inherit; padding: 2px 4px; color: var(--vscode-dropdown-foreground); background: var(--vscode-dropdown-background); border: 1px solid var(--vscode-dropdown-border); border-radius: 2px; }
+	#platform:focus { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
 	#surface { flex: 1; overflow: auto; padding: 40px 32px 32px; }
 	#frame { position: relative; display: none; margin: 0 auto; outline: 1px dashed transparent; outline-offset: 4px; }
 	#frame:hover, #frame.dragging { outline-color: var(--vscode-focusBorder); }
@@ -162,6 +181,7 @@ function getHtml(): string {
 </style>
 </head>
 <body>
+<div id="toolbar"><select id="platform" title="Platform to draw the preview with"></select></div>
 <div id="surface">
 	<div id="status">Drawing preview…</div>
 	<div id="frame"><img id="image" alt=""><button id="size" title=""></button><div id="grip" title="Drag to resize"></div></div>
@@ -175,6 +195,7 @@ function getHtml(): string {
 	const grip = document.getElementById('grip');
 	const status = document.getElementById('status');
 	const error = document.getElementById('error');
+	const platform = document.getElementById('platform');
 	let drag, sent = 0, sized = false;
 
 	function setFrameSize(width, height) {
@@ -183,8 +204,20 @@ function getHtml(): string {
 		size.textContent = width + 'x' + height;
 	}
 
+	// shows what Auto picked
+	function setPlatform(label) {
+		const auto = platform.querySelector('option[value="auto"]');
+		if (auto && label)
+			auto.textContent = platform.value === 'auto' ? 'Auto (' + label + ')' : 'Auto';
+	}
+
 	window.addEventListener('message', e => {
 		const message = e.data;
+		if (message.type === 'platforms') {
+			platform.replaceChildren(...message.options.map(r => new Option(r.label, r.id, false, r.id === message.selected)));
+			return;
+		}
+		setPlatform(message.platform);
 		if (message.type === 'image') {
 			error.style.display = 'none';
 			status.style.display = 'none';
@@ -230,6 +263,10 @@ function getHtml(): string {
 		drag = undefined;
 		frame.classList.remove('dragging');
 		vscode.postMessage({ type: 'resize', width: frame.offsetWidth, height: frame.offsetHeight });
+	});
+	platform.addEventListener('change', () => {
+		status.textContent = 'Drawing preview…';
+		vscode.postMessage({ type: 'platform', id: platform.value });
 	});
 	size.addEventListener('click', () => {
 		if (sized)

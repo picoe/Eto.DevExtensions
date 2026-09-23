@@ -7,15 +7,17 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
-import { HostLauncher } from './hostLaunch';
-import { isPreviewable, PreviewPanel } from './preview';
+import { AUTO, HostLauncher } from './hostLaunch';
+import { isPreviewable, PlatformPicker, PreviewPanel } from './preview';
 import { PreviewHost } from './previewHost';
 
 const SERVER_DLL = 'Eto.DevExtension.LanguageServer.dll';
+const PLATFORM_KEY = 'eto.preview.platform';
 
 let client: LanguageClient | undefined;
 let output: vscode.OutputChannel;
 let previewHost: PreviewHost | undefined;
+let platformPicker: PlatformPicker | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	output = vscode.window.createOutputChannel('Eto.Forms Designer');
@@ -108,11 +110,16 @@ async function openPreview(context: vscode.ExtensionContext, uri?: vscode.Uri): 
 		return;
 	}
 
-	if (!previewHost) {
+	if (!previewHost || !platformPicker) {
 		const launcher = new HostLauncher(context.extensionPath, output);
-		previewHost = new PreviewHost(fileName => launcher.resolve(fileName), output);
+		const picker: PlatformPicker = platformPicker = {
+			getPlatforms: () => launcher.getPlatforms(),
+			get: () => context.workspaceState.get<string>(PLATFORM_KEY, AUTO),
+			set: id => context.workspaceState.update(PLATFORM_KEY, id)
+		};
+		previewHost = new PreviewHost(fileName => launcher.resolve(fileName, picker.get()), output);
 	}
-	PreviewPanel.show(previewHost, document);
+	PreviewPanel.show(previewHost, platformPicker, document);
 }
 
 function resolveServerPath(context: vscode.ExtensionContext, configured?: string): string | undefined {
