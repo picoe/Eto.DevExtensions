@@ -89,9 +89,11 @@
     <Compile Include="EtoAddinPackage.cs" />
     <Compile Include="Editor\EtoPreviewPane.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Intellisense\EtoLanguageServer.cs" />
     <Compile Include="Intellisense\JetoCompletionManager.cs" />
     <Compile Include="Intellisense\JetoCompletionProvider.cs" />
     <Compile Include="Intellisense\JetoCompletionSource.cs" />
+    <Compile Include="Intellisense\ProjectAssemblyPaths.cs" />
     <Compile Include="Intellisense\XamlCompletionHandler.cs" />
     <Compile Include="Intellisense\XamlCompletionManager.cs" />
     <Compile Include="Intellisense\XamlCompletionProvider.cs" />
@@ -268,6 +270,18 @@
   <Target Name="BeforeBuild">
   </Target>
   -->
+  <!-- completions run in the same .NET language server as VS Code, so ship it in the vsix -->
+  <PropertyGroup>
+    <LanguageServerProject>$(MSBuildProjectDirectory)\..\Eto.DevExtension.LanguageServer\Eto.DevExtension.LanguageServer.csproj</LanguageServerProject>
+    <LanguageServerPublishDir>$(ArtifactsDir)Eto.DevExtension.LanguageServer\publish\$(Configuration)\</LanguageServerPublishDir>
+  </PropertyGroup>
+  <Target Name="PublishLanguageServer" BeforeTargets="GetVsixSourceItems">
+    <Exec Command="dotnet publish &quot;$(LanguageServerProject)&quot; -c $(Configuration) -o &quot;$(LanguageServerPublishDir.TrimEnd('\'))&quot; --nologo -v q" />
+    <ItemGroup>
+      <LanguageServerFile Include="$(LanguageServerPublishDir)**\*" Exclude="$(LanguageServerPublishDir)**\*.pdb" />
+      <VSIXSourceItem Include="@(LanguageServerFile)" VSIXSubPath="server\%(RecursiveDir)" />
+    </ItemGroup>
+  </Target>
   <Target Name="CreateDirectory for vsix" BeforeTargets="CreateVsixContainer" >
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName($(TargetVsixContainer)))"/>
   </Target>  

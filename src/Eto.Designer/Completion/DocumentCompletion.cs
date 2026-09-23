@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Eto.Designer.Completion
 {
@@ -12,6 +14,9 @@ namespace Eto.Designer.Completion
 		public string Label { get; set; }
 
 		public string InsertText { get; set; }
+
+		/// <summary>Declaration to add to the root element so the item resolves, or null when none is needed.</summary>
+		public DocumentTextEdit NamespaceEdit { get; set; }
 	}
 
 	/// <summary>What the cursor sits on, and the span of text a completion should replace.</summary>
@@ -27,6 +32,18 @@ namespace Eto.Designer.Completion
 
 		/// <summary>True when the cursor is already inside a quoted value.</summary>
 		public bool Quoted { get; set; }
+
+		public IList<Assembly> ProjectAssemblies { get; set; }
+
+		public string Text { get; set; }
+	}
+
+	/// <summary>Text to insert at an offset of the document the completion was computed for.</summary>
+	public class DocumentTextEdit
+	{
+		public int Offset { get; set; }
+
+		public string Text { get; set; }
 	}
 
 	/// <summary>
@@ -44,7 +61,7 @@ namespace Eto.Designer.Completion
 				: CompletionFormat.Xaml;
 
 		/// <returns>The context, or null when there is nothing to complete at the offset.</returns>
-		public static DocumentCompletionContext GetContext(string text, int offset, CompletionFormat format, string rootTypeName = null)
+		public static DocumentCompletionContext GetContext(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null)
 		{
 			offset = Math.Min(Math.Max(offset, 0), text.Length);
 
@@ -71,7 +88,7 @@ namespace Eto.Designer.Completion
 				? ScanForward(text, offset, IsValueChar)
 				: ScanForward(text, offset, format == CompletionFormat.Json ? (Func<char, bool>)IsJsonTokenChar : IsTokenChar);
 
-			return new DocumentCompletionContext { Info = info, Format = format, Start = start, End = end, Quoted = quoted };
+			return new DocumentCompletionContext { Info = info, Format = format, Start = start, End = end, Quoted = quoted, Text = text, ProjectAssemblies = projectAssemblies };
 		}
 
 		public static List<DocumentCompletionItem> GetItems(DocumentCompletionContext context)
@@ -83,7 +100,7 @@ namespace Eto.Designer.Completion
 			var addColon = addQuotes && info.Mode == CompletionMode.Property;
 
 			var results = new List<DocumentCompletionItem>();
-			foreach (var item in Completion.GetCompletionItems(info.Namespaces, info.Mode, info.Path, info.Context, format).OrderBy(r => r.Name))
+			foreach (var item in Completion.GetCompletionItems(info.Namespaces, info.Mode, info.Path, info.Context, format, context.ProjectAssemblies).OrderBy(r => r.Name))
 			{
 				var label = item.Name;
 				var insert = label;
@@ -103,19 +120,20 @@ namespace Eto.Designer.Completion
 							insert += ": ";
 					}
 				}
-				results.Add(new DocumentCompletionItem { Item = item, Label = label, InsertText = insert });
+				var namespaceEdit = item.Namespace != null ? GetNamespaceDeclaration(context.Text, item.Namespace) : null;
+				results.Add(new DocumentCompletionItem { Item = item, Label = label, InsertText = insert, NamespaceEdit = namespaceEdit });
 			}
 			return results;
 		}
 
-		public static List<DocumentCompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null)
+		public static List<DocumentCompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null)
 		{
-			var context = GetContext(text, offset, format, rootTypeName);
+			var context = GetContext(text, offset, format, rootTypeName, projectAssemblies);
 			return context == null ? new List<DocumentCompletionItem>() : GetItems(context);
 		}
 
 		/// <summary>The completion item for the word under the cursor, used for hover text.</summary>
-		public static CompletionItem FindItemAt(string text, int offset, CompletionFormat format, string rootTypeName, out int start, out int end)
+		public static CompletionItem FindItemAt(string text, int offset, CompletionFormat format, string rootTypeName, out int start, out int end, IList<Assembly> projectAssemblies = null)
 		{
 			offset = Math.Min(Math.Max(offset, 0), text.Length);
 			start = GetTokenStart(text, offset);
@@ -130,8 +148,60 @@ namespace Eto.Designer.Completion
 			if (info.Mode == CompletionMode.None)
 				return null;
 
-			return Completion.GetCompletionItems(info.Namespaces, info.Mode, info.Path, info.Context, format)
+			return Completion.GetCompletionItems(info.Namespaces, info.Mode, info.Path, info.Context, format, projectAssemblies)
 				.FirstOrDefault(r => r.Name == word);
+		}
+
+		static readonly Regex rootTagReg = new Regex(@"<(?![?!])[A-Za-z_][\w.:-]*", RegexOptions.Compiled);
+		static readonly Regex xmlnsAttributeReg = new Regex(@"\s+xmlns(:[\w.-]+)?\s*=\s*(""[^""]*""|'[^']*')", RegexOptions.Compiled);
+
+		/// <summary>
+		/// Where to declare a namespace on the root element: after its last xmlns, or its name when it has none.
+		/// </summary>
+		/// <returns>The edit, or null when there is no complete root start tag to add it to.</returns>
+		public static DocumentTextEdit GetNamespaceDeclaration(string text, CompletionNamespace ns)
+		{
+			var root = rootTagReg.Match(text);
+			if (!root.Success)
+				return null;
+
+			var tagEnd = FindTagEnd(text, root.Index + root.Length);
+			if (tagEnd < 0)
+				return null;
+
+			var offset = root.Index + root.Length;
+			var tag = text.Substring(offset, tagEnd - offset);
+			var last = xmlnsAttributeReg.Matches(tag).Cast<Match>().LastOrDefault();
+			if (last != null)
+				offset += last.Index + last.Length;
+
+			return new DocumentTextEdit
+			{
+				Offset = offset,
+				Text = " xmlns:" + ns.Prefix + "=\"" + ns.Namespace + "\""
+			};
+		}
+
+		/// <summary>Index of the '>' closing a start tag, skipping quoted attribute values.</summary>
+		static int FindTagEnd(string text, int start)
+		{
+			var quote = '\0';
+			for (var i = start; i < text.Length; i++)
+			{
+				var ch = text[i];
+				if (quote != '\0')
+				{
+					if (ch == quote)
+						quote = '\0';
+				}
+				else if (ch == '"' || ch == '\'')
+					quote = ch;
+				else if (ch == '>')
+					return i;
+				else if (ch == '<')
+					return -1;
+			}
+			return -1;
 		}
 
 		static int ScanBack(string text, int offset, Func<char, bool> include)

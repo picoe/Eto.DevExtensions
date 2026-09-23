@@ -12,6 +12,8 @@ namespace Eto.Designer.Completion
 
 	class GeneralCompletion : Completion
 	{
+		public IList<Assembly> ProjectAssemblies { get; set; }
+
 		public override IEnumerable<CompletionItem> GetClasses(IEnumerable<string> path, Func<Type, bool> filter)
 		{
 			yield break;
@@ -38,6 +40,11 @@ namespace Eto.Designer.Completion
 				yield return new CompletionItem { Name = XamlNamespace2006, Type = CompletionType.Literal };
 				yield return new CompletionItem { Name = EtoFormsNamespace, Type = CompletionType.Literal };
 				yield return new CompletionItem { Name = "clr-namespace:[namespace];assembly=[assembly]", Type = CompletionType.Literal };
+				foreach (var assembly in ProjectAssemblies ?? Enumerable.Empty<Assembly>())
+				{
+					foreach (var ns in ProjectTypes.GetNamespaces(assembly))
+						yield return new CompletionItem { Name = ProjectTypes.GetClrNamespace(ns, assembly), Type = CompletionType.Literal };
+				}
 			}
 		}
 	}

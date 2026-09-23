@@ -26,6 +26,9 @@ namespace Eto.Designer.Completion
 		public string Suffix { get; set; }
 
 		public CompletionBehavior Behavior { get; set; }
+
+		/// <summary>Namespace the document must declare for this item to resolve, when it hasn't yet.</summary>
+		public CompletionNamespace Namespace { get; set; }
 	}
 	
 }

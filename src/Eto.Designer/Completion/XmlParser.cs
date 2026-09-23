@@ -13,10 +13,10 @@ namespace Eto.Designer.Completion
 	{
 		const RegexOptions opts = RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase;
 		static readonly Regex valueReg = new Regex(@"(?<=\w+\s*=\s*)(('[^']*)|(""[^""]*))?$", opts);
-		static readonly Regex propertyReg = new Regex(@"([<]\w+\s+)([^<>]+\s+)?[^<>/]*$", opts);
+		static readonly Regex propertyReg = new Regex(@"([<](\w+:)?\w+\s+)([^<>]+\s+)?[^<>/]*$", opts);
 		//static readonly Regex propertyReg = new Regex(@"([<]\w+\s+)([^<]*)?(?<!(/|([/][>])|[>])[^<]*)$", opts);
 		static readonly Regex classReg = new Regex(@"([<]\w*)$", opts);
-		static readonly Regex classPropertyReg = new Regex(@"([<]\w*[.])$", opts);
+		static readonly Regex classPropertyReg = new Regex(@"([<](\w+:)?\w*[.])$", opts);
 		static readonly Regex usedPrefixReg = new Regex(@"(?:[<]|\s)(?<p>[A-Za-z_][\w.-]*):", opts);
 		static readonly Regex declaredPrefixReg = new Regex(@"xmlns:(?<p>[\w.-]+)\s*=", opts);
 		static readonly Regex defaultNamespaceReg = new Regex(@"(?<![\w:])xmlns\s*=", opts);

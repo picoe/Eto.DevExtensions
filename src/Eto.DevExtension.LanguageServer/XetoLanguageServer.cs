@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.IO;
 using System.Text.Json.Nodes;
 using Eto.DevExtension.LanguageServer.Lsp;
@@ -12,6 +15,7 @@ namespace Eto.DevExtension.LanguageServer
 	{
 		readonly LspConnection connection;
 		readonly DocumentStore documents = new DocumentStore();
+		readonly ConcurrentDictionary<string, List<string>> clientAssemblies = new ConcurrentDictionary<string, List<string>>(StringComparer.Ordinal);
 
 		bool warnedAboutVersion;
 
@@ -28,6 +32,7 @@ namespace Eto.DevExtension.LanguageServer
 			connection.OnNotification("textDocument/didClose", DidClose);
 			connection.OnRequest("textDocument/completion", Complete);
 			connection.OnRequest("textDocument/hover", HoverAt);
+			connection.OnNotification("eto/setProjectAssemblies", SetProjectAssemblies);
 		}
 
 		object Initialize(JsonNode parameters)
@@ -86,6 +91,7 @@ namespace Eto.DevExtension.LanguageServer
 			if (uri != null)
 			{
 				documents.Remove(uri);
+				clientAssemblies.TryRemove(uri, out _);
 				RootTypeLocator.Forget(ToLocalPath(uri));
 			}
 		}
@@ -94,14 +100,40 @@ namespace Eto.DevExtension.LanguageServer
 		{
 			if (!TryGetContext(parameters, out var text, out var offset, out var format, out var rootType))
 				return new CompletionList();
-			return new CompletionList { Items = CompletionService.GetCompletions(text, offset, format, rootType) };
+			return new CompletionList { Items = CompletionService.GetCompletions(text, offset, format, rootType, GetProjectAssemblies(parameters)) };
 		}
 
 		object HoverAt(JsonNode parameters)
 		{
 			if (!TryGetContext(parameters, out var text, out var offset, out var format, out var rootType))
 				return null;
-			return CompletionService.GetHover(text, offset, format, rootType);
+			return CompletionService.GetHover(text, offset, format, rootType, GetProjectAssemblies(parameters));
+		}
+
+		/// <summary>
+		/// Lets a client that knows the project's real build output, such as Visual Studio, say where
+		/// the document's assemblies are instead of having them searched for.
+		/// </summary>
+		void SetProjectAssemblies(JsonNode parameters)
+		{
+			var uri = parameters?["textDocument"]?["uri"]?.GetValue<string>();
+			var assemblies = (parameters?["assemblies"] as JsonArray)?.Select(r => r?.GetValue<string>()).Where(r => !string.IsNullOrEmpty(r)).ToList();
+			if (uri == null)
+				return;
+			if (assemblies == null)
+				clientAssemblies.TryRemove(uri, out _);
+			else
+				clientAssemblies[uri] = assemblies;
+		}
+
+		IList<Assembly> GetProjectAssemblies(JsonNode parameters)
+		{
+			var uri = parameters?["textDocument"]?["uri"]?.GetValue<string>();
+			if (uri == null)
+				return null;
+			if (!clientAssemblies.TryGetValue(uri, out var paths))
+				paths = ProjectAssemblyLocator.Find(ToLocalPath(uri), connection.Log);
+			return ProjectAssemblyLoader.Load(paths, connection.Log);
 		}
 
 		bool TryGetContext(JsonNode parameters, out string text, out int offset, out Eto.Designer.Completion.CompletionFormat format, out string rootTypeName)
