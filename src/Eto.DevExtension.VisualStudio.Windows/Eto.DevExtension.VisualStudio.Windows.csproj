@@ -97,7 +97,6 @@
     <Compile Include="Intellisense\XamlCompletionManager.cs" />
     <Compile Include="Intellisense\XamlCompletionProvider.cs" />
     <Compile Include="Intellisense\XamlCompletionSource.cs" />
-    <Compile Include="Intellisense\XmlParser.cs" />
     <Compile Include="IVsTextLinesExtensions.cs" />
     <Compile Include="PlatformThemeHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
