@@ -27,7 +27,10 @@ if (process.platform === 'darwin') {
 		fs.mkdirSync(path.join(preview, 'macos'), { recursive: true });
 		// ditto keeps the bundle's signature intact
 		execFileSync('ditto', [path.join(artifacts, 'Eto.DevExtension.PreviewHost.macOS', 'Release', 'net10.0-macos', app), path.join(preview, 'macos', app)], { stdio: 'inherit' });
-	} catch {
+	} catch (e) {
+		// CI packages must always ship it
+		if (process.env.CI)
+			throw e;
 		// usually a missing macOS workload or mismatched Xcode, which shouldn't stop the rest from packaging
 		console.warn('Could not build the Eto.macOS preview host, so Mac previews will use Eto.Mac64.');
 	}

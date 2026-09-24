@@ -53,7 +53,8 @@ jobs:
 
   build-vscode:
 
-    runs-on: ubuntu-latest
+    # macOS so the package includes the Eto.macOS preview host
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v7
@@ -66,6 +67,14 @@ jobs:
         dotnet-version: |
           ${{ env.DotNetVersion }}
           8.0.x
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    - name: Install macOS workload
+      run: dotnet workload install macos
 
     - uses: actions/setup-node@v4
       with:
