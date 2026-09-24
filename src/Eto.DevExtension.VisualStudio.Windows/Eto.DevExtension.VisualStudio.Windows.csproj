@@ -84,8 +84,8 @@
     <Compile Include="Adornments\AdornmentFactory.cs" />
     <Compile Include="Components.cs" />
     <Compile Include="Editor\CodeEditorHost.cs" />
-    <Compile Include="Editor\EtoAdapterHandler.cs" />
     <Compile Include="Editor\EditorFactory.cs" />
+    <Compile Include="Editor\PreviewHostClient.cs" />
     <Compile Include="EtoAddinPackage.cs" />
     <Compile Include="Editor\EtoPreviewPane.cs" />
     <Compile Include="Constants.cs" />
@@ -184,8 +184,6 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="ReachFramework" />
     <Reference Include="System" />
-    <Reference Include="System.AddIn" />
-    <Reference Include="System.AddIn.Contract" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -280,6 +278,18 @@
     <ItemGroup>
       <LanguageServerFile Include="$(LanguageServerPublishDir)**\*" Exclude="$(LanguageServerPublishDir)**\*.pdb" />
       <VSIXSourceItem Include="@(LanguageServerFile)" VSIXSubPath="server\%(RecursiveDir)" />
+    </ItemGroup>
+  </Target>
+  <!-- previews are drawn by a separate .NET process so project code never loads into Visual Studio -->
+  <PropertyGroup>
+    <PreviewHostProject>$(MSBuildProjectDirectory)\..\Eto.DevExtension.PreviewHost\Eto.DevExtension.PreviewHost.csproj</PreviewHostProject>
+    <PreviewHostPublishDir>$(ArtifactsDir)Eto.DevExtension.PreviewHost\publish\$(Configuration)\</PreviewHostPublishDir>
+  </PropertyGroup>
+  <Target Name="PublishPreviewHost" BeforeTargets="GetVsixSourceItems">
+    <Exec Command="dotnet publish &quot;$(PreviewHostProject)&quot; -f net8.0-windows -c $(Configuration) -o &quot;$(PreviewHostPublishDir.TrimEnd('\'))&quot; --nologo -v q" />
+    <ItemGroup>
+      <PreviewHostFile Include="$(PreviewHostPublishDir)**\*" Exclude="$(PreviewHostPublishDir)**\*.pdb" />
+      <VSIXSourceItem Include="@(PreviewHostFile)" VSIXSubPath="preview\%(RecursiveDir)" />
     </ItemGroup>
   </Target>
   <Target Name="CreateDirectory for vsix" BeforeTargets="CreateVsixContainer" >

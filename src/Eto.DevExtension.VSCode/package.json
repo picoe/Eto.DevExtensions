@@ -1,7 +1,7 @@
 {
   "name": "eto-forms-designer",
   "displayName": "Eto.Forms Designer",
-  "description": "Autocompletion and hover documentation for Eto.Forms .xeto and .jeto designer files.",
+  "description": "Autocompletion, hover documentation and a live preview for Eto.Forms .xeto and .jeto designer files.",
   "version": "2.7.5",
   "publisher": "picoe",
   "license": "MIT",
@@ -76,6 +76,11 @@
           "default": "",
           "description": "Path to Eto.DevExtension.LanguageServer.dll. Uses the copy bundled with the extension when empty."
         },
+        "eto.previewHost.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Eto.DevExtension.PreviewHost.dll. Uses the copy bundled with the extension when empty. Not used for Eto.macOS previews."
+        },
         "eto.etoAssemblyPath": {
           "type": "string",
           "default": "",
@@ -97,17 +102,38 @@
       {
         "command": "eto.restartLanguageServer",
         "title": "Eto: Restart Language Server"
+      },
+      {
+        "command": "eto.openPreview",
+        "title": "Eto: Open Preview to the Side",
+        "icon": "$(open-preview)"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "eto.openPreview",
+          "group": "navigation",
+          "when": "resourceFilename =~ /\\.(xeto|jeto|eto\\.cs|eto\\.vb)$/i"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "eto.openPreview",
+          "when": "resourceFilename =~ /\\.(xeto|jeto|eto\\.cs|eto\\.vb)$/i"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run build:server && npm run compile",
-    "build:server": "dotnet publish ../Eto.DevExtension.LanguageServer/Eto.DevExtension.LanguageServer.csproj -c Release -o server",
+    "build:server": "node scripts/build-server.js",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "node -e \"require('fs').mkdirSync('../../artifacts/vscode',{recursive:true})\" && vsce package --out ../../artifacts/vscode/"
   },
   "dependencies": {
+    "vscode-jsonrpc": "^8.2.0",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {

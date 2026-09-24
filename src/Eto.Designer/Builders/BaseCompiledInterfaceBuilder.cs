@@ -15,7 +15,8 @@ namespace Eto.Designer.Builders
 	{
 		string output;
 
-		public static string InitializeAssembly { get; set; }
+		/// <summary>Eto.dll to compile against, for when it was loaded from memory and has no location.</summary>
+		public static string EtoAssemblyPath { get; set; }
 
 		~BaseCompiledInterfaceBuilder()
 		{
@@ -72,7 +73,7 @@ namespace Eto.Designer.Builders
 			if (!string.IsNullOrEmpty(mainAssembly))
 				refs.Insert(0, mainAssembly);
 			refs.RemoveAll(r => Path.GetFileName(r).ToLowerInvariant() == "eto.dll");
-			refs.Add(typeof(Control).Assembly.Location);
+			refs.Add(EtoAssemblyPath ?? typeof(Control).Assembly.Location);
 
 			ThreadPool.QueueUserWorkItem(state =>
 			{

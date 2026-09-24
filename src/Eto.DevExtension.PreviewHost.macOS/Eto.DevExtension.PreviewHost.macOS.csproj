@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Eto.DevExtension.PreviewHost as an app bundle, since Eto.macOS can't run from `dotnet <dll>`. Only builds on macOS. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-macos</TargetFramework>
+    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>osx-x64;osx-arm64</RuntimeIdentifiers>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Eto.DevExtension.PreviewHost</AssemblyName>
+    <RootNamespace>Eto.DevExtension.PreviewHost</RootNamespace>
+    <ApplicationId>ca.picoe.eto.previewhost</ApplicationId>
+    <ApplicationTitle>Eto Preview Host</ApplicationTitle>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- the project's Eto.macOS is loaded at runtime, so its classes must be registered then -->
+    <Registrar>dynamic</Registrar>
+    <LinkMode>None</LinkMode>
+    <CreatePackage>false</CreatePackage>
+    <!-- never trimmed -->
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Eto.DevExtension.PreviewHost\**\*.cs" Exclude="..\Eto.DevExtension.PreviewHost\obj\**;..\Eto.DevExtension.PreviewHost\bin\**" LinkBase="Shared" />
+    <Compile Include="..\Eto.DevExtension.LanguageServer\Lsp\LspConnection.cs" Link="Shared\LspConnection.cs" />
+    <Compile Include="..\Eto.DevExtension.LanguageServer\EtoAssemblyLocator.cs" Link="Shared\EtoAssemblyLocator.cs" />
+    <Compile Include="..\Eto.DevExtension.LanguageServer\ProjectAssemblyLocator.cs" Link="Shared\ProjectAssemblyLocator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- resolved at runtime from the user's project, so keep them out of the bundle -->
+    <PackageReference Include="Eto.Forms" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.macOS" Version="2.7.5" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Portable.Xaml" Version="0.26.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="runtime" GeneratePathProperty="true" />
+
+    <!-- the code builders compile .eto.cs/.eto.vb files -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.8.0" />
+  </ItemGroup>
+
+  <!-- fallback Eto used when the open project's copy can't be found, in Contents/Resources/eto -->
+  <ItemGroup>
+    <BundleResource Include="$(PkgEto_Forms)\lib\netstandard2.0\Eto.dll" LogicalName="eto/Eto.dll" />
+    <BundleResource Include="$(PkgEto_Platform_macOS)\lib\net6.0-macos10.15\Eto.macOS.dll" LogicalName="eto/Eto.macOS.dll" />
+    <BundleResource Include="$(PkgEto_Serialization_Xaml)\lib\netstandard2.0\Eto.Serialization.Xaml.dll" LogicalName="eto/Eto.Serialization.Xaml.dll" />
+    <BundleResource Include="$(PkgEto_Serialization_Json)\lib\netstandard2.0\Eto.Serialization.Json.dll" LogicalName="eto/Eto.Serialization.Json.dll" />
+    <BundleResource Include="$(PkgPortable_Xaml)\lib\netstandard2.0\Portable.Xaml.dll" LogicalName="eto/Portable.Xaml.dll" />
+    <BundleResource Include="$(PkgNewtonsoft_Json)\lib\netstandard2.0\Newtonsoft.Json.dll" LogicalName="eto/Newtonsoft.Json.dll" />
+  </ItemGroup>
+</Project>
