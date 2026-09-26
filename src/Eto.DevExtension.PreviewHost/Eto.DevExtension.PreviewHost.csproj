@@ -9,7 +9,6 @@
     <!-- always launched as `dotnet <dll>`, same as the language server -->
     <UseAppHost>false</UseAppHost>
     <!-- lets the VS Code package, built on Linux, publish it -->
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>Eto.DevExtension.PreviewHost</AssemblyName>
     <RootNamespace>Eto.DevExtension.PreviewHost</RootNamespace>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -32,9 +31,9 @@
 
   <ItemGroup>
     <!-- resolved at runtime from the user's project, so keep them out of the probing path -->
-    <PackageReference Include="Eto.Forms" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Forms" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
     <PackageReference Include="Portable.Xaml" Version="0.26.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="runtime" GeneratePathProperty="true" />
 
@@ -44,8 +43,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
-    <PackageReference Include="Eto.Platform.Wpf" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.Windows" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Wpf" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Windows" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
 
     <!-- Eto.Wpf and Eto.WinForms's own dependencies, which don't flow through when their runtime assets are excluded -->
     <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" NoWarn="NU1701" />
@@ -55,15 +54,15 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <!-- build assets excluded too, as they bundle apps and download Gtk -->
-    <PackageReference Include="Eto.Platform.Gtk" Version="2.7.5" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.Mac64" Version="2.7.5" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="GtkSharp" Version="3.24.24.38" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="GdkSharp" Version="3.24.24.38" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="GLibSharp" Version="3.24.24.38" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="GioSharp" Version="3.24.24.38" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="AtkSharp" Version="3.24.24.38" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="PangoSharp" Version="3.24.24.38" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="CairoSharp" Version="3.24.24.38" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Gtk" Version="2.12.0" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Mac64" Version="2.12.0" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="GtkSharp" Version="3.24.24.95" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="GdkSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="GLibSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="GioSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="AtkSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="PangoSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="CairoSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
   </ItemGroup>
 
   <!-- fallback Eto used when the open project's copy can't be found -->
@@ -76,8 +75,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
-    <FallbackEto Include="$(PkgEto_Platform_Wpf)\lib\netcoreapp3.1\Eto.Wpf.dll" />
-    <FallbackEto Include="$(PkgEto_Platform_Windows)\lib\netcoreapp3.1\Eto.WinForms.dll" />
+    <FallbackEto Include="$(PkgEto_Platform_Wpf)\lib\net8.0-windows7.0\Eto.Wpf.dll" />
+    <FallbackEto Include="$(PkgEto_Platform_Windows)\lib\net8.0-windows7.0\Eto.WinForms.dll" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">

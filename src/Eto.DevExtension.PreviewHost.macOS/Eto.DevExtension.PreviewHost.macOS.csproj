@@ -33,10 +33,10 @@
 
   <ItemGroup>
     <!-- resolved at runtime from the user's project, so keep them out of the bundle -->
-    <PackageReference Include="Eto.Forms" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.macOS" Version="2.7.5" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.7.5" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Forms" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.macOS" Version="2.12.0" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
     <PackageReference Include="Portable.Xaml" Version="0.26.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="runtime" GeneratePathProperty="true" />
 
@@ -48,7 +48,7 @@
   <!-- fallback Eto used when the open project's copy can't be found, in Contents/Resources/eto -->
   <ItemGroup>
     <BundleResource Include="$(PkgEto_Forms)\lib\netstandard2.0\Eto.dll" LogicalName="eto/Eto.dll" />
-    <BundleResource Include="$(PkgEto_Platform_macOS)\lib\net6.0-macos10.15\Eto.macOS.dll" LogicalName="eto/Eto.macOS.dll" />
+    <BundleResource Include="$(PkgEto_Platform_macOS)\lib\net9.0-macos15.0\Eto.macOS.dll" LogicalName="eto/Eto.macOS.dll" />
     <BundleResource Include="$(PkgEto_Serialization_Xaml)\lib\netstandard2.0\Eto.Serialization.Xaml.dll" LogicalName="eto/Eto.Serialization.Xaml.dll" />
     <BundleResource Include="$(PkgEto_Serialization_Json)\lib\netstandard2.0\Eto.Serialization.Json.dll" LogicalName="eto/Eto.Serialization.Json.dll" />
     <BundleResource Include="$(PkgPortable_Xaml)\lib\netstandard2.0\Portable.Xaml.dll" LogicalName="eto/Portable.Xaml.dll" />
