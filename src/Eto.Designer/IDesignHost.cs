@@ -12,9 +12,6 @@ namespace Eto.Designer
 		Action ControlCreating { get; set; }
 		Action ControlCreated { get; set; }
 		Action<DesignError> Error { get; set; }
-		Action ContainerChanged { get; set; }
-		string MainAssembly { get; set; }
-		IEnumerable<string> References { get; set; }
 		Control GetContainer();
 		void Update(string code);
 		void Invalidate();

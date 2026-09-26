@@ -31,6 +31,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using System.Windows.Media;
 using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
 using System.Collections.Generic;
+using Eto.DevExtension.VisualStudio.Intellisense;
 
 namespace Eto.DevExtension.VisualStudio.Windows.Editor
 {
@@ -48,6 +49,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		EtoAddinPackage package;
 		PreviewEditorView preview;
 		PreviewEditorViewSplitter previewSplitter;
+		PreviewHostClient previewHost;
 		Panel editorControl;
 		uint dataEventsCookie;
 		uint linesEventsCookie;
@@ -100,7 +102,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		/// our initialization functions.
 		/// </summary>
 		/// <param name="package">Our Package instance.</param>
-		public EtoPreviewPane(EtoAddinPackage package, string fileName, IVsTextLines textBuffer, string mainAssembly, IEnumerable<string> references, CodeEditorHost codeEditor)
+		/// <param name="projectKey">Identifies the project, so its designers share one preview host.</param>
+		public EtoPreviewPane(EtoAddinPackage package, string fileName, IVsTextLines textBuffer, string projectKey, CodeEditorHost codeEditor)
 			: base(package)
 		{
 			this.editor = codeEditor;
@@ -111,7 +114,11 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			editorControl = new Panel();
 			editorControl.Content = editor.wpfElement.ToEto();
 
-			previewSplitter = new PreviewEditorViewSplitter(editorControl, mainAssembly, references, () => textBuffer?.GetText());
+			var host = previewHost = PreviewHostClient.Acquire(projectKey);
+			host.ProjectChanged += PreviewHost_ProjectChanged;
+			var designHost = new RemoteDesignPanel(async request => await host.RenderAsync(request, await ProjectAssemblyPaths.GetAsync(fileName)));
+
+			previewSplitter = new PreviewEditorViewSplitter(editorControl, designHost, () => textBuffer?.GetText());
 			previewSplitter.GotFocus += (sender, e) =>
 			{
 				WpfTextView?.VisualElement?.Focus();
@@ -259,6 +266,13 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 					RegisterIndependentView(false);
 
+					if (previewHost != null)
+					{
+						previewHost.ProjectChanged -= PreviewHost_ProjectChanged;
+						previewHost.Release();
+						previewHost = null;
+					}
+
 					//previewSplitter?.Dispose();
 					//previewSplitter = null;
 
@@ -305,6 +319,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 #endregion
 
+
+		void PreviewHost_ProjectChanged(object sender, EventArgs e) => preview?.Update();
 
 		void IVsTextBufferDataEvents.OnFileChanged(uint grfChange, uint dwFileAttrs)
 		{

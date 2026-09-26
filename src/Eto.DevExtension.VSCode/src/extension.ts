@@ -7,18 +7,26 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
+import { AUTO, HostLauncher } from './hostLaunch';
+import { isPreviewable, PlatformPicker, PreviewPanel } from './preview';
+import { PreviewHost } from './previewHost';
 
 const SERVER_DLL = 'Eto.DevExtension.LanguageServer.dll';
+const PLATFORM_KEY = 'eto.preview.platform';
 
 let client: LanguageClient | undefined;
 let output: vscode.OutputChannel;
+let previewHost: PreviewHost | undefined;
+let platformPicker: PlatformPicker | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	output = vscode.window.createOutputChannel('Eto.Forms Designer');
 	context.subscriptions.push(output);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('eto.restartLanguageServer', () => restart(context))
+		vscode.commands.registerCommand('eto.restartLanguageServer', () => restart(context)),
+		vscode.commands.registerCommand('eto.openPreview', (uri?: vscode.Uri) => openPreview(context, uri)),
+		{ dispose: () => previewHost?.dispose() }
 	);
 
 	// the server pins one Eto version per session, so these need a fresh process
@@ -93,12 +101,40 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
 	}
 }
 
+async function openPreview(context: vscode.ExtensionContext, uri?: vscode.Uri): Promise<void> {
+	const document = uri
+		? await vscode.workspace.openTextDocument(uri)
+		: vscode.window.activeTextEditor?.document;
+	if (!document || !isPreviewable(document)) {
+		vscode.window.showInformationMessage('Open a .xeto, .jeto or .eto.cs file to preview it.');
+		return;
+	}
+
+	if (!previewHost || !platformPicker) {
+		const launcher = new HostLauncher(context.extensionPath, output);
+		const picker: PlatformPicker = platformPicker = {
+			getPlatforms: () => launcher.getPlatforms(),
+			get: () => context.workspaceState.get<string>(PLATFORM_KEY, AUTO),
+			set: id => context.workspaceState.update(PLATFORM_KEY, id)
+		};
+		previewHost = new PreviewHost(fileName => launcher.resolve(fileName, picker.get()), output);
+	}
+	PreviewPanel.show(previewHost, platformPicker, document);
+}
+
 function resolveServerPath(context: vscode.ExtensionContext, configured?: string): string | undefined {
+	return resolvePath(context, configured, 'server', SERVER_DLL, path.join('Eto.DevExtension.LanguageServer', 'Debug', 'net8.0'));
+}
+
+/**
+ * @param folder Where the dll is bundled in the extension.
+ * @param buildFolder Where a debug build puts it under artifacts, for running out of the source tree.
+ */
+function resolvePath(context: vscode.ExtensionContext, configured: string | undefined, folder: string, dll: string, buildFolder: string): string | undefined {
 	const candidates = [
 		configured?.trim(),
-		path.join(context.extensionPath, 'server', SERVER_DLL),
-		// running out of the source tree during development
-		path.join(context.extensionPath, '..', '..', 'artifacts', 'Eto.DevExtension.LanguageServer', 'Debug', 'net8.0', SERVER_DLL)
+		path.join(context.extensionPath, folder, dll),
+		path.join(context.extensionPath, '..', '..', 'artifacts', buildFolder, dll)
 	];
 
 	for (const candidate of candidates) {

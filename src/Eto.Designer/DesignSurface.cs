@@ -24,6 +24,12 @@ namespace Eto.Designer
 
 		public event EventHandler InvalidateContent;
 
+		/// <summary>Raised when the user drags the content to a size, or resets it to auto size.</summary>
+		public event EventHandler RequestedSizeChanged;
+
+		/// <summary>Size the user dragged the content to, or null for its own size.</summary>
+		public Size? RequestedSize => _sizeBounds != null ? Size.Round(_sizeBounds.Value) : (Size?)null;
+
 		public DesignSurface()
 		{
 			if (!Platform.Instance.IsGtk) // doesn't work correctly on Gtk2 due to lack of control transparency
@@ -82,6 +88,7 @@ namespace Eto.Designer
 				_sizeBounds = value.Size;
 				_content.Size = Size.Round(value.Size);
 				Invalidate();
+				RequestedSizeChanged?.Invoke(this, EventArgs.Empty);
 			}
 		}
 
@@ -191,6 +198,7 @@ namespace Eto.Designer
 					_sizeBounds = null;
 					_content.Size = _originalContentSize ?? new Size(-1, -1);
 					InvalidateContent?.Invoke(this, EventArgs.Empty);
+					RequestedSizeChanged?.Invoke(this, EventArgs.Empty);
 				},
 				ShouldDraw = location => _sizeBounds != null,
 				ToolTip = "Click to reset to auto size",

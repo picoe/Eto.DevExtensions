@@ -34,8 +34,6 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 
 			if (Application.Instance == null)
 				new Eto.Forms.Application().Attach();
-
-			Eto.Designer.Builders.BaseCompiledInterfaceBuilder.InitializeAssembly = typeof(EtoInitializer).Assembly.FullName;
 		}
 
 		private static void ThemeWindow(System.Windows.Window w)

@@ -13,10 +13,9 @@ namespace Eto.Designer
 
         public PreviewEditorView Preview { get; }
 
-        public PreviewEditorViewSplitter(Control editor, string mainAssembly, IEnumerable<string> references, Func<string> getCode)
+        public PreviewEditorViewSplitter(Control editor, IDesignHost designHost, Func<string> getCode)
         {
-            //Size = new Size (200, 200);
-            Preview = new PreviewEditorView(mainAssembly, references, getCode);
+            Preview = new PreviewEditorView(designHost, getCode);
             Editor = editor;
 
             Orientation = Orientation.Vertical;
