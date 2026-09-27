@@ -45,6 +45,42 @@
             },
             "problemMatcher": "$tsc",
             "group": "build"
+        },
+        {
+            "label": "build-rider-plugin",
+            "type": "shell",
+            "command": "./gradlew",
+            "windows": {
+                "command": ".\\gradlew.bat"
+            },
+            "args": [ "buildPlugin" ],
+            "options": {
+                "cwd": "${workspaceFolder}/src/Eto.DevExtension.Rider"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            // waits for a debugger on port 5005 before Rider starts
+            "label": "run-rider-debug",
+            "type": "shell",
+            "command": "./gradlew",
+            "windows": {
+                "command": ".\\gradlew.bat"
+            },
+            "args": [ "runIde", "--debug-jvm" ],
+            "options": {
+                "cwd": "${workspaceFolder}/src/Eto.DevExtension.Rider"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "gradle",
+                "pattern": { "regexp": "^\\b$" },
+                "background": {
+                    "beginsPattern": "Using Rider|No local Rider found",
+                    "endsPattern": "Listening for transport dt_socket at address"
+                }
+            }
         }
     ],
     "inputs": [

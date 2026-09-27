@@ -1,0 +1,57 @@
+<idea-plugin>
+    <id>com.picoe.eto.designer</id>
+    <name>Eto.Forms Designer</name>
+    <vendor url="https://github.com/picoe/Eto.DevExtensions">Picoe Software Solutions</vendor>
+
+    <description><![CDATA[
+    Autocompletion, hover documentation and a live preview for <a href="https://github.com/picoe/Eto">Eto.Forms</a>
+    <code>.xeto</code> and <code>.jeto</code> designer files.
+    <ul>
+        <li>A live preview of <code>.xeto</code>, <code>.jeto</code> and <code>.eto.cs</code> files, drawn with the
+            Eto.Forms platform of your choice. Run <b>Open Eto Preview</b> from the editor's context menu.</li>
+        <li>Completion of control names, properties, events and values, including your own controls once the project is built</li>
+        <li>Hover documentation from the Eto.Forms xml docs</li>
+        <li>Syntax highlighting for both file types</li>
+    </ul>
+    Needs the .NET 8 runtime or newer.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lsp</depends>
+    <depends>com.intellij.modules.rider</depends>
+    <depends>org.jetbrains.plugins.textmate</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <platform.lsp.serverSupportProvider implementation="com.picoe.eto.rider.lsp.EtoLspServerSupportProvider"/>
+
+        <applicationService serviceImplementation="com.picoe.eto.rider.EtoSettings"/>
+        <applicationConfigurable parentId="tools" id="com.picoe.eto.designer.settings" displayName="Eto.Forms Designer"
+                                 instance="com.picoe.eto.rider.EtoSettingsConfigurable"/>
+
+        <toolWindow id="Eto Preview" anchor="right" doNotActivateOnStart="true" icon="AllIcons.Actions.Preview"
+                    factoryClass="com.picoe.eto.rider.preview.PreviewToolWindowFactory"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij.textmate">
+        <bundleProvider implementation="com.picoe.eto.rider.EtoTextMateBundleProvider"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="com.picoe.eto.rider.preview.PreviewAvailability"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </projectListeners>
+
+    <actions>
+        <action id="Eto.OpenPreview" class="com.picoe.eto.rider.preview.OpenPreviewAction" text="Open Eto Preview"
+                description="Show a live preview of this Eto.Forms designer file" icon="AllIcons.Actions.Preview">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="Eto.RestartLanguageServer" class="com.picoe.eto.rider.lsp.RestartLanguageServerAction"
+                text="Restart Eto Language Server" description="Restart the Eto.Forms language server, to pick up a different Eto version">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
