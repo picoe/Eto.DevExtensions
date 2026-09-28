@@ -38,7 +38,14 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 
 		private static void ThemeWindow(System.Windows.Window w)
 		{
-			w.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/Eto.DevExtension.VisualStudio.Windows;component/theme/WindowStyles.xaml", UriKind.RelativeOrAbsolute) });
+			ApplyTheme(w);
+			WindowTitleBar.Attach(w);
+		}
+
+		/// <summary>Styles the Eto controls within the element to match the VS theme.</summary>
+		public static void ApplyTheme(System.Windows.FrameworkElement element)
+		{
+			element.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = new Uri("pack://application:,,,/Eto.DevExtension.VisualStudio.Windows;component/theme/WindowStyles.xaml", UriKind.RelativeOrAbsolute) });
 		}
 	}
 }

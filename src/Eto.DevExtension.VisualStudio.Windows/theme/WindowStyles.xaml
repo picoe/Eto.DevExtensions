@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:eto="clr-namespace:Eto.Wpf.Forms;assembly=Eto.Wpf"
                     xmlns:etoc="clr-namespace:Eto.Wpf.Forms.Controls;assembly=Eto.Wpf"
-                    xmlns:vsp="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0">
+                    xmlns:vsp="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+                    xmlns:vs="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0">
 
     <!-- Set all control styles to match VS theme (dark/light/blue/etc) -->
 
@@ -83,6 +84,7 @@
                         <Trigger Property="IsEnabled" Value="false">
                             <Setter Property="Background" TargetName="radioButtonBorder" Value="{DynamicResource ResourceKey={x:Static vsp:CommonControlsColors.CheckBoxBackgroundDisabledBrushKey}}"/>
                             <Setter Property="BorderBrush" TargetName="radioButtonBorder" Value="{DynamicResource ResourceKey={x:Static vsp:CommonControlsColors.CheckBoxBorderDisabledBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource ResourceKey={x:Static vsp:CommonControlsColors.CheckBoxTextDisabledBrushKey}}"/>
                             <Setter Property="Fill" TargetName="optionMark" Value="{DynamicResource ResourceKey={x:Static vsp:CommonControlsColors.CheckBoxGlyphDisabledBrushKey}}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="true">
@@ -210,6 +212,57 @@
     </Style>
     <Style TargetType="{x:Type etoc:EtoLabel}">
         <Setter Property="Foreground" Value="{DynamicResource ResourceKey={x:Static vsp:EnvironmentColors.PanelTextBrushKey}}"/>
+    </Style>
+
+    <!-- text inside buttons, check boxes and radio buttons; take the owning control's colour so its triggers apply -->
+    <Style TargetType="{x:Type etoc:EtoAccessLabel}">
+        <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}"/>
+    </Style>
+
+    <!-- implicit styles only match the exact type, so Eto's subclasses need their own -->
+    <Style TargetType="{x:Type etoc:EtoCheckBox}" BasedOn="{StaticResource {x:Type CheckBox}}"/>
+    <Style TargetType="{x:Type etoc:EtoRadioButton}" BasedOn="{StaticResource {x:Type RadioButton}}"/>
+
+    <!-- VS's own styles, from its application resources -->
+    <Style TargetType="{x:Type etoc:EtoComboBox}" BasedOn="{StaticResource {x:Static vs:VsResourceKeys.ThemedDialogComboBoxStyleKey}}"/>
+    <Style TargetType="{x:Type etoc:EtoScrollViewer}" BasedOn="{StaticResource {x:Static vs:VsResourceKeys.ScrollViewerStyleKey}}"/>
+    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource {x:Static vs:VsResourceKeys.ScrollBarStyleKey}}"/>
+
+    <!-- same colour as the gaps between VS's docked windows -->
+    <Style TargetType="{x:Type GridSplitter}">
+        <Setter Property="Background" Value="{DynamicResource ResourceKey={x:Static vsp:EnvironmentColors.EnvironmentBackgroundBrushKey}}"/>
+        <Setter Property="Focusable" Value="False"/>
+    </Style>
+
+    <Style TargetType="{x:Type ToolTip}">
+        <Setter Property="Background" Value="{DynamicResource ResourceKey={x:Static vsp:EnvironmentColors.ToolTipBrushKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ResourceKey={x:Static vsp:EnvironmentColors.ToolTipTextBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ResourceKey={x:Static vsp:EnvironmentColors.ToolTipBorderBrushKey}}"/>
+    </Style>
+
+    <Style TargetType="{x:Type etoc:EtoDataGrid}">
+        <Setter Property="Background" Value="{DynamicResource ResourceKey={x:Static vsp:TreeViewColors.BackgroundBrushKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ResourceKey={x:Static vsp:TreeViewColors.BackgroundTextBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ResourceKey={x:Static vsp:EnvironmentColors.PanelBorderBrushKey}}"/>
+        <Setter Property="RowBackground" Value="Transparent"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource ResourceKey={x:Static vsp:HeaderColors.SeparatorLineBrushKey}}"/>
+        <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource ResourceKey={x:Static vsp:HeaderColors.SeparatorLineBrushKey}}"/>
+    </Style>
+    <Style TargetType="{x:Type DataGridColumnHeader}">
+        <Setter Property="Background" Value="{DynamicResource ResourceKey={x:Static vsp:HeaderColors.DefaultBrushKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ResourceKey={x:Static vsp:HeaderColors.DefaultTextBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ResourceKey={x:Static vsp:HeaderColors.SeparatorLineBrushKey}}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="Padding" Value="4,2"/>
+    </Style>
+    <Style TargetType="{x:Type DataGridCell}">
+        <Setter Property="BorderThickness" Value="0"/>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource ResourceKey={x:Static vsp:TreeViewColors.SelectedItemActiveBrushKey}}"/>
+                <Setter Property="Foreground" Value="{DynamicResource ResourceKey={x:Static vsp:TreeViewColors.SelectedItemActiveTextBrushKey}}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

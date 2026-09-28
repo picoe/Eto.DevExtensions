@@ -61,5 +61,18 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 				}
 			}
 		}
+
+		/// <summary>Closes the text view, before the document closes. Safe to call more than once.</summary>
+		public int Close()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			var window = codeWindow;
+			if (window == null)
+				return VSConstants.S_OK;
+			codeWindow = null;
+			viewAdapter = null;
+			textViewHost = null;
+			return window.Close();
+		}
 	}
 }

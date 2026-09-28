@@ -21,6 +21,11 @@ namespace Eto.Designer
 		Color SummaryForeground { get; }
 		Color DesignerBackground { get; }
 		Color DesignerPanel { get; }
+		Color SplitBarBackground { get; }
+		Color SplitBarForeground { get; }
+		Color SplitBarHoverBackground { get; }
+		Color SplitBarSelectedBackground { get; }
+		Color SplitBarSelectedForeground { get; }
 
 		IEnumerable<PlatformColor> AllColors { get; }
 	}

@@ -50,9 +50,15 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		PreviewEditorView preview;
 		PreviewEditorViewSplitter previewSplitter;
 		PreviewHostClient previewHost;
+		DropDown platformDropDown;
+		// label of the platform the last preview was drawn with, shown beside Auto
+		string drawnPlatform;
+		bool loadingPlatforms;
 		Panel editorControl;
 		uint dataEventsCookie;
 		uint linesEventsCookie;
+		uint docCookie;
+		bool disposed;
 
 		IWpfTextView WpfTextView => editor.textViewHost?.TextView;
 
@@ -116,7 +122,16 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 			var host = previewHost = PreviewHostClient.Acquire(projectKey);
 			host.ProjectChanged += PreviewHost_ProjectChanged;
-			var designHost = new RemoteDesignPanel(async request => await host.RenderAsync(request, await ProjectAssemblyPaths.GetAsync(fileName)));
+			var designHost = new RemoteDesignPanel(async request =>
+			{
+				var result = await host.RenderAsync(request, await ProjectAssemblyPaths.GetAsync(fileName));
+				if (result?.Platform != null && result.Platform != drawnPlatform)
+				{
+					drawnPlatform = result.Platform;
+					LoadPlatforms();
+				}
+				return result;
+			});
 
 			previewSplitter = new PreviewEditorViewSplitter(editorControl, designHost, () => textBuffer?.GetText());
 			previewSplitter.GotFocus += (sender, e) =>
@@ -124,8 +139,17 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 				WpfTextView?.VisualElement?.Focus();
 			};
 			preview = previewSplitter.Preview;
+			PreviewLayoutSettings.Load(previewSplitter);
+			previewSplitter.LayoutChanged += (sender, e) => PreviewLayoutSettings.Save(previewSplitter);
+
+			platformDropDown = new DropDown { ToolTip = "Platform to draw the preview with" };
+			platformDropDown.SelectedKeyChanged += PlatformDropDown_SelectedKeyChanged;
+			preview.ToolBar = platformDropDown;
+			LoadPlatforms();
+			PreviewPlatforms.ChoiceChanged += PreviewPlatforms_ChoiceChanged;
 
 			var content = previewSplitter.ToNative(true);
+			Wizards.EtoInitializer.ApplyTheme(content);
 
 			if (!preview.SetBuilder(fileName))
 				throw new InvalidOperationException(string.Format("Could not find builder for file {0}", fileName));
@@ -223,7 +247,42 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 			InheritKeyBindings();
 
+			// the document may not be registered yet while the frame is being created
+			if (!LockDocument())
+				ThreadHelper.JoinableTaskFactory.StartOnIdle(() => LockDocument());
+
 			preview.Update();
+		}
+
+		/// <summary>
+		/// Holds the document open until our text view is closed, as VS releases it before closing the pane,
+		/// and a view still open when it closes throws from the editor's margins.
+		/// </summary>
+		bool LockDocument()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			if (disposed || docCookie != 0)
+				return true;
+			var rdt = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
+			if (rdt == null)
+				return false;
+			var hr = rdt.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_ReadLock, FileName, out _, out _, out var docData, out var cookie);
+			if (docData != IntPtr.Zero)
+				Marshal.Release(docData);
+			if (hr != VSConstants.S_OK || cookie == 0)
+				return false;
+			docCookie = cookie;
+			return true;
+		}
+
+		void UnlockDocument()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			if (docCookie == 0)
+				return;
+			var rdt = (IVsRunningDocumentTable)GetService(typeof(SVsRunningDocumentTable));
+			rdt?.UnlockDocument((uint)(_VSRDTFLAGS.RDT_ReadLock | _VSRDTFLAGS.RDT_Unlock_NoSave), docCookie);
+			docCookie = 0;
 		}
 
 		void InheritKeyBindings()
@@ -265,6 +324,14 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 				{
 
 					RegisterIndependentView(false);
+
+					PreviewPlatforms.ChoiceChanged -= PreviewPlatforms_ChoiceChanged;
+
+					disposed = true;
+
+					// close the view before letting the document close
+					editor.Close();
+					UnlockDocument();
 
 					if (previewHost != null)
 					{
@@ -322,6 +389,37 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 		void PreviewHost_ProjectChanged(object sender, EventArgs e) => preview?.Update();
 
+		void LoadPlatforms()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			if (platformDropDown == null)
+				return;
+			var choice = PreviewPlatforms.Choice;
+			var auto = choice == PreviewPlatforms.Auto && drawnPlatform != null ? $"Auto ({drawnPlatform})" : "Auto";
+			var items = new List<IListItem> { new ListItem { Key = PreviewPlatforms.Auto, Text = auto } };
+			items.AddRange(PreviewPlatforms.GetAvailable().Select(r => new ListItem { Key = r.Id, Text = r.Label }));
+
+			loadingPlatforms = true;
+			platformDropDown.DataStore = items;
+			platformDropDown.SelectedKey = items.Any(r => r.Key == choice) ? choice : PreviewPlatforms.Auto;
+			loadingPlatforms = false;
+		}
+
+		void PlatformDropDown_SelectedKeyChanged(object sender, EventArgs e)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			if (!loadingPlatforms && platformDropDown.SelectedKey != null)
+				PreviewPlatforms.Choice = platformDropDown.SelectedKey;
+		}
+
+		void PreviewPlatforms_ChoiceChanged(object sender, EventArgs e)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			drawnPlatform = null;
+			LoadPlatforms();
+			preview?.Update();
+		}
+
 		void IVsTextBufferDataEvents.OnFileChanged(uint grfChange, uint dwFileAttrs)
 		{
 			preview.Update();
@@ -370,7 +468,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		public int GetViewClassID(out Guid pclsidView) => editor.codeWindow.GetViewClassID(out pclsidView);
 		public int SetBaseEditorCaption(string[] pszBaseEditorCaption) => editor.codeWindow.SetBaseEditorCaption(pszBaseEditorCaption);
 		public int GetEditorCaption(READONLYSTATUS dwReadOnly, out string pbstrEditorCaption) => editor.codeWindow.GetEditorCaption(dwReadOnly, out pbstrEditorCaption);
-		public int Close() => editor.codeWindow.Close();
+		public int Close() => editor.Close();
 		public int GetLastActiveView(out IVsTextView ppView) => editor.codeWindow.GetLastActiveView(out ppView);
 
 		int IVsCodeWindowEx.Initialize(uint grfCodeWindowBehaviorFlags, VSUSERCONTEXTATTRIBUTEUSAGE usageAuxUserContext, string szNameAuxUserContext, string szValueAuxUserContext, uint InitViewFlags, INITVIEW[] pInitView) => ((IVsCodeWindowEx)editor.codeWindow).Initialize(grfCodeWindowBehaviorFlags, usageAuxUserContext, szNameAuxUserContext, szValueAuxUserContext, InitViewFlags, pInitView);

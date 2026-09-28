@@ -19,18 +19,19 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 	/// </remarks>
 	sealed class PreviewHostClient
 	{
-		const string HostDll = "Eto.DevExtension.PreviewHost.dll";
 		// long enough for a first render that compiles code, short enough to recover from a hung control
 		static readonly TimeSpan RenderTimeout = TimeSpan.FromSeconds(30);
 
 		static readonly Dictionary<string, PreviewHostClient> hosts = new Dictionary<string, PreviewHostClient>(StringComparer.OrdinalIgnoreCase);
-		static bool unavailable;
+		// platforms whose host couldn't start, usually for want of a runtime, so don't keep trying
+		static readonly HashSet<string> unavailable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		readonly string key;
 		readonly SemaphoreSlim requestLock = new SemaphoreSlim(1, 1);
 		int references;
 		Process process;
 		JsonRpc rpc;
+		PreviewPlatform platform;
 
 		/// <summary>Raised on the UI thread after the project is rebuilt, so previews can be redrawn.</summary>
 		public event EventHandler ProjectChanged;
@@ -70,11 +71,12 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			try
 			{
 				// a second try covers a host that exited after a rebuild, or that serves an older build
+				var wanted = await PreviewPlatforms.ResolveAsync();
 				for (var attempt = 0; attempt < 2; attempt++)
 				{
-					var server = await GetServerAsync();
+					var server = await GetServerAsync(wanted);
 					if (server == null)
-						return Error("The preview needs the .NET 8 Desktop Runtime (or newer) to be installed.", null);
+						return Error(wanted.Requirement, null, wanted);
 
 					try
 					{
@@ -98,22 +100,22 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 								Stop();
 								continue;
 							}
-							return Read(result);
+							return Read(result, wanted);
 						}
 					}
 					catch (OperationCanceledException)
 					{
 						Stop();
-						return Error("The preview took too long to draw, so it was stopped.", null);
+						return Error("The preview took too long to draw, so it was stopped.", null, wanted);
 					}
 					catch (Exception ex) when (ex is ConnectionLostException || ex is ObjectDisposedException || ex is IOException)
 					{
 						Stop();
 						if (attempt > 0)
-							return Error("The preview host stopped unexpectedly.", ex.ToString());
+							return Error("The preview host stopped unexpectedly.", ex.ToString(), wanted);
 					}
 				}
-				return Error("The preview host could not load the project.", null);
+				return Error("The preview host could not load the project.", null, wanted);
 			}
 			finally
 			{
@@ -121,44 +123,44 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			}
 		}
 
-		static PreviewRenderResult Read(JToken result)
+		static PreviewRenderResult Read(JToken result, PreviewPlatform platform)
 		{
 			var error = result?["error"];
 			if (error != null && error.Type == JTokenType.Object)
-				return Error((string)error["message"], (string)error["details"]);
+				return Error((string)error["message"], (string)error["details"], platform);
 
 			var image = (string)result?["image"];
 			return new PreviewRenderResult
 			{
 				Image = string.IsNullOrEmpty(image) ? null : Convert.FromBase64String(image),
-				Size = new Size((int?)result?["width"] ?? 0, (int?)result?["height"] ?? 0)
+				Size = new Size((int?)result?["width"] ?? 0, (int?)result?["height"] ?? 0),
+				Platform = platform.Label
 			};
 		}
 
-		static PreviewRenderResult Error(string message, string details) =>
-			new PreviewRenderResult { Error = new DesignError { Message = message, Details = details ?? message } };
+		static PreviewRenderResult Error(string message, string details, PreviewPlatform platform) =>
+			new PreviewRenderResult { Error = new DesignError { Message = message, Details = details ?? message }, Platform = platform.Label };
 
-		async Task<JsonRpc> GetServerAsync()
+		async Task<JsonRpc> GetServerAsync(PreviewPlatform wanted)
 		{
-			if (IsRunning)
+			if (IsRunning && platform?.Id == wanted.Id)
 				return rpc;
-			if (unavailable)
+			if (unavailable.Contains(wanted.Id))
 				return null;
 
-			// clean up after a host that exited, such as after a rebuild
+			// clean up after a host that exited, such as after a rebuild, or one drawing with another platform
 			Stop();
 
-			var hostPath = Path.Combine(Path.GetDirectoryName(typeof(PreviewHostClient).Assembly.Location), "preview", HostDll);
-			if (!File.Exists(hostPath))
+			if (!File.Exists(wanted.HostPath))
 			{
-				unavailable = true;
-				Debug.WriteLine($"Eto preview host not found at {hostPath}");
+				unavailable.Add(wanted.Id);
+				Debug.WriteLine($"Eto preview host not found at {wanted.HostPath}");
 				return null;
 			}
 
 			try
 			{
-				var start = new ProcessStartInfo("dotnet", "\"" + hostPath + "\"")
+				var start = new ProcessStartInfo("dotnet", $"\"{wanted.HostPath}\" --platform {wanted.Id}")
 				{
 					UseShellExecute = false,
 					CreateNoWindow = true,
@@ -166,7 +168,10 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 					RedirectStandardOutput = true,
 					RedirectStandardError = true
 				};
+				if (wanted.LibraryPath != null)
+					start.EnvironmentVariables["PATH"] = wanted.LibraryPath + Path.PathSeparator + start.EnvironmentVariables["PATH"];
 				process = Process.Start(start);
+				platform = wanted;
 				process.ErrorDataReceived += (sender, e) => Debug.WriteLine(e.Data);
 				process.BeginErrorReadLine();
 
@@ -180,8 +185,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			}
 			catch (Exception ex)
 			{
-				// usually no desktop runtime to run it with, so don't keep trying
-				unavailable = true;
+				unavailable.Add(wanted.Id);
 				Debug.WriteLine($"Could not start the Eto preview host: {ex}");
 				Stop();
 				return null;
@@ -212,6 +216,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			var oldProcess = process;
 			rpc = null;
 			process = null;
+			platform = null;
 			try
 			{
 				oldRpc?.Dispose();
