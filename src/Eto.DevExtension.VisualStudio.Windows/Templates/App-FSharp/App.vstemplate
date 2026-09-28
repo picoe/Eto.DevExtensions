@@ -31,7 +31,7 @@
 			<CustomParameter Name="$uistyle$" Value="none"/>
 			<CustomParameter Name="$groupid$" Value="Eto.App" />
 			<CustomParameter Name="SideWaffleNewProjNode" Value="Project\FSharp\Eto.Forms"/>
-			<CustomParameter Name="SupportedParameters" Value="Combined,Xeto,Jeto,Preview,XamMac,macos,Framework" />
+			<CustomParameter Name="SupportedParameters" Value="Combined,Xeto,Jeto,Preview,macos,winforms,Framework" />
 		</CustomParameters>
 	</TemplateContent>
 	<WizardExtension>
