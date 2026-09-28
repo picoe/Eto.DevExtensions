@@ -1,0 +1,118 @@
+name: Publish
+
+# Publishes a release's extensions to the marketplaces once it's marked as a full release, rather than a pre-release.
+# Running it by hand shows the Azure identity to add to the Visual Studio Marketplace publisher, for the one-time setup.
+on:
+  release:
+    types: [ released ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # lets the Visual Studio Marketplace jobs sign in to Azure without a stored secret
+  id-token: write
+
+env:
+  TAG: ${{ github.event.release.tag_name }}
+  GH_TOKEN: ${{ github.token }}
+  # Azure DevOps, which the Visual Studio Marketplace signs in through
+  MARKETPLACE_RESOURCE: 499b84ac-1321-427f-aa17-267ca6975798
+
+jobs:
+  marketplace-identity:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # the Azure sign-in only trusts jobs in this environment
+    environment: marketplace
+    steps:
+    - uses: azure/login@v3
+      with:
+        client-id: ${{ vars.AZURE_CLIENT_ID }}
+        tenant-id: ${{ vars.AZURE_TENANT_ID }}
+        allow-no-subscriptions: true
+
+    - name: Show the identity to add to the publisher
+      run: |
+        az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource "$MARKETPLACE_RESOURCE" \
+          --query "{id: id, name: displayName}"
+
+  visual-studio:
+    if: github.event_name == 'release'
+    runs-on: windows-latest
+    environment: marketplace
+    steps:
+    # for the publish manifest and overview
+    - uses: actions/checkout@v7
+
+    - name: Download extension
+      run: gh release download "$env:TAG" --pattern "Eto.DevExtension.VisualStudio.Windows.*.vsix" --dir extensions
+
+    - uses: azure/login@v3
+      with:
+        client-id: ${{ vars.AZURE_CLIENT_ID }}
+        tenant-id: ${{ vars.AZURE_TENANT_ID }}
+        allow-no-subscriptions: true
+
+    - name: Publish to the Visual Studio Marketplace
+      run: |
+        # VsixPublisher accepts a short-lived Azure token in place of a personal access token
+        $token = az account get-access-token --resource $env:MARKETPLACE_RESOURCE --query accessToken -o tsv
+        $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+        $publisher = Join-Path $vs 'VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe'
+        $vsix = (Get-ChildItem extensions\*.vsix | Select-Object -First 1).FullName
+        & $publisher publish -payload $vsix -publishManifest src\Eto.DevExtension.VisualStudio.Windows\publishManifest.json -personalAccessToken $token
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+  vscode:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment: marketplace
+    steps:
+    - name: Download extension
+      run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "eto-forms-designer-*.vsix" --dir extensions
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - uses: azure/login@v3
+      with:
+        client-id: ${{ vars.AZURE_CLIENT_ID }}
+        tenant-id: ${{ vars.AZURE_TENANT_ID }}
+        allow-no-subscriptions: true
+
+    - name: Publish to the Visual Studio Marketplace
+      run: npx --yes @vscode/vsce publish --packagePath extensions/*.vsix --azure-credential
+
+  open-vsx:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download extension
+      run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "eto-forms-designer-*.vsix" --dir extensions
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Publish to Open VSX
+      env:
+        OVSX_PAT: ${{ secrets.OPEN_VSX_TOKEN }}
+      run: npx --yes ovsx publish extensions/*.vsix
+
+  rider:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download plugin
+      run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "Eto.DevExtension.Rider-*.zip" --dir extensions
+
+    - name: Publish to the JetBrains Marketplace
+      env:
+        TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+      run: |
+        curl --fail-with-body \
+          --header "Authorization: Bearer $TOKEN" \
+          --form xmlId=com.picoe.eto.designer \
+          --form file=@"$(ls extensions/*.zip)" \
+          https://plugins.jetbrains.com/api/updates/upload

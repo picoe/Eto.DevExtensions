@@ -7,3 +7,4 @@ tsconfig.json
 server/**/*.pdb
 preview/**/*.pdb
 scripts/**
+BUILDING.md
