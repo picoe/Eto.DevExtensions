@@ -27,6 +27,7 @@ using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.Utilities;
 using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Editor;
+using Microsoft.VisualStudio.Editor.Internal;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using System.Windows.Media;
@@ -43,7 +44,11 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		IVsTextLinesEvents,
 		IOleCommandTarget,
 		IVsCodeWindow, // support setting breakpoints
-		IVsCodeWindowEx
+		IVsCodeWindowEx,
+		IVsFindTarget, // find in the embedded editor
+		IVsFindTarget2,
+		IVsFindTarget3, // enables the quick find bar instead of only the find dialog
+		IVsFindTarget4
 	{
 		IVsTextLines textBuffer;
 		CodeEditorHost editor;
@@ -546,5 +551,48 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 		int IVsCodeWindowEx.Initialize(uint grfCodeWindowBehaviorFlags, VSUSERCONTEXTATTRIBUTEUSAGE usageAuxUserContext, string szNameAuxUserContext, string szValueAuxUserContext, uint InitViewFlags, INITVIEW[] pInitView) => ((IVsCodeWindowEx)editor.codeWindow).Initialize(grfCodeWindowBehaviorFlags, usageAuxUserContext, szNameAuxUserContext, szValueAuxUserContext, InitViewFlags, pInitView);
 		int IVsCodeWindowEx.IsReadOnly() => ((IVsCodeWindowEx)editor.codeWindow).IsReadOnly();
+
+		IVsFindTarget FindTarget => editor.viewAdapter as IVsFindTarget;
+
+		int IVsFindTarget.GetCapabilities(bool[] pfImage, uint[] pgrfOptions) => FindTarget?.GetCapabilities(pfImage, pgrfOptions) ?? VSConstants.E_FAIL;
+		int IVsFindTarget.GetProperty(uint propid, out object pvar)
+		{
+			pvar = null;
+			return FindTarget?.GetProperty(propid, out pvar) ?? VSConstants.E_FAIL;
+		}
+		int IVsFindTarget.GetSearchImage(uint grfOptions, IVsTextSpanSet[] ppSpans, out IVsTextImage ppTextImage)
+		{
+			ppTextImage = null;
+			return FindTarget?.GetSearchImage(grfOptions, ppSpans, out ppTextImage) ?? VSConstants.E_FAIL;
+		}
+		int IVsFindTarget.Find(string pszSearch, uint grfOptions, int fResetStartPoint, IVsFindHelper pHelper, out uint pResult)
+		{
+			pResult = 0;
+			return FindTarget?.Find(pszSearch, grfOptions, fResetStartPoint, pHelper, out pResult) ?? VSConstants.E_FAIL;
+		}
+		int IVsFindTarget.Replace(string pszSearch, string pszReplace, uint grfOptions, int fResetStartPoint, IVsFindHelper pHelper, out int pfReplaced)
+		{
+			pfReplaced = 0;
+			return FindTarget?.Replace(pszSearch, pszReplace, grfOptions, fResetStartPoint, pHelper, out pfReplaced) ?? VSConstants.E_FAIL;
+		}
+		int IVsFindTarget.GetMatchRect(RECT[] prc) => FindTarget?.GetMatchRect(prc) ?? VSConstants.E_FAIL;
+		int IVsFindTarget.NavigateTo(TextSpan[] pts) => FindTarget?.NavigateTo(pts) ?? VSConstants.E_FAIL;
+		int IVsFindTarget.GetCurrentSpan(TextSpan[] pts) => FindTarget?.GetCurrentSpan(pts) ?? VSConstants.E_FAIL;
+		int IVsFindTarget.SetFindState(object pUnk) => FindTarget?.SetFindState(pUnk) ?? VSConstants.E_FAIL;
+		int IVsFindTarget.GetFindState(out object ppunk)
+		{
+			ppunk = null;
+			return FindTarget?.GetFindState(out ppunk) ?? VSConstants.E_FAIL;
+		}
+		int IVsFindTarget.NotifyFindTarget(uint notification) => FindTarget?.NotifyFindTarget(notification) ?? VSConstants.E_FAIL;
+		int IVsFindTarget.MarkSpan(TextSpan[] pts) => FindTarget?.MarkSpan(pts) ?? VSConstants.E_FAIL;
+
+		int IVsFindTarget2.NavigateTo2(IVsTextSpanSet pSpans, TextSelMode iSelMode) => (editor.viewAdapter as IVsFindTarget2)?.NavigateTo2(pSpans, iSelMode) ?? VSConstants.E_FAIL;
+
+		int IVsFindTarget3.IsNewUISupported => (editor.viewAdapter as IVsFindTarget3)?.IsNewUISupported ?? 0;
+		int IVsFindTarget3.NotifyShowingNewUI() => (editor.viewAdapter as IVsFindTarget3)?.NotifyShowingNewUI() ?? VSConstants.E_FAIL;
+
+		int IVsFindTarget4.IsAutonomous => (editor.viewAdapter as IVsFindTarget4)?.IsAutonomous ?? 0;
+		int IVsFindTarget4.IsIncrementalSearchSupported => (editor.viewAdapter as IVsFindTarget4)?.IsIncrementalSearchSupported ?? 0;
 	}
 }
