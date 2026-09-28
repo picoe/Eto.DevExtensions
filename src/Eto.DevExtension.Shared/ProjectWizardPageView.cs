@@ -97,15 +97,14 @@ namespace Eto.DevExtension.Shared
 				content.AddRow(HeadingLabel(string.Empty), cb);
 			}
 
-			if (model.SupportsXamMac)
+			if (model.SupportsWinForms)
 			{
 				var cb = new CheckBox
 				{
-					ToolTip = "This enables you to bundle mono with your app so your users don't have to install it separately.  You can only compile this on a Mac"
+					ToolTip = "Uses Windows Forms on Windows instead of, or as well as, WPF"
 				};
-				cb.BindDataContext(c => c.Text, Binding.Property((ProjectWizardPageModel m) => m.Combined).Convert(combined => combined ? "Use Xamarin.Mac" : "Include Xamarin.Mac project"));
-				cb.BindDataContext(c => c.Enabled, Binding.Property((ProjectWizardPageModel m) => m.AllowXamMac));
-				cb.CheckedBinding.BindDataContext((ProjectWizardPageModel m) => m.IncludeXamMac);
+				cb.BindDataContext(c => c.Text, Binding.Property((ProjectWizardPageModel m) => m.Combined).Convert(combined => combined ? "Use Windows Forms instead of WPF" : "Include Windows Forms project"));
+				cb.CheckedBinding.BindDataContext((ProjectWizardPageModel m) => m.IncludeWinForms);
 				content.AddRow(HeadingLabel(string.Empty), cb);
 			}
 
