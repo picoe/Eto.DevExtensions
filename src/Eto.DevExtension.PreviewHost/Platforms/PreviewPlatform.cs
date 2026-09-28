@@ -37,6 +37,9 @@ namespace Eto.DevExtension.PreviewHost
 		/// <summary>Called once the application is running.</summary>
 		public virtual void Initialized() { }
 
+		/// <summary>The Eto.Forms.Theme to use when none is picked, or null to keep the app's own.</summary>
+		public virtual object GetDefaultTheme() => null;
+
 		/// <summary>Draws the control to a PNG. <paramref name="control"/> is an Eto.Forms.Control, and is disposed after.</summary>
 		public abstract Task<RenderResult> CaptureAsync(object control, RenderRequest request);
 

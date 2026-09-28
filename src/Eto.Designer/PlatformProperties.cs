@@ -26,6 +26,12 @@ namespace Eto.Designer
 		Color SplitBarHoverBackground { get; }
 		Color SplitBarSelectedBackground { get; }
 		Color SplitBarSelectedForeground { get; }
+		/// <summary>Line around the preview, so it stands out when it matches the background.</summary>
+		Color DesignerBorder { get; }
+		/// <summary>Handle and outline for resizing the preview.</summary>
+		Color SizeGrip { get; }
+		Color SizeLabelBackground { get; }
+		Color SizeLabelForeground { get; }
 
 		IEnumerable<PlatformColor> AllColors { get; }
 	}

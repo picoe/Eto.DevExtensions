@@ -53,6 +53,13 @@ namespace Eto.Designer
             UpdateState();
         }
 
+        public void UpdateTheme()
+        {
+            BackgroundColor = Global.Theme.SplitBarBackground;
+            foreach (var button in new[] { designTab, codeTab, swapButton, orientationButton, collapseButton })
+                button.Invalidate();
+        }
+
         /// <summary>Reflects the splitter's current layout.</summary>
         public void UpdateState()
         {

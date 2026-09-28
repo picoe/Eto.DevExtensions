@@ -8,11 +8,12 @@ import {
 	TransportKind
 } from 'vscode-languageclient/node';
 import { AUTO, HostLauncher } from './hostLaunch';
-import { isPreviewable, PlatformPicker, PreviewPanel } from './preview';
+import { DEFAULT_THEME, isPreviewable, PlatformPicker, PreviewPanel } from './preview';
 import { PreviewHost } from './previewHost';
 
 const SERVER_DLL = 'Eto.DevExtension.LanguageServer.dll';
 const PLATFORM_KEY = 'eto.preview.platform';
+const THEME_KEY = 'eto.preview.theme';
 
 let client: LanguageClient | undefined;
 let output: vscode.OutputChannel;
@@ -115,7 +116,9 @@ async function openPreview(context: vscode.ExtensionContext, uri?: vscode.Uri): 
 		const picker: PlatformPicker = platformPicker = {
 			getPlatforms: () => launcher.getPlatforms(),
 			get: () => context.workspaceState.get<string>(PLATFORM_KEY, AUTO),
-			set: id => context.workspaceState.update(PLATFORM_KEY, id)
+			set: id => context.workspaceState.update(PLATFORM_KEY, id),
+			getTheme: () => context.workspaceState.get<string>(THEME_KEY, DEFAULT_THEME),
+			setTheme: name => context.workspaceState.update(THEME_KEY, name)
 		};
 		previewHost = new PreviewHost(fileName => launcher.resolve(fileName, picker.get()), output);
 	}

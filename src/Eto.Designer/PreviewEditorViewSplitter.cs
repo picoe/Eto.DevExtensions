@@ -149,6 +149,13 @@ namespace Eto.Designer
             lastPosition = designPosition;
         }
 
+        /// <summary>Call after the editor's theme changes to pick up its new colours.</summary>
+        public void UpdateTheme()
+        {
+            Preview.UpdateTheme();
+            bar.UpdateTheme();
+        }
+
         protected override void OnGotFocus(EventArgs e)
         {
             base.OnGotFocus(e);

@@ -35,8 +35,11 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 	static class PreviewPlatforms
 	{
 		public const string Auto = "auto";
+		/// <summary>The platform's usual theme, which for WPF is the system one.</summary>
+		public const string DefaultTheme = "";
 		const string HostDll = "Eto.DevExtension.PreviewHost.dll";
 		const string CollectionPath = @"Eto.DevExtension\PreviewPlatform";
+		const string ThemeCollectionPath = @"Eto.DevExtension\PreviewTheme";
 		const string Requirement = "The preview needs the .NET 8 Desktop Runtime (or newer) to be installed.";
 		// scanning projects on every keystroke is too slow, but an edited project should still be noticed
 		static readonly TimeSpan CacheTime = TimeSpan.FromSeconds(10);
@@ -44,9 +47,13 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		static (DateTime Time, string Solution, string Id) autoCache;
 		// used when there's no solution to remember it with
 		static string unsavedChoice = Auto;
+		static string unsavedTheme = DefaultTheme;
 
 		/// <summary>Raised on the UI thread when <see cref="Choice"/> changes.</summary>
 		public static event EventHandler ChoiceChanged;
+
+		/// <summary>Raised on the UI thread when <see cref="ThemeChoice"/> changes.</summary>
+		public static event EventHandler ThemeChoiceChanged;
 
 		/// <summary>Platforms available on this machine, best first.</summary>
 		public static List<PreviewPlatform> GetAvailable()
@@ -79,38 +86,57 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		/// <summary>A platform id or <see cref="Auto"/>, remembered for each solution. Use on the UI thread.</summary>
 		public static string Choice
 		{
-			get
-			{
-				ThreadHelper.ThrowIfNotOnUIThread();
-				var solution = GetSolutionPath();
-				if (string.IsNullOrEmpty(solution))
-					return unsavedChoice;
-				var store = GetStore();
-				return store?.GetString(CollectionPath, solution, Auto) ?? Auto;
-			}
+			get => GetChoice(CollectionPath, Auto, unsavedChoice);
 			set
 			{
-				ThreadHelper.ThrowIfNotOnUIThread();
-				value = value ?? Auto;
-				if (value == Choice)
-					return;
-
-				var solution = GetSolutionPath();
-				var store = string.IsNullOrEmpty(solution) ? null : GetStore();
-				if (store == null)
-					unsavedChoice = value;
-				else if (value == Auto)
-				{
-					if (store.CollectionExists(CollectionPath))
-						store.DeleteProperty(CollectionPath, solution);
-				}
-				else
-				{
-					store.CreateCollection(CollectionPath);
-					store.SetString(CollectionPath, solution, value);
-				}
-				ChoiceChanged?.Invoke(null, EventArgs.Empty);
+				if (SetChoice(CollectionPath, value ?? Auto, Auto, ref unsavedChoice))
+					ChoiceChanged?.Invoke(null, EventArgs.Empty);
 			}
+		}
+
+		/// <summary>A theme name from the host, or <see cref="DefaultTheme"/>, remembered for each solution. Use on the UI thread.</summary>
+		public static string ThemeChoice
+		{
+			get => GetChoice(ThemeCollectionPath, DefaultTheme, unsavedTheme);
+			set
+			{
+				if (SetChoice(ThemeCollectionPath, value ?? DefaultTheme, DefaultTheme, ref unsavedTheme))
+					ThemeChoiceChanged?.Invoke(null, EventArgs.Empty);
+			}
+		}
+
+		static string GetChoice(string collection, string fallback, string unsaved)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			var solution = GetSolutionPath();
+			if (string.IsNullOrEmpty(solution))
+				return unsaved;
+			var store = GetStore();
+			return store?.GetString(collection, solution, fallback) ?? fallback;
+		}
+
+		/// <returns>true when the choice changed.</returns>
+		static bool SetChoice(string collection, string value, string fallback, ref string unsaved)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			if (value == GetChoice(collection, fallback, unsaved))
+				return false;
+
+			var solution = GetSolutionPath();
+			var store = string.IsNullOrEmpty(solution) ? null : GetStore();
+			if (store == null)
+				unsaved = value;
+			else if (value == fallback)
+			{
+				if (store.CollectionExists(collection))
+					store.DeleteProperty(collection, solution);
+			}
+			else
+			{
+				store.CreateCollection(collection);
+				store.SetString(collection, solution, value);
+			}
+			return true;
 		}
 
 		/// <summary>The platform to draw with: the one picked, or for Auto the first the solution references, otherwise WPF.</summary>

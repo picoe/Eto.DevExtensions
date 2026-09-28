@@ -43,6 +43,14 @@ namespace Eto.DevExtension.VisualStudio.Windows
 
 		public Color SplitBarSelectedForeground => VSColorTheme.GetThemedColor(EnvironmentColors.FileTabSelectedTextColorKey).ToEto();
 
+		public Color DesignerBorder => VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBorderColorKey).ToEto();
+
+		public Color SizeGrip => VSColorTheme.GetThemedColor(EnvironmentColors.FileTabSelectedBorderColorKey).ToEto();
+
+		public Color SizeLabelBackground => VSColorTheme.GetThemedColor(CommonControlsColors.ButtonColorKey).ToEto();
+
+		public Color SizeLabelForeground => VSColorTheme.GetThemedColor(CommonControlsColors.ButtonTextColorKey).ToEto();
+
 		public IEnumerable<PlatformColor> AllColors
 		{
 			get

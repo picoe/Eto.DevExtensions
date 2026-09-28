@@ -17,6 +17,8 @@ export interface RenderRequest {
 	width?: number;
 	height?: number;
 	scale: number;
+	/** Theme name, or undefined for the platform's default. */
+	theme?: string;
 }
 
 export interface RenderResult {
@@ -26,6 +28,10 @@ export interface RenderResult {
 	error?: { message: string; details?: string };
 	/** Label of the platform it was drawn with. */
 	platform?: string;
+	/** Theme names the platform offers. */
+	themes?: string[];
+	/** Name of the theme it was drawn with. */
+	theme?: string;
 }
 
 /**

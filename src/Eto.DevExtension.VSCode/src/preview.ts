@@ -5,6 +5,9 @@ import { PreviewHost, RenderResult } from './previewHost';
 
 const REFRESH_DELAY_MS = 500;
 
+/** The platform's usual theme, which for WPF is the system one. */
+export const DEFAULT_THEME = '';
+
 /** Designer files the preview can draw. */
 export function isPreviewable(document: vscode.TextDocument): boolean {
 	return document.uri.scheme === 'file' && /\.(xeto|jeto|eto\.cs|eto\.vb)$/i.test(document.fileName);
@@ -16,6 +19,9 @@ export interface PlatformPicker {
 	/** A platform id, or {@link AUTO}. */
 	get(): string;
 	set(id: string): Thenable<void>;
+	/** A theme name, or {@link DEFAULT_THEME}. */
+	getTheme(): string;
+	setTheme(name: string): Thenable<void>;
 }
 
 /**
@@ -33,6 +39,10 @@ export class PreviewPanel implements vscode.Disposable {
 	private rendering = false;
 	private renderPending = false;
 	private timer: NodeJS.Timeout | undefined;
+	// themes the host offers, and the one it last drew with, shown beside Default
+	private themes: string[] | undefined;
+	private drawnTheme: string | undefined;
+	private sentThemes: string | undefined;
 
 	static show(host: PreviewHost, picker: PlatformPicker, document: vscode.TextDocument): void {
 		if (PreviewPanel.current) {
@@ -92,11 +102,23 @@ export class PreviewPanel implements vscode.Disposable {
 				const options = [{ id: AUTO, label: 'Auto' }, ...this.picker.getPlatforms()];
 				const selected = options.some(r => r.id === this.picker.get()) ? this.picker.get() : AUTO;
 				this.panel.webview.postMessage({ type: 'platforms', options, selected });
+				this.sentThemes = undefined;
+				this.postThemes();
 				this.render();
 				break;
 			}
 			case 'platform':
+				// another platform has its own themes
+				this.themes = undefined;
+				this.drawnTheme = undefined;
+				this.postThemes();
 				this.picker.set(message.id || AUTO).then(() => this.render());
+				break;
+			case 'theme':
+				this.picker.setTheme(message.id || DEFAULT_THEME).then(() => {
+					this.postThemes();
+					this.render();
+				});
 				break;
 			case 'scale':
 				this.scale = message.scale || 1;
@@ -110,6 +132,24 @@ export class PreviewPanel implements vscode.Disposable {
 				this.size = undefined;
 				this.render();
 				break;
+		}
+	}
+
+	private postThemes(): void {
+		const choice = this.picker.getTheme();
+		const names = [...this.themes ?? []];
+		// until the host lists its themes, still show what was picked
+		if (!this.themes && choice !== DEFAULT_THEME) {
+			names.push(choice);
+		}
+		const selected = names.includes(choice) ? choice : DEFAULT_THEME;
+		const label = selected === DEFAULT_THEME && this.drawnTheme ? `Default (${this.drawnTheme})` : 'Default';
+		const options = [{ id: DEFAULT_THEME, label }, ...names.map(r => ({ id: r, label: r }))];
+		// rebuilding the list would close it if it's open
+		const key = JSON.stringify([options, selected]);
+		if (key !== this.sentThemes) {
+			this.sentThemes = key;
+			this.panel.webview.postMessage({ type: 'themes', options, selected });
 		}
 	}
 
@@ -137,10 +177,16 @@ export class PreviewPanel implements vscode.Disposable {
 					text: document.getText(),
 					width: this.size?.width,
 					height: this.size?.height,
-					scale: this.scale
+					scale: this.scale,
+					theme: this.picker.getTheme() || undefined
 				});
 				if (PreviewPanel.current !== this) {
 					return;
+				}
+				if (result.themes) {
+					this.themes = result.themes;
+					this.drawnTheme = result.theme;
+					this.postThemes();
 				}
 				// results for a file the user already moved away from would only flicker
 				if (document === this.document) {
@@ -166,13 +212,14 @@ function getHtml(): string {
 <style nonce="${nonce}">
 	html, body { height: 100%; margin: 0; }
 	body { background: var(--vscode-editor-background); color: var(--vscode-foreground); font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); display: flex; flex-direction: column; }
-	#toolbar { display: flex; justify-content: flex-end; padding: 6px 10px 0; }
-	#platform { font: inherit; padding: 2px 4px; color: var(--vscode-dropdown-foreground); background: var(--vscode-dropdown-background); border: 1px solid var(--vscode-dropdown-border); border-radius: 2px; }
-	#platform:focus { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+	#toolbar { display: flex; justify-content: flex-end; gap: 4px; padding: 6px 10px 0; }
+	select { font: inherit; padding: 2px 4px; color: var(--vscode-dropdown-foreground); background: var(--vscode-dropdown-background); border: 1px solid var(--vscode-dropdown-border); border-radius: 2px; }
+	select:focus { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
 	#surface { flex: 1; overflow: auto; padding: 40px 32px 32px; }
 	#frame { position: relative; display: none; margin: 0 auto; outline: 1px dashed transparent; outline-offset: 4px; }
 	#frame:hover, #frame.dragging { outline-color: var(--vscode-focusBorder); }
-	#frame img { display: block; width: 100%; height: 100%; }
+	/* a line just outside the form, so it stands out when it matches the background */
+	#frame img { display: block; width: 100%; height: 100%; box-shadow: 0 0 0 1px var(--vscode-editorWidget-border, var(--vscode-panel-border)); }
 	#size { position: absolute; left: 50%; top: -30px; transform: translateX(-50%); padding: 1px 6px; font-size: 11px; white-space: nowrap; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); border: none; border-radius: 2px; cursor: default; }
 	#size.sized { cursor: pointer; }
 	#grip { position: absolute; right: -9px; bottom: -9px; width: 10px; height: 10px; border-radius: 50%; background: var(--vscode-focusBorder); cursor: nwse-resize; }
@@ -181,7 +228,7 @@ function getHtml(): string {
 </style>
 </head>
 <body>
-<div id="toolbar"><select id="platform" title="Platform to draw the preview with"></select></div>
+<div id="toolbar"><select id="platform" title="Platform to draw the preview with"></select><select id="theme" title="Theme to draw the preview with"></select></div>
 <div id="surface">
 	<div id="status">Drawing preview…</div>
 	<div id="frame"><img id="image" alt=""><button id="size" title=""></button><div id="grip" title="Drag to resize"></div></div>
@@ -196,6 +243,7 @@ function getHtml(): string {
 	const status = document.getElementById('status');
 	const error = document.getElementById('error');
 	const platform = document.getElementById('platform');
+	const theme = document.getElementById('theme');
 	let drag, sent = 0, sized = false;
 
 	function setFrameSize(width, height) {
@@ -213,8 +261,9 @@ function getHtml(): string {
 
 	window.addEventListener('message', e => {
 		const message = e.data;
-		if (message.type === 'platforms') {
-			platform.replaceChildren(...message.options.map(r => new Option(r.label, r.id, false, r.id === message.selected)));
+		if (message.type === 'platforms' || message.type === 'themes') {
+			const select = message.type === 'platforms' ? platform : theme;
+			select.replaceChildren(...message.options.map(r => new Option(r.label, r.id, false, r.id === message.selected)));
 			return;
 		}
 		setPlatform(message.platform);
@@ -267,6 +316,10 @@ function getHtml(): string {
 	platform.addEventListener('change', () => {
 		status.textContent = 'Drawing preview…';
 		vscode.postMessage({ type: 'platform', id: platform.value });
+	});
+	theme.addEventListener('change', () => {
+		status.textContent = 'Drawing preview…';
+		vscode.postMessage({ type: 'theme', id: theme.value });
 	});
 	size.addEventListener('click', () => {
 		if (sized)

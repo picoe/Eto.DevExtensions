@@ -23,6 +23,10 @@ namespace Eto.Designer
 		public DesignError Error { get; set; }
 		/// <summary>Name of the platform it was drawn with, if known.</summary>
 		public string Platform { get; set; }
+		/// <summary>Theme names the platform offers, if known.</summary>
+		public string[] Themes { get; set; }
+		/// <summary>Name of the theme it was drawn with, if known.</summary>
+		public string Theme { get; set; }
 	}
 
 	/// <summary>
@@ -72,6 +76,12 @@ namespace Eto.Designer
 		}
 
 		public string GetCodeFile(string fileName) => builder?.GetCodeFile(fileName);
+
+		public void UpdateTheme()
+		{
+			BackgroundColor = Global.Theme.DesignerBackground;
+			designSurface.Invalidate();
+		}
 
 		public void Update(string code)
 		{

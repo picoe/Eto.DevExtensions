@@ -17,5 +17,7 @@ namespace Eto.Designer
 		void Invalidate();
 		bool SetBuilder(string fileName);
 		string GetCodeFile(string fileName);
+		/// <summary>Call after the editor's theme changes to pick up its new colours.</summary>
+		void UpdateTheme();
 	}
 }

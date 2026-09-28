@@ -16,6 +16,9 @@ private const val CACHE_MS = 10000L
 
 const val AUTO = "auto"
 
+/** The platform's usual theme, which for WPF is the system one. */
+const val DEFAULT_THEME = ""
+
 /** A platform the preview can draw with. */
 data class PlatformOption(val id: String, val label: String) {
     override fun toString() = label
