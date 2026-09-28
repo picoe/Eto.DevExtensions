@@ -126,10 +126,20 @@ export class PreviewHost implements vscode.Disposable {
 			const child = spawn(launch.command, launch.args, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true, env: launch.env });
 			const failed = new Promise<never>((_, reject) => child.once('error', reject));
 			child.stderr?.on('data', data => this.output.append(`${data}`));
+			// a closed stream doesn't fail pending requests, so drop the host to fail them instead of waiting out the timeout
+			child.once('exit', () => {
+				if (this.process === child) {
+					this.stop();
+				}
+			});
 
 			const connection = createMessageConnection(new StreamMessageReader(child.stdout!), new StreamMessageWriter(child.stdin!));
 			connection.onNotification('preview/restart', () => {
 				this.output.appendLine('Project rebuilt, restarting the preview host.');
+				// the host is about to exit and won't answer, so the redraw must start a new one
+				if (this.connection === connection) {
+					this.stop();
+				}
 				this.restarted.fire();
 			});
 			connection.onNotification('window/logMessage', (params: { message: string }) => this.output.appendLine(params.message));
