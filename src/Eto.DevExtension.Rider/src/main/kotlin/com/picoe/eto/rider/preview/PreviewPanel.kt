@@ -68,6 +68,12 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
     private var disposed = false
     // what Auto picked
     private var autoLabel: String? = null
+    private val themes = CollectionComboBoxModel<PlatformOption>()
+    private val themeBox = ComboBox(themes)
+    // themes the host offers, and the one it last drew with, shown beside Default
+    private var hostThemes: List<String>? = null
+    private var drawnTheme: String? = null
+    private var loadingThemes = false
 
     init {
         background = editorBackground()
@@ -84,6 +90,22 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
             val id = platformBox.item?.id ?: AUTO
             if (id != state.platform) {
                 state.platform = id
+                // another platform has its own themes
+                hostThemes = null
+                drawnTheme = null
+                loadThemes()
+                surface.status = "Drawing preview…"
+                render()
+            }
+        }
+        themeBox.toolTipText = "Theme to draw the preview with"
+        loadThemes()
+        themeBox.addActionListener {
+            if (loadingThemes) return@addActionListener
+            val name = themeBox.item?.id ?: DEFAULT_THEME
+            if (name != state.theme) {
+                state.theme = name
+                loadThemes()
                 surface.status = "Drawing preview…"
                 render()
             }
@@ -91,6 +113,7 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
         val toolbar = JPanel(FlowLayout(FlowLayout.RIGHT, JBUI.scale(10), JBUI.scale(6))).apply {
             isOpaque = false
             add(platformBox)
+            add(themeBox)
         }
 
         error.apply {
@@ -172,7 +195,7 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
         rendering = true
         renderPending = false
         val text = ReadAction.compute<String, Throwable> { FileDocumentManager.getInstance().getDocument(file)?.text ?: "" }
-        val request = RenderRequest(file.path, text, size?.width, size?.height, scale)
+        val request = RenderRequest(file.path, text, size?.width, size?.height, scale, state.theme)
         host.render(request, state.platform).whenComplete { result, e ->
             ApplicationManager.getApplication().invokeLater({
                 rendering = false
@@ -188,6 +211,11 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
     private fun show(result: RenderResult) {
         autoLabel = result.platform
         platformBox.repaint()
+        result.themes?.let {
+            hostThemes = it
+            drawnTheme = result.theme
+            loadThemes()
+        }
         if (result.errorMessage != null) {
             // keep the last good preview up
             error.text = result.errorMessage
@@ -202,6 +230,22 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
         }
         revalidate()
         repaint()
+    }
+
+    private fun loadThemes() {
+        val choice = state.theme
+        val names = hostThemes.orEmpty().toMutableList()
+        // until the host lists its themes, still show what was picked
+        if (hostThemes == null && choice != DEFAULT_THEME) names += choice
+        val selected = if (choice in names) choice else DEFAULT_THEME
+        val label = if (selected == DEFAULT_THEME && drawnTheme != null) "Default ($drawnTheme)" else "Default"
+        val options = listOf(PlatformOption(DEFAULT_THEME, label)) + names.map { PlatformOption(it, it) }
+        // replacing the items would close the list if it's open
+        if (options == themes.items && themeBox.item?.id == selected) return
+        loadingThemes = true
+        themes.replaceAll(options)
+        themeBox.item = options.first { it.id == selected }
+        loadingThemes = false
     }
 
     private fun onResize(width: Int, height: Int) {
@@ -342,6 +386,9 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
                 val frame = frame()
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
                 g2.drawImage(image, frame.x, frame.y, frame.width, frame.height, null)
+                // a line just outside the form, so it stands out when it matches the background
+                g2.color = JBColor.border()
+                g2.drawRect(frame.x - 1, frame.y - 1, frame.width + 1, frame.height + 1)
 
                 val focus = JBUI.CurrentTheme.Focus.focusColor()
                 if (hover || drag != null) {

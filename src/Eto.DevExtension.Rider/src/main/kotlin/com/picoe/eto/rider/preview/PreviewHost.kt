@@ -1,5 +1,6 @@
 package com.picoe.eto.rider.preview
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.google.gson.JsonObject
@@ -28,7 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger
 // long enough for a first render that compiles code, short enough to recover from a hung control
 private const val RENDER_TIMEOUT_MS = 30000L
 
-data class RenderRequest(val fileName: String, val text: String, val width: Int?, val height: Int?, val scale: Double)
+/** @param theme A theme name, or [DEFAULT_THEME]. */
+data class RenderRequest(val fileName: String, val text: String, val width: Int?, val height: Int?, val scale: Double, val theme: String = DEFAULT_THEME)
 
 data class RenderResult(
     /** Base64 png. */
@@ -39,6 +41,10 @@ data class RenderResult(
     val errorDetails: String? = null,
     /** Label of the platform it was drawn with. */
     val platform: String? = null,
+    /** Theme names the platform offers, if known. */
+    val themes: List<String>? = null,
+    /** Name of the theme it was drawn with. */
+    val theme: String? = null,
 )
 
 /**
@@ -86,6 +92,7 @@ class PreviewHost(private val project: Project) : Disposable {
                 request.width?.let { addProperty("width", it) }
                 request.height?.let { addProperty("height", it) }
                 addProperty("scale", request.scale)
+                if (request.theme != DEFAULT_THEME) addProperty("theme", request.theme)
                 add("assemblies", JsonNull.INSTANCE)
             }
             try {
@@ -103,6 +110,8 @@ class PreviewHost(private val project: Project) : Disposable {
                     errorMessage = error?.string("message"),
                     errorDetails = error?.string("details"),
                     platform = launch.platform,
+                    themes = (result.get("themes") as? JsonArray)?.mapNotNull { r -> r.takeIf { it.isJsonPrimitive }?.asString?.takeIf { it.isNotEmpty() } },
+                    theme = result.string("theme"),
                 )
             } catch (e: TimeoutException) {
                 stop()

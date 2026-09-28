@@ -13,6 +13,8 @@ namespace Eto.DevExtension.PreviewHost
 		public int? Width;
 		public int? Height;
 		public double Scale = 1;
+		/// <summary>Theme name, or null for the default.</summary>
+		public string Theme;
 	}
 
 	class RenderResult
@@ -22,6 +24,10 @@ namespace Eto.DevExtension.PreviewHost
 		public int Height { get; set; }
 		public RenderError Error { get; set; }
 		public bool? RestartRequired { get; set; }
+		/// <summary>Theme names that can be picked.</summary>
+		public string[] Themes { get; set; }
+		/// <summary>Name of the theme it was drawn with.</summary>
+		public string Theme { get; set; }
 
 		public static RenderResult Png(byte[] png, int width, int height) =>
 			new RenderResult { Image = Convert.ToBase64String(png), Width = width, Height = height };
@@ -41,13 +47,27 @@ namespace Eto.DevExtension.PreviewHost
 	class PreviewRenderer
 	{
 		readonly PreviewPlatform platform;
+		readonly PreviewThemes themes;
 		string builderFile;
 		IInterfaceBuilder builder;
 		IBuildToken token;
 
-		public PreviewRenderer(PreviewPlatform platform) => this.platform = platform;
+		public PreviewRenderer(PreviewPlatform platform, PreviewThemes themes)
+		{
+			this.platform = platform;
+			this.themes = themes;
+		}
 
-		public Task<RenderResult> RenderAsync(RenderRequest request)
+		public async Task<RenderResult> RenderAsync(RenderRequest request)
+		{
+			themes.Apply(request.Theme);
+			var result = await BuildAsync(request);
+			result.Themes = themes.Names;
+			result.Theme = themes.Current;
+			return result;
+		}
+
+		Task<RenderResult> BuildAsync(RenderRequest request)
 		{
 			var completion = new TaskCompletionSource<RenderResult>();
 			try

@@ -25,6 +25,7 @@ using System.Windows.Threading;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.Utilities;
+using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -54,6 +55,11 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		// label of the platform the last preview was drawn with, shown beside Auto
 		string drawnPlatform;
 		bool loadingPlatforms;
+		DropDown themeDropDown;
+		// themes the host offers, and the one it last drew with, shown beside Default
+		string[] drawnThemes;
+		string drawnTheme;
+		bool loadingThemes;
 		Panel editorControl;
 		uint dataEventsCookie;
 		uint linesEventsCookie;
@@ -130,6 +136,12 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 					drawnPlatform = result.Platform;
 					LoadPlatforms();
 				}
+				if (result?.Themes != null && (result.Theme != drawnTheme || drawnThemes == null || !result.Themes.SequenceEqual(drawnThemes)))
+				{
+					drawnThemes = result.Themes;
+					drawnTheme = result.Theme;
+					LoadThemes();
+				}
 				return result;
 			});
 
@@ -144,9 +156,19 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 			platformDropDown = new DropDown { ToolTip = "Platform to draw the preview with" };
 			platformDropDown.SelectedKeyChanged += PlatformDropDown_SelectedKeyChanged;
-			preview.ToolBar = platformDropDown;
+			themeDropDown = new DropDown { ToolTip = "Theme to draw the preview with" };
+			themeDropDown.SelectedKeyChanged += ThemeDropDown_SelectedKeyChanged;
+			preview.ToolBar = new StackLayout
+			{
+				Orientation = Orientation.Horizontal,
+				Spacing = 4,
+				Items = { platformDropDown, themeDropDown }
+			};
 			LoadPlatforms();
+			LoadThemes();
 			PreviewPlatforms.ChoiceChanged += PreviewPlatforms_ChoiceChanged;
+			PreviewPlatforms.ThemeChoiceChanged += PreviewPlatforms_ThemeChoiceChanged;
+			VSColorTheme.ThemeChanged += VSColorTheme_ThemeChanged;
 
 			var content = previewSplitter.ToNative(true);
 			Wizards.EtoInitializer.ApplyTheme(content);
@@ -326,6 +348,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 					RegisterIndependentView(false);
 
 					PreviewPlatforms.ChoiceChanged -= PreviewPlatforms_ChoiceChanged;
+					PreviewPlatforms.ThemeChoiceChanged -= PreviewPlatforms_ThemeChoiceChanged;
+					VSColorTheme.ThemeChanged -= VSColorTheme_ThemeChanged;
 
 					disposed = true;
 
@@ -389,6 +413,16 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 		void PreviewHost_ProjectChanged(object sender, EventArgs e) => preview?.Update();
 
+		void VSColorTheme_ThemeChanged(ThemeChangedEventArgs e)
+		{
+			// may be raised off the UI thread
+			Eto.Forms.Application.Instance.AsyncInvoke(() =>
+			{
+				if (!disposed)
+					previewSplitter?.UpdateTheme();
+			});
+		}
+
 		void LoadPlatforms()
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
@@ -417,6 +451,45 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			ThreadHelper.ThrowIfNotOnUIThread();
 			drawnPlatform = null;
 			LoadPlatforms();
+			// another platform has its own themes
+			drawnThemes = null;
+			drawnTheme = null;
+			LoadThemes();
+			preview?.Update();
+		}
+
+		void LoadThemes()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			if (themeDropDown == null)
+				return;
+			var choice = PreviewPlatforms.ThemeChoice;
+			var names = (drawnThemes ?? Array.Empty<string>()).ToList();
+			// until the host lists its themes, still show what was picked
+			if (drawnThemes == null && choice != PreviewPlatforms.DefaultTheme)
+				names.Add(choice);
+			var selected = names.Contains(choice) ? choice : PreviewPlatforms.DefaultTheme;
+			var label = selected == PreviewPlatforms.DefaultTheme && drawnTheme != null ? $"Default ({drawnTheme})" : "Default";
+			var items = new List<IListItem> { new ListItem { Key = PreviewPlatforms.DefaultTheme, Text = label } };
+			items.AddRange(names.Select(r => new ListItem { Key = r, Text = r }));
+
+			loadingThemes = true;
+			themeDropDown.DataStore = items;
+			themeDropDown.SelectedKey = selected;
+			loadingThemes = false;
+		}
+
+		void ThemeDropDown_SelectedKeyChanged(object sender, EventArgs e)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			if (!loadingThemes && themeDropDown.SelectedKey != null)
+				PreviewPlatforms.ThemeChoice = themeDropDown.SelectedKey;
+		}
+
+		void PreviewPlatforms_ThemeChoiceChanged(object sender, EventArgs e)
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			LoadThemes();
 			preview?.Update();
 		}
 

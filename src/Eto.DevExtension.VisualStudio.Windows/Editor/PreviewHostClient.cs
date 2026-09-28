@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,6 +73,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			{
 				// a second try covers a host that exited after a rebuild, or that serves an older build
 				var wanted = await PreviewPlatforms.ResolveAsync();
+				var theme = PreviewPlatforms.ThemeChoice;
 				for (var attempt = 0; attempt < 2; attempt++)
 				{
 					var server = await GetServerAsync(wanted);
@@ -91,7 +93,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 									assemblies,
 									width = request.Size?.Width,
 									height = request.Size?.Height,
-									scale = request.Scale
+									scale = request.Scale,
+									theme = string.IsNullOrEmpty(theme) ? null : theme
 								},
 								timeout.Token);
 
@@ -126,16 +129,18 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		static PreviewRenderResult Read(JToken result, PreviewPlatform platform)
 		{
 			var error = result?["error"];
-			if (error != null && error.Type == JTokenType.Object)
-				return Error((string)error["message"], (string)error["details"], platform);
-
 			var image = (string)result?["image"];
-			return new PreviewRenderResult
-			{
-				Image = string.IsNullOrEmpty(image) ? null : Convert.FromBase64String(image),
-				Size = new Size((int?)result?["width"] ?? 0, (int?)result?["height"] ?? 0),
-				Platform = platform.Label
-			};
+			var read = error != null && error.Type == JTokenType.Object
+				? Error((string)error["message"], (string)error["details"], platform)
+				: new PreviewRenderResult
+				{
+					Image = string.IsNullOrEmpty(image) ? null : Convert.FromBase64String(image),
+					Size = new Size((int?)result?["width"] ?? 0, (int?)result?["height"] ?? 0),
+					Platform = platform.Label
+				};
+			read.Themes = (result?["themes"] as JArray)?.Select(r => (string)r).Where(r => !string.IsNullOrEmpty(r)).ToArray();
+			read.Theme = (string)result?["theme"];
+			return read;
 		}
 
 		static PreviewRenderResult Error(string message, string details, PreviewPlatform platform) =>

@@ -8,7 +8,7 @@ with the same features as the VS Code extension. Needs Rider 2025.1 or newer.
 - A live preview of `.xeto`, `.jeto` and `.eto.cs` files in the **Eto Preview** tool window, which appears once you open
   one of those files. Open it from its button on the right-hand side, **View | Tool Windows**, or **Open Eto Preview** in
   the editor's right-click menu. It follows the file you're editing and redraws as you type and after each build. Drag the corner handle to try other sizes; click the size label to go back to the form's own size
-- Pick the platform to draw with from the drop down in the preview, the same as in VS Code. The **Log** tab shows the preview host's output
+- Pick the platform and theme to draw with from the drop downs in the preview, the same as in VS Code. The **Log** tab shows the preview host's output
 - Completion of controls, properties, events and values, including your own controls once the project is built
 - Hover documentation from the Eto.Forms xml docs
 - Syntax highlighting for both file types, using the VS Code extension's grammars

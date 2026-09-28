@@ -32,6 +32,9 @@ namespace Eto.DevExtension.PreviewHost
 		// the offscreen forms come and go, and must not end the process
 		public override void Initialized() => System.Windows.Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
+		// Eto.Wpf otherwise starts with the classic look
+		public override object GetDefaultTheme() => Themes.System;
+
 		public override async Task<RenderResult> CaptureAsync(object control, RenderRequest request)
 		{
 			var form = OffscreenForm.Create((Control)control, request, out var content);

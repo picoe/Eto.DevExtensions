@@ -86,12 +86,13 @@ class OpenPreviewAction : AnAction(), DumbAware {
     }
 }
 
-/** The platform picked in the preview's drop down, per project. */
+/** The platform and theme picked in the preview's drop downs, per project. */
 @Service(Service.Level.PROJECT)
 @State(name = "EtoPreview", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class PreviewPlatformState : SimplePersistentStateComponent<PreviewPlatformState.Options>(Options()) {
     class Options : BaseState() {
         var platform by string(AUTO)
+        var theme by string(DEFAULT_THEME)
     }
 
     /** A platform id, or [AUTO]. */
@@ -99,6 +100,13 @@ class PreviewPlatformState : SimplePersistentStateComponent<PreviewPlatformState
         get() = state.platform ?: AUTO
         set(value) {
             state.platform = value
+        }
+
+    /** A theme name from the host, or [DEFAULT_THEME]. */
+    var theme: String
+        get() = state.theme ?: DEFAULT_THEME
+        set(value) {
+            state.theme = value
         }
 }
 

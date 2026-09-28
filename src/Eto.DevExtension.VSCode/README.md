@@ -7,7 +7,7 @@ A live preview, IntelliSense and syntax highlighting for building cross-platform
 
 - **Live preview** of your views beside the editor, whether they're written in XAML (`.xeto`), JSON (`.jeto`)
   or code (`.eto.cs`). It redraws as you type and after each build, and shows your own custom controls once the
-  project is built. Drag the corner handle to try other sizes, and pick which platform draws it from the drop down.
+  project is built. Drag the corner handle to try other sizes, and pick which platform and theme draw it from the drop downs.
 - **IntelliSense** in `.xeto` and `.jeto` files for controls, properties, events and values, including your own
   controls. Picking one of your controls in a `.xeto` file adds the `xmlns` it needs.
 - **Hover documentation** from the Eto.Forms API docs.

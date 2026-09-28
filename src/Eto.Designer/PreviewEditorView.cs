@@ -98,6 +98,13 @@ namespace Eto.Designer
 			}
 		}
 
+		/// <summary>Call after the editor's theme changes to pick up its new colours.</summary>
+		public void UpdateTheme()
+		{
+			toolBarHolder.BackgroundColor = Global.Theme.DesignerBackground;
+			designPanel?.UpdateTheme();
+		}
+
 		protected override void OnGotFocus(EventArgs e)
 		{
 			base.OnGotFocus(e);

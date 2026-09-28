@@ -50,7 +50,8 @@ namespace Eto.DevExtension.PreviewHost
 				Text = parameters?["text"]?.GetValue<string>() ?? string.Empty,
 				Width = parameters?["width"]?.GetValue<int?>(),
 				Height = parameters?["height"]?.GetValue<int?>(),
-				Scale = parameters?["scale"]?.GetValue<double?>() ?? 1
+				Scale = parameters?["scale"]?.GetValue<double?>() ?? 1,
+				Theme = parameters?["theme"]?.GetValue<string>()
 			};
 			var assemblies = (parameters?["assemblies"] as JsonArray)?.Select(r => r?.GetValue<string>()).Where(r => !string.IsNullOrEmpty(r)).ToList()
 				?? ProjectAssemblyLocator.Find(request.FileName, connection.Log);
@@ -80,7 +81,8 @@ namespace Eto.DevExtension.PreviewHost
 		void StartEto()
 		{
 			var etoPlatform = (Eto.Platform)platform.CreatePlatform();
-			etoPlatform.Add<Eto.Designer.IPlatformTheme>(() => new HostTheme(theme));
+			var hostTheme = new HostTheme(theme);
+			etoPlatform.Add<Eto.Designer.IPlatformTheme>(() => hostTheme);
 			Eto.Designer.Builders.BaseCompiledInterfaceBuilder.EtoAssemblyPath = ProjectAssemblies.EtoFile;
 
 			var app = new Eto.Forms.Application(etoPlatform);
@@ -89,7 +91,7 @@ namespace Eto.DevExtension.PreviewHost
 				platform.Initialized();
 				ProjectAssemblies.LoadProject();
 				ProjectAssemblies.WatchForChanges(Restart);
-				renderer = new PreviewRenderer(platform);
+				renderer = new PreviewRenderer(platform, new PreviewThemes(platform, hostTheme, connection.Log));
 				uiReady.TrySetResult(true);
 			};
 			app.UnhandledException += (sender, e) => connection.Log($"Unhandled exception: {e.ExceptionObject}");

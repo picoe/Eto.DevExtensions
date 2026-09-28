@@ -34,6 +34,12 @@ namespace Eto.Designer
 			return this;
 		}
 
+		public void UpdateTheme()
+		{
+			BackgroundColor = Global.Theme.DesignerBackground;
+			designSurface.Invalidate();
+		}
+
 		public string MainAssembly { get; set; }
 		public IEnumerable<string> References { get; set; }
 
