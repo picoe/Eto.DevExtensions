@@ -1,36 +1,31 @@
-# Eto.Forms Designer for VS Code
+# Eto.Forms Designer
 
-Autocompletion, hover documentation and a live preview for [Eto.Forms](https://github.com/picoe/Eto) designer files.
+A live preview, IntelliSense and syntax highlighting for building cross-platform desktop apps with
+[Eto.Forms](https://github.com/picoe/Eto) in VS Code.
 
 ## Features
 
-- A live preview of `.xeto`, `.jeto` and `.eto.cs` files beside the editor. Run
-  **Eto: Open Preview to the Side**, or use the preview button in the editor title bar. Your own
-  controls show up once the project is built, and the preview redraws after each build. Drag the
-  corner handle to try the form at other sizes; click the size label to go back to its own size
+- **Live preview** of your views beside the editor, whether they're written in XAML (`.xeto`), JSON (`.jeto`)
+  or code (`.eto.cs`). It redraws as you type and after each build, and shows your own custom controls once the
+  project is built. Drag the corner handle to try other sizes, and pick which platform draws it from the drop down.
+- **IntelliSense** in `.xeto` and `.jeto` files for controls, properties, events and values, including your own
+  controls. Picking one of your controls in a `.xeto` file adds the `xmlns` it needs.
+- **Hover documentation** from the Eto.Forms API docs.
+- **Syntax highlighting** for `.xeto` and `.jeto` files.
 
-- Completion of control names, properties, events and property values in `.xeto` (xaml) and `.jeto` (json) files
-- Completion of your own controls from the project and the projects it references, once built. In
-  `.xeto` files picking one adds the `xmlns` it needs; in `.jeto` files they complete as
-  `"Namespace.Type, Assembly"`
-- Hover documentation pulled from the Eto.Forms xml docs
-- Syntax highlighting for both file types
+Everything matches the Eto.Forms version your project uses, so you see the API you're building against.
 
-Completions come from the Eto.Forms version your project references, so they match the API you are
-building against. The version is detected from the nearest project file when you open a designer
-file, using `obj/project.assets.json` and falling back to the build output. If no reference is found,
-the copy bundled with the extension is used.
+To open the preview, click the preview button in the editor's title bar, or run **Eto: Open Preview to the Side**.
 
 ## Requirements
 
-The [.NET 8 runtime](https://dotnet.microsoft.com/download) or newer, used to run the language server.
-On Windows the preview also needs the .NET Desktop Runtime 8 or newer, and on Linux it needs GTK 3.
+- The [.NET 8 runtime](https://dotnet.microsoft.com/download) or newer.
+- On Windows, the preview also needs the .NET Desktop Runtime 8 or newer.
+- On Linux, the preview needs GTK 3.
 
-The preview runs your project's code in a separate process, drawing with the Eto.Forms version the
-project uses. Pick the platform to draw with from the drop down at the top of the preview: WPF or
-WinForms on Windows, macOS or Mac64 on macOS, and Gtk anywhere GTK 3 is installed (on macOS, from
-Homebrew or MacPorts). **Auto** uses the first of these that a project in the solution references,
-otherwise WPF, macOS or Gtk.
+The preview runs your project's code in a separate process, so it can't affect VS Code. It can draw with WPF or
+Windows Forms on Windows, macOS or Mac64 on macOS, and GTK anywhere GTK 3 is installed (on macOS, from Homebrew
+or MacPorts). **Auto** picks the one your solution uses.
 
 ## Settings
 
@@ -42,20 +37,20 @@ otherwise WPF, macOS or Gtk.
 | `eto.etoAssemblyPath` | Folder containing the `Eto.dll` to complete against. Detected from the project when empty. |
 | `eto.trace.server` | Logs the traffic between VS Code and the language server. |
 
-Only one Eto.Forms version is loaded per session. After changing any of these settings, or to pick up
-a different project, run **Eto: Restart Language Server**.
+Only one Eto.Forms version is loaded at a time. To pick up a different project's version, or after changing
+these settings, run **Eto: Restart Language Server**.
 
-## Building
+## About Eto.Forms
 
-```sh
-npm install
-npm run build:server   # publishes the .NET language server into ./server and the preview hosts into ./preview
-npm run compile
-```
+Eto.Forms is a .NET UI framework that lets you write your user interface once and run it on Windows, macOS and
+Linux. Each platform uses its own native toolkit (WPF or Windows Forms on Windows, Cocoa on macOS and GTK on
+Linux), so your app looks and feels at home everywhere.
 
-The Eto.macOS preview host is an app bundle, so it's only built when packaging on a Mac with the .NET
-macOS workload. Without it, Mac previews use Eto.Mac64. If the workload rejects your Xcode version, pass
-`npm run build:server -- -p:ValidateXcodeVersion=false`.
+When you need more, you can use each platform's own features directly, or build your own controls with a separate
+implementation for each platform. Version 2.12 adds app-wide light and dark themes that can follow the system setting.
 
-Press <kbd>F5</kbd> to launch an extension development host. `npm run package` produces a `.vsix` in
-`artifacts/vscode`.
+## Links
+
+- [Eto.Forms on GitHub](https://github.com/picoe/Eto)
+- [Eto.Forms wiki](https://github.com/picoe/Eto/wiki)
+- [Report an issue with this extension](https://github.com/picoe/Eto.DevExtensions/issues)

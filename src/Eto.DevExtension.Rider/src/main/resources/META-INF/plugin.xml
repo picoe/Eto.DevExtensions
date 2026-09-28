@@ -4,16 +4,39 @@
     <vendor url="https://github.com/picoe/Eto.DevExtensions">Picoe Software Solutions</vendor>
 
     <description><![CDATA[
-    Autocompletion, hover documentation and a live preview for <a href="https://github.com/picoe/Eto">Eto.Forms</a>
-    <code>.xeto</code> and <code>.jeto</code> designer files.
+    <p>A live preview, code completion and syntax highlighting for building cross-platform desktop apps with
+    <a href="https://github.com/picoe/Eto">Eto.Forms</a> in Rider.</p>
+
+    <h2>Features</h2>
     <ul>
-        <li>A live preview of <code>.xeto</code>, <code>.jeto</code> and <code>.eto.cs</code> files, drawn with the
-            Eto.Forms platform of your choice. Run <b>Open Eto Preview</b> from the editor's context menu.</li>
-        <li>Completion of control names, properties, events and values, including your own controls once the project is built</li>
-        <li>Hover documentation from the Eto.Forms xml docs</li>
-        <li>Syntax highlighting for both file types</li>
+        <li><b>Live preview</b> of your views in the Eto Preview tool window, whether they're written in XAML
+            (<code>.xeto</code>), JSON (<code>.jeto</code>) or code (<code>.eto.cs</code>). It redraws as you type and
+            after each build, and shows your own custom controls once the project is built. Drag the corner handle to try
+            other sizes, and pick which platform draws it from the drop down.</li>
+        <li><b>Code completion</b> in <code>.xeto</code> and <code>.jeto</code> files for controls, properties, events
+            and values, including your own controls.</li>
+        <li><b>Quick documentation</b> from the Eto.Forms API docs.</li>
+        <li><b>Syntax highlighting</b> for <code>.xeto</code> and <code>.jeto</code> files.</li>
     </ul>
-    Needs the .NET 8 runtime or newer.
+    <p>Everything matches the Eto.Forms version your project uses, so you see the API you're building against.
+    To open the preview, right-click in the editor and choose <b>Open Eto Preview</b>.</p>
+
+    <h2>Requirements</h2>
+    <p>The <a href="https://dotnet.microsoft.com/download">.NET 8 runtime</a> or newer. On Windows the preview also needs
+    the .NET Desktop Runtime 8 or newer, and on Linux it needs GTK 3.</p>
+
+    <h2>About Eto.Forms</h2>
+    <p>Eto.Forms is a .NET UI framework that lets you write your user interface once and run it on Windows, macOS and
+    Linux. Each platform uses its own native toolkit (WPF or Windows Forms on Windows, Cocoa on macOS and GTK on Linux),
+    so your app looks and feels at home everywhere.</p>
+    <p>When you need more, you can use each platform's own features directly, or build your own controls with a separate
+    implementation for each platform. Version 2.12 adds app-wide light and dark themes that can follow the system setting.</p>
+
+    <p>
+    <a href="https://github.com/picoe/Eto">Eto.Forms on GitHub</a> ·
+    <a href="https://github.com/picoe/Eto/wiki">Eto.Forms wiki</a> ·
+    <a href="https://github.com/picoe/Eto.DevExtensions/issues">Report an issue with this plugin</a>
+    </p>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>

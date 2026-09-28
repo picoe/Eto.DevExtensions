@@ -1,0 +1,57 @@
+name: Release
+
+# Closing a milestone named like 1.2.3 builds that version and makes a pre-release with the extensions.
+# Marking the pre-release as a full release publishes them, see publish.yml.
+on:
+  milestone:
+    types: [ closed ]
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+    - id: version
+      env:
+        TITLE: ${{ github.event.milestone.title }}
+      run: |
+        if [[ "$TITLE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "version=$TITLE" >> "$GITHUB_OUTPUT"
+        else
+          echo "::notice::Milestone '$TITLE' isn't a version like 1.2.3, so no release was made."
+        fi
+
+  build:
+    needs: version
+    if: needs.version.outputs.version
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+
+  prerelease:
+    needs: [ version, build ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download extensions
+      uses: actions/download-artifact@v8
+      with:
+        pattern: extension*
+        path: extensions
+        merge-multiple: true
+
+    - name: Create pre-release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        VERSION: ${{ needs.version.outputs.version }}
+        MILESTONE: ${{ github.event.milestone.html_url }}
+      run: |
+        gh release create "$VERSION" extensions/*.vsix extensions/*.zip \
+          --repo "$GITHUB_REPOSITORY" \
+          --target "$GITHUB_SHA" \
+          --title "$VERSION" \
+          --prerelease \
+          --notes "[Closed issues in this milestone]($MILESTONE?closed=1)" \
+          --generate-notes

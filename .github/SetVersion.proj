@@ -1,0 +1,45 @@
+<!-- Sets every package in the checkout to one version, for release builds: dotnet msbuild .github/SetVersion.proj -p:ReleaseVersion=1.2.3 -->
+<Project DefaultTargets="SetVersion">
+
+  <PropertyGroup>
+    <Root>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))/</Root>
+  </PropertyGroup>
+
+  <UsingTask TaskName="ReplaceInFile" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <File ParameterType="System.String" Required="true" />
+      <Pattern ParameterType="System.String" Required="true" />
+      <Replacement ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var bytes = System.IO.File.ReadAllBytes(File);
+        // keep the byte order mark of files that have one
+        var bom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+        var text = System.IO.File.ReadAllText(File);
+        var regex = new System.Text.RegularExpressions.Regex(Pattern);
+        // fail loudly rather than ship a package with the old version
+        if (!regex.IsMatch(text))
+        {
+          Log.LogError($"Could not find the version in {File}");
+          return false;
+        }
+        System.IO.File.WriteAllText(File, regex.Replace(text, Replacement, 1), new System.Text.UTF8Encoding(bom));
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="SetVersion">
+    <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(ReleaseVersion)', '^\d+\.\d+\.\d+$'))" Text="Version '$(ReleaseVersion)' must look like 1.2.3" />
+
+    <ReplaceInFile File="$(Root)Directory.Build.props" Pattern="&lt;DevVersion&gt;[^&lt;]*&lt;/DevVersion&gt;" Replacement="&lt;DevVersion&gt;$(ReleaseVersion)&lt;/DevVersion&gt;" />
+    <ReplaceInFile File="$(Root)Directory.Build.props" Pattern="(&lt;Version Condition=&quot;[^&quot;]*&quot;&gt;)[^&lt;]*" Replacement="${1}$(ReleaseVersion).0" />
+    <ReplaceInFile File="$(Root)src/Eto.DevExtension.VisualStudio.Windows/2022/source.extension.vsixmanifest" Pattern="(&lt;Identity [^&gt;]*Version=&quot;)[^&quot;]*" Replacement="${1}$(ReleaseVersion).0" />
+    <ReplaceInFile File="$(Root)src/Eto.DevExtension.VSCode/package.json" Pattern="(&quot;version&quot;:\s*&quot;)[^&quot;]*" Replacement="${1}$(ReleaseVersion)" />
+
+    <!-- without it the .NET builds add a -ci suffix to the version -->
+    <WriteLinesToFile Condition="'$(GITHUB_ENV)' != ''" File="$(GITHUB_ENV)" Lines="SetVersion=$(ReleaseVersion)" />
+    <Message Importance="high" Text="Set version to $(ReleaseVersion)" />
+  </Target>
+
+</Project>
