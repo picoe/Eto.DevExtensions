@@ -2,5 +2,7 @@
 	"var": {
 		"configuration" : "Debug",
 		"buildProperties" : "/v:Minimal /p:GenerateFullPaths=True /consoleLoggerParameters:NoSummary"
-	}
+	},
+	"java.compile.nullAnalysis.mode": "automatic",
+	"java.configuration.updateBuildConfiguration": "interactive"
 }

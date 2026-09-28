@@ -14,6 +14,26 @@
             ]
         },
         {
+            // runs the newest Rider installed, or set riderPath in src/Eto.DevExtension.Rider/gradle.properties
+            "name": "Eto.DevExtension.Rider",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "./gradlew runIde",
+            "windows": {
+                "command": ".\\gradlew.bat runIde"
+            },
+            "cwd": "${workspaceFolder}/src/Eto.DevExtension.Rider"
+        },
+        {
+            // needs the Debugger for Java extension
+            "name": "Eto.DevExtension.Rider (debug)",
+            "type": "java",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005,
+            "preLaunchTask": "run-rider-debug"
+        },
+        {
             "name": "Eto.DevExtension.VisualStudio.Windows.2022",
             "type": "clr",
             "request": "launch",
