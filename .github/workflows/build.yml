@@ -14,7 +14,8 @@ on:
         default: ''
 
 env:
-  DotNetVersion: "10.0.x"
+  # must match the RecommendedXcodeVersion of the macOS workload pinned in workloads.json
+  XcodeVersion: "26.6"
   BuildParameters: "/v:Minimal /consoleLoggerParameters:NoSummary /p:Configuration=Release /p:BuildVersion=${{ github.run_id }} /p:BuildBranch=${{ github.ref }}"
 
 jobs:
@@ -35,7 +36,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: ${{ env.DotNetVersion }}
+        global-json-file: global.json
 
     - name: Set version
       if: inputs.version
@@ -50,7 +51,7 @@ jobs:
     - name: Upload extensions
       uses: actions/upload-artifact@v7
       with:
-        name: extensions-windows-${{ matrix.vs }}
+        name: extension-vs${{ matrix.vs }}
         path: artifacts/Release/*.vsix
 
     - name: Upload log files
@@ -73,21 +74,21 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: |
-          ${{ env.DotNetVersion }}
-          8.0.x
-
-    - name: Set version
-      if: inputs.version
-      run: dotnet msbuild .github/SetVersion.proj -p:ReleaseVersion=${{ inputs.version }}
+        global-json-file: global.json
+        dotnet-version: 8.0.x
 
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: latest-stable
+        xcode-version: ${{ env.XcodeVersion }}
 
+    # pinned so the minimum macOS version doesn't drift
     - name: Install macOS workload
-      run: dotnet workload install macos
+      run: dotnet workload install macos --from-rollback-file workloads.json
+
+    - name: Set version
+      if: inputs.version
+      run: dotnet msbuild .github/SetVersion.proj -p:ReleaseVersion=${{ inputs.version }}
 
     - uses: actions/setup-node@v4
       with:
@@ -105,6 +106,13 @@ jobs:
         name: extension-vscode
         path: artifacts/vscode/*.vsix
 
+    - name: Upload log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: log-vscode
+        path: artifacts/log/**/*
+
   build-rider:
 
     # macOS so the plugin includes the Eto.macOS preview host
@@ -118,21 +126,21 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: |
-          ${{ env.DotNetVersion }}
-          8.0.x
-
-    - name: Set version
-      if: inputs.version
-      run: dotnet msbuild .github/SetVersion.proj -p:ReleaseVersion=${{ inputs.version }}
+        global-json-file: global.json
+        dotnet-version: 8.0.x
 
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: latest-stable
+        xcode-version: ${{ env.XcodeVersion }}
 
+    # pinned so the minimum macOS version doesn't drift
     - name: Install macOS workload
-      run: dotnet workload install macos
+      run: dotnet workload install macos --from-rollback-file workloads.json
+
+    - name: Set version
+      if: inputs.version
+      run: dotnet msbuild .github/SetVersion.proj -p:ReleaseVersion=${{ inputs.version }}
 
     - uses: actions/setup-java@v6
       with:
@@ -152,3 +160,10 @@ jobs:
       with:
         name: extension-rider
         path: src/Eto.DevExtension.Rider/build/distributions/*.zip
+
+    - name: Upload log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: log-rider
+        path: artifacts/log/**/*

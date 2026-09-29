@@ -9,20 +9,21 @@ const src = path.resolve(root, '..');
 const artifacts = path.resolve(src, '..', 'artifacts');
 const host = path.join(src, 'Eto.DevExtension.PreviewHost', 'Eto.DevExtension.PreviewHost.csproj');
 const preview = path.join(root, 'preview');
+const logs = path.join(artifacts, 'log', 'vscode');
 
-function dotnet(...args) {
-	execFileSync('dotnet', args, { stdio: 'inherit', cwd: root });
+function dotnet(log, ...args) {
+	execFileSync('dotnet', [...args, `-bl:${path.join(logs, log)}.binlog`], { stdio: 'inherit', cwd: root });
 }
 
 fs.rmSync(preview, { recursive: true, force: true });
 
-dotnet('publish', path.join(src, 'Eto.DevExtension.LanguageServer', 'Eto.DevExtension.LanguageServer.csproj'), '-c', 'Release', '-o', path.join(root, 'server'));
-dotnet('publish', host, '-c', 'Release', '-f', 'net8.0-windows', '-o', path.join(preview, 'win'));
-dotnet('publish', host, '-c', 'Release', '-f', 'net8.0', '-o', path.join(preview, 'net'));
+dotnet('LanguageServer', 'publish', path.join(src, 'Eto.DevExtension.LanguageServer', 'Eto.DevExtension.LanguageServer.csproj'), '-c', 'Release', '-o', path.join(root, 'server'));
+dotnet('PreviewHost.Windows', 'publish', host, '-c', 'Release', '-f', 'net8.0-windows', '-o', path.join(preview, 'win'));
+dotnet('PreviewHost.Net', 'publish', host, '-c', 'Release', '-f', 'net8.0', '-o', path.join(preview, 'net'));
 
 if (process.platform === 'darwin') {
 	try {
-		dotnet('build', path.join(src, 'Eto.DevExtension.PreviewHost.macOS', 'Eto.DevExtension.PreviewHost.macOS.csproj'), '-c', 'Release', ...process.argv.slice(2));
+		dotnet('PreviewHost.macOS', 'build', path.join(src, 'Eto.DevExtension.PreviewHost.macOS', 'Eto.DevExtension.PreviewHost.macOS.csproj'), '-c', 'Release', ...process.argv.slice(2));
 		const app = 'Eto Preview Host.app';
 		fs.mkdirSync(path.join(preview, 'macos'), { recursive: true });
 		// ditto keeps the bundle's signature intact

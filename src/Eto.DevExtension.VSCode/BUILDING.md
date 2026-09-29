@@ -1,5 +1,8 @@
 # Building the VS Code extension
 
+To build the Eto.macOS preview host, install the pinned macOS workload with Xcode 26.6, from the repo root:
+`sudo dotnet workload install macos --from-rollback-file workloads.json`
+
 ```sh
 npm install
 npm run build:server   # publishes the .NET language server into ./server and the preview hosts into ./preview

@@ -135,6 +135,7 @@ intellijPlatform {
 // .NET language server and preview hosts, bundled into the plugin the same way as the VS Code extension
 
 val dotnetDir = layout.buildDirectory.dir("dotnet")
+fun binlog(name: String) = "-bl:" + repoRoot.resolve("artifacts/log/rider/$name.binlog").path
 val dotnetSources = files(
     repoRoot.resolve("Directory.Build.props"),
     srcDir.resolve("Eto.Designer"),
@@ -148,7 +149,7 @@ fun dotnetPublish(name: String, project: String, output: String, vararg args: St
     inputs.files(dotnetSources).withPropertyName("sources")
     outputs.dir(dotnetDir.map { it.dir(output) })
     doFirst { delete(dotnetDir.map { it.dir(output) }) }
-    commandLine("dotnet", "publish", srcDir.resolve("$project/$project.csproj").path, "-c", "Release", "-o", dotnetDir.get().dir(output).asFile.path, *args)
+    commandLine("dotnet", "publish", srcDir.resolve("$project/$project.csproj").path, "-c", "Release", "-o", dotnetDir.get().dir(output).asFile.path, *args, binlog(name))
 }
 
 val publishLanguageServer = dotnetPublish("publishLanguageServer", "Eto.DevExtension.LanguageServer", "server")
@@ -165,7 +166,7 @@ val buildPreviewHostMac = tasks.register<Exec>("buildPreviewHostMac") {
     outputs.dir(macAppBuilt)
     // CI packages must always ship it, but locally a missing workload shouldn't stop the rest
     isIgnoreExitValue = System.getenv("CI") == null
-    commandLine("dotnet", "build", srcDir.resolve("Eto.DevExtension.PreviewHost.macOS/Eto.DevExtension.PreviewHost.macOS.csproj").path, "-c", "Release")
+    commandLine("dotnet", "build", srcDir.resolve("Eto.DevExtension.PreviewHost.macOS/Eto.DevExtension.PreviewHost.macOS.csproj").path, "-c", "Release", binlog(name))
     doLast {
         if (executionResult.get().exitValue != 0)
             logger.warn("Could not build the Eto.macOS preview host, so Mac previews will use Eto.Mac64.")
