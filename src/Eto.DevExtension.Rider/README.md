@@ -26,6 +26,9 @@ the language server and preview host paths, and the folder of the `Eto.dll` to c
 
 Needs a JDK 17 or newer to run Gradle (`JAVA_HOME` or on `PATH`), and the .NET SDK. Gradle downloads the JDK it compiles with.
 
+To build the Eto.macOS preview host, install the pinned macOS workload with Xcode 26.6, from the repo root:
+`sudo dotnet workload install macos --from-rollback-file workloads.json`
+
 ```sh
 ./gradlew runIde       # starts Rider with the plugin, in a separate sandbox
 ./gradlew buildPlugin  # zip in build/distributions, installable from Settings | Plugins | Install Plugin from Disk

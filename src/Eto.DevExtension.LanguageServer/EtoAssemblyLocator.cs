@@ -24,9 +24,11 @@ namespace Eto.DevExtension.LanguageServer
 			var dir = Directory.Exists(documentPath) ? new DirectoryInfo(documentPath) : new FileInfo(documentPath).Directory;
 			while (dir != null)
 			{
-				if (ProjectExtensions.Any(p => dir.EnumerateFiles(p).Any()))
+				var project = ProjectExtensions.SelectMany(p => dir.EnumerateFiles(p)).FirstOrDefault();
+				if (project != null)
 				{
-					var path = FromAssets(dir.FullName, log) ?? FromBuildOutput(dir.FullName, log);
+					var properties = ProjectProperties.Get(project.FullName, log);
+					var path = FromAssets(properties.ProjectAssetsFile, log) ?? FromBuildOutput(properties, log);
 					if (path != null)
 						return path;
 				}
@@ -36,9 +38,8 @@ namespace Eto.DevExtension.LanguageServer
 		}
 
 		/// <summary>Resolves the restored Eto.Forms package out of project.assets.json.</summary>
-		static string FromAssets(string projectDir, Action<string> log)
+		static string FromAssets(string assetsPath, Action<string> log)
 		{
-			var assetsPath = Path.Combine(projectDir, "obj", "project.assets.json");
 			if (!File.Exists(assetsPath))
 				return null;
 
@@ -83,28 +84,13 @@ namespace Eto.DevExtension.LanguageServer
 		}
 
 		/// <summary>Falls back to the newest Eto.dll under the project's build output.</summary>
-		static string FromBuildOutput(string projectDir, Action<string> log)
+		static string FromBuildOutput(ProjectProperties properties, Action<string> log)
 		{
-			var bin = Path.Combine(projectDir, "bin");
-			if (!Directory.Exists(bin))
+			var newest = properties.FindNewest("Eto.dll", log);
+			if (newest == null)
 				return null;
-
-			try
-			{
-				var newest = new DirectoryInfo(bin)
-					.EnumerateFiles("Eto.dll", SearchOption.AllDirectories)
-					.OrderByDescending(r => r.LastWriteTimeUtc)
-					.FirstOrDefault();
-				if (newest == null)
-					return null;
-				log?.Invoke($"Using Eto from build output ({newest.FullName})");
-				return newest.DirectoryName;
-			}
-			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-			{
-				log?.Invoke($"Could not scan {bin}: {ex.Message}");
-				return null;
-			}
+			log?.Invoke($"Using Eto from build output ({newest.FullName})");
+			return newest.DirectoryName;
 		}
 	}
 }

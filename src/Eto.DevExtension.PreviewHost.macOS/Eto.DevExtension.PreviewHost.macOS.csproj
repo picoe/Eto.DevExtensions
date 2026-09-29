@@ -25,6 +25,7 @@
     <Compile Include="..\Eto.DevExtension.LanguageServer\Lsp\LspConnection.cs" Link="Shared\LspConnection.cs" />
     <Compile Include="..\Eto.DevExtension.LanguageServer\EtoAssemblyLocator.cs" Link="Shared\EtoAssemblyLocator.cs" />
     <Compile Include="..\Eto.DevExtension.LanguageServer\ProjectAssemblyLocator.cs" Link="Shared\ProjectAssemblyLocator.cs" />
+    <Compile Include="..\Eto.DevExtension.LanguageServer\ProjectProperties.cs" Link="Shared\ProjectProperties.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,7 +3,7 @@
   "displayName": "Eto.Forms Designer",
   "description": "Autocompletion, hover documentation and a live preview for Eto.Forms .xeto and .jeto designer files.",
   "version": "2.12.0",
-  "publisher": "picoe",
+  "publisher": "CurtisWensley",
   "license": "MIT",
   "icon": "icon.png",
   "repository": {
