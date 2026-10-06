@@ -39,6 +39,8 @@ namespace Eto.Designer.Completion
 			{
 				yield return new CompletionItem { Name = XamlNamespace2006, Type = CompletionType.Literal };
 				yield return new CompletionItem { Name = EtoFormsNamespace, Type = CompletionType.Literal };
+				yield return new CompletionItem { Name = DesignNamespace, Type = CompletionType.Literal, Description = "Designer-only attributes such as d:DataContext." };
+				yield return new CompletionItem { Name = MarkupCompatibilityNamespace, Type = CompletionType.Literal, Description = "Use with mc:Ignorable=\"d\" so designer-only attributes are skipped at runtime." };
 				yield return new CompletionItem { Name = "clr-namespace:[namespace];assembly=[assembly]", Type = CompletionType.Literal };
 				foreach (var assembly in ProjectAssemblies ?? Enumerable.Empty<Assembly>())
 				{

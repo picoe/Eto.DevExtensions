@@ -12,7 +12,10 @@ namespace Eto.Designer.Completion
 	public enum CompletionBehavior
 	{
 		None = 0,
-		ChildProperty = 1 << 0
+		ChildProperty = 1 << 0,
+
+		/// <summary>A read-only collection, which xaml can only fill using a property element.</summary>
+		PropertyElementOnly = 1 << 1
 	}
 
 	public class CompletionItem

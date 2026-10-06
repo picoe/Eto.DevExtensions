@@ -76,6 +76,9 @@ namespace Eto.Designer.Completion
 			return null;
 		}
 
+		/// <summary>True when <paramref name="node"/> is a property element of a dictionary, eg. Panel.Properties.</summary>
+		public virtual bool IsDictionaryContent(string node) => false;
+
 		/// <summary>
 		/// Determine whether the specified objectName has content, or null if not known by this completion handler.
 		/// </summary>
@@ -96,6 +99,8 @@ namespace Eto.Designer.Completion
 
 		public const string EtoFormsNamespace = "http://schema.picoe.ca/eto.forms";
 		public const string XamlNamespace2006 = "http://schemas.microsoft.com/winfx/2006/xaml";
+		public const string DesignNamespace = "http://schema.picoe.ca/eto.forms/design";
+		public const string MarkupCompatibilityNamespace = "http://schemas.openxmlformats.org/markup-compatibility/2006";
 
 		public static IEnumerable<CompletionItem> GetCompletionItems(IEnumerable<CompletionNamespace> namespaces, CompletionMode mode, IEnumerable<string> path, CompletionPathNode context, CompletionFormat format = CompletionFormat.Xaml, IList<Assembly> projectAssemblies = null)
 		{
@@ -117,9 +122,20 @@ namespace Eto.Designer.Completion
 					contextName = contextName.TrimEnd('.');
 					completions = completions.Where(r => r.Prefix == context.Prefix).ToList();
 				}
+				var isPropertyElement = context.Name.EndsWith(".");
 				items = completions
 					.SelectMany(r => r.GetProperties(contextName, path))
-					.Where(r => !context.Attributes.Contains(r.Name));
+					.Where(r => !context.Attributes.Contains(r.Name))
+					.Where(r => format == CompletionFormat.Json || isPropertyElement || !r.Behavior.HasFlag(CompletionBehavior.PropertyElementOnly));
+
+				// entries of a dictionary such as Widget.Properties need a key
+				var parent = path.Reverse().Skip(1).FirstOrDefault();
+				if (format == CompletionFormat.Xaml && !isPropertyElement && parent != null && completions.Any(r => r.IsDictionaryContent(parent)))
+				{
+					var x = completions.OfType<XamlCompletion>().FirstOrDefault()?.PrefixWithColon ?? "x:";
+					if (!context.Attributes.Contains(x + "Key"))
+						items = items.Concat(new[] { new CompletionItem { Name = x + "Key", Type = CompletionType.Attribute, Description = "Key to add this object to the dictionary with, eg. to use it with {StaticResource}." } });
+				}
 			}
 			else if (mode == CompletionMode.Value && context != null && context.Mode == CompletionMode.Property)
 			{
@@ -168,8 +184,10 @@ namespace Eto.Designer.Completion
 				yield return new JsonCompletion();
 				yield return new TypeCompletion { Assembly = typeof(Eto.Widget).Assembly, Namespace = "Eto.Forms" };
 				yield return new TypeCompletion { Assembly = typeof(Eto.Widget).Assembly, Namespace = "Eto" };
+				// newer Eto finds types without an assembly name in the assembly being loaded, ie. the project's own
+				var localAssembly = typeof(Eto.Serialization.Json.NamespaceManager).GetProperty("LocalAssembly") != null ? projectAssemblies.FirstOrDefault() : null;
 				foreach (var assembly in projectAssemblies)
-					yield return new TypeCompletion { Assembly = assembly, UseFullName = true };
+					yield return new TypeCompletion { Assembly = assembly, UseFullName = true, OmitAssemblyName = assembly == localAssembly };
 				yield break;
 			}
 
@@ -208,6 +226,10 @@ namespace Eto.Designer.Completion
 				if (ns.Namespace == XamlNamespace2006)
 				{
 					yield return new XamlCompletion { Prefix = ns.Prefix };
+				}
+				if (ns.Namespace == DesignNamespace)
+				{
+					yield return new DesignCompletion { Prefix = ns.Prefix };
 				}
 			}
 

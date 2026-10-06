@@ -18,12 +18,16 @@
   <ItemGroup>
     <!-- resolved at runtime from the user's project, so keep it out of the probing path -->
     <PackageReference Include="Eto.Forms" Version="2.12.0" PrivateAssets="all" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Xaml" Version="2.12.0" PrivateAssets="all" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Json" Version="2.12.0" PrivateAssets="all" ExcludeAssets="runtime" GeneratePathProperty="true" />
   </ItemGroup>
 
   <!-- fallback Eto used when the open project's copy can't be found -->
   <Target Name="CopyFallbackEto" AfterTargets="Build">
     <ItemGroup>
       <FallbackEto Include="$(PkgEto_Forms)\lib\netstandard2.0\Eto.dll;$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" />
+      <FallbackEto Include="$(PkgEto_Serialization_Xaml)\lib\netstandard2.0\Eto.Serialization.Xaml.dll" />
+      <FallbackEto Include="$(PkgEto_Serialization_Json)\lib\netstandard2.0\Eto.Serialization.Json.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(FallbackEto)" DestinationFolder="$(OutDir)eto" SkipUnchangedFiles="true" />
   </Target>
@@ -31,6 +35,8 @@
   <Target Name="PublishFallbackEto" AfterTargets="Publish">
     <ItemGroup>
       <FallbackEto Include="$(PkgEto_Forms)\lib\netstandard2.0\Eto.dll;$(PkgEto_Forms)\lib\netstandard2.0\Eto.xml" />
+      <FallbackEto Include="$(PkgEto_Serialization_Xaml)\lib\netstandard2.0\Eto.Serialization.Xaml.dll" />
+      <FallbackEto Include="$(PkgEto_Serialization_Json)\lib\netstandard2.0\Eto.Serialization.Json.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(FallbackEto)" DestinationFolder="$(PublishDir)eto" SkipUnchangedFiles="true" />
   </Target>
