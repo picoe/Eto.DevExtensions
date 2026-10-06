@@ -36,6 +36,12 @@ namespace Eto.Designer.Completion
 		public IList<Assembly> ProjectAssemblies { get; set; }
 
 		public string Text { get; set; }
+
+		/// <summary>Set when the cursor is inside a {Binding ...} value.</summary>
+		public BindingCompletion.Request Binding { get; set; }
+
+		/// <summary>Set when the cursor is inside other xaml markup, eg. {x:Static ...}.</summary>
+		public MarkupCompletion.Request Markup { get; set; }
 	}
 
 	/// <summary>Text to insert at an offset of the document the completion was computed for.</summary>
@@ -65,19 +71,33 @@ namespace Eto.Designer.Completion
 		{
 			offset = Math.Min(Math.Max(offset, 0), text.Length);
 
-			ParseInfo info;
-			bool quoted;
-			int start;
-			if (format == CompletionFormat.Json)
+			var jsonInfo = format == CompletionFormat.Json ? JsonParser.Read(text.Substring(0, offset), rootTypeName) : null;
+			var quoted = jsonInfo?.InString ?? IsInsideAttributeValue(text, offset);
+
+			var binding = quoted ? BindingCompletion.Read(text, offset, format) : null;
+			if (binding != null)
 			{
-				info = JsonParser.Read(text.Substring(0, offset), rootTypeName);
-				quoted = info.InString;
+				var bindingInfo = new ParseInfo { Nodes = new List<CompletionPathNode>(), Mode = CompletionMode.Value };
+				return new DocumentCompletionContext { Info = bindingInfo, Format = format, Start = binding.Start, End = binding.End, Quoted = true, Text = text, ProjectAssemblies = projectAssemblies, Binding = binding };
+			}
+
+			var markup = quoted && jsonInfo == null ? MarkupCompletion.Read(text, offset) : null;
+			if (markup != null)
+			{
+				var markupInfo = new ParseInfo { Nodes = new List<CompletionPathNode>(), Mode = CompletionMode.Value };
+				return new DocumentCompletionContext { Info = markupInfo, Format = format, Start = markup.Start, End = markup.End, Quoted = true, Text = text, ProjectAssemblies = projectAssemblies, Markup = markup };
+			}
+
+			ParseInfo info;
+			int start;
+			if (jsonInfo != null)
+			{
+				info = jsonInfo;
 				start = quoted ? ScanBack(text, offset, IsValueChar) : ScanBack(text, offset, IsJsonTokenChar);
 			}
 			else
 			{
 				// the xaml parser keys off what precedes the word being typed, so cut it first
-				quoted = IsInsideAttributeValue(text, offset);
 				start = quoted ? ScanBack(text, offset, IsValueChar) : GetTokenStart(text, offset);
 				info = XmlParser.Read(text.Substring(0, start));
 			}
@@ -93,6 +113,17 @@ namespace Eto.Designer.Completion
 
 		public static List<DocumentCompletionItem> GetItems(DocumentCompletionContext context)
 		{
+			if (context.Binding != null || context.Markup != null)
+			{
+				var items = context.Binding != null
+					? BindingCompletion.GetItems(context.Binding, context.ProjectAssemblies)
+					: MarkupCompletion.GetItems(context.Markup, context.ProjectAssemblies);
+				return items
+					.OrderBy(r => r.Name)
+					.Select(r => new DocumentCompletionItem { Item = r, Label = r.Name, InsertText = r.Name })
+					.ToList();
+			}
+
 			var info = context.Info;
 			var format = context.Format;
 			// json keys and values are always quoted, so add them when the cursor isn't already in a string

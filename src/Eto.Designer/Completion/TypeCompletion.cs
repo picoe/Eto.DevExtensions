@@ -23,6 +23,9 @@ namespace Eto.Designer.Completion
 		/// <summary>Names types as "Namespace.Type, Assembly", the way a .jeto $type refers to types outside Eto.</summary>
 		public bool UseFullName { get; set; }
 
+		/// <summary>Leaves the assembly off full names, for the assembly a .jeto is loaded from.</summary>
+		public bool OmitAssemblyName { get; set; }
+
 		List<Type> exportedTypes;
 
 		List<Type> GetExportedTypes()
@@ -33,7 +36,7 @@ namespace Eto.Designer.Completion
 		}
 
 		string GetName(Type type) =>
-			UseFullName ? type.FullName + ", " + ProjectTypes.GetAssemblyName(type.Assembly) : PrefixWithColon + type.Name;
+			UseFullName ? type.FullName + (OmitAssemblyName ? string.Empty : ", " + ProjectTypes.GetAssemblyName(type.Assembly)) : PrefixWithColon + type.Name;
 
 		bool IsOwnType(Type type) =>
 			type.Assembly == Assembly && (Namespace == null || type.Namespace == Namespace);
@@ -240,6 +243,12 @@ namespace Eto.Designer.Completion
 					if (prop != null)
 					{
 						var propType = prop.PropertyType;
+						// dictionary entries can be anything, given an x:Key
+						var dictionary = GetDictionaryInterface(propType);
+						if (dictionary != null)
+							return dictionary.GenericTypeArguments[1];
+						if (typeof(IDictionary).IsAssignableFrom(propType))
+							return typeof(object);
 						if (typeof(IList).IsAssignableFrom(propType))
 						{
 							var list = propType.GetInterfaces().FirstOrDefault(r => r.IsGenericType && r.GetGenericTypeDefinition() == typeof(IList<>));
@@ -253,6 +262,22 @@ namespace Eto.Designer.Completion
 				}
 			}
 			return null;
+		}
+
+		static Type GetDictionaryInterface(Type type) =>
+			type.GetInterfaces().FirstOrDefault(r => r.IsGenericType && r.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+
+		static bool IsCollection(Type type) =>
+			type != typeof(string) && (typeof(IList).IsAssignableFrom(type) || typeof(IDictionary).IsAssignableFrom(type)
+				|| type.GetInterfaces().Any(r => r.IsGenericType && r.GetGenericTypeDefinition() == typeof(ICollection<>)));
+
+		public override bool IsDictionaryContent(string node)
+		{
+			var type = GetNodeType(node, out var propertyName);
+			if (type == null || string.IsNullOrEmpty(propertyName))
+				return false;
+			var propType = type.GetProperty(propertyName)?.PropertyType;
+			return propType != null && (typeof(IDictionary).IsAssignableFrom(propType) || GetDictionaryInterface(propType) != null);
 		}
 
 		public override bool? HasContent(string objectName, IEnumerable<string> path)
@@ -272,7 +297,9 @@ namespace Eto.Designer.Completion
 			{
 				foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
 				{
-					if (prop.SetMethod == null || !prop.SetMethod.IsPublic)
+					var settable = prop.SetMethod?.IsPublic == true;
+					// read-only collections such as Properties are filled rather than set
+					if (!settable && !IsCollection(prop.PropertyType))
 						continue;
 
 					if (prop.GetCustomAttribute<ObsoleteAttribute>() != null)
@@ -288,7 +315,8 @@ namespace Eto.Designer.Completion
 						Name = prop.Name,
 						Suffix = suffix,
 						Description = XmlComments.GetSummary(prop),
-						Type = CompletionType.Property
+						Type = CompletionType.Property,
+						Behavior = settable ? CompletionBehavior.None : CompletionBehavior.PropertyElementOnly
 					};
 				}
 				foreach (var evt in type.GetEvents(BindingFlags.Public | BindingFlags.Instance))
@@ -305,6 +333,14 @@ namespace Eto.Designer.Completion
 
 		public override IEnumerable<CompletionItem> GetPropertyValues(string objectName, string propertyName, IEnumerable<string> path)
 		{
+			// "d:DataContext": "My.ViewModel" only names the type, so it doesn't need to be creatable
+			if (UseFullName && propertyName == BindingCompletion.DesignDataContextProperty)
+			{
+				foreach (var result in GetExportedTypes().Where(JsonCompletion.IsDataContextType))
+					yield return new CompletionItem { Name = GetName(result), Description = XmlComments.GetSummary(result), Type = CompletionType.Class };
+				yield break;
+			}
+
 			var type = FindType(objectName);
 			if (type != null)
 			{

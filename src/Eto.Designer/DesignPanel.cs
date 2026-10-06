@@ -79,6 +79,8 @@ namespace Eto.Designer
 				// swap out window for a panel so we can add it as a child
 				content = new Panel
 				{
+					// the window's content inherited its data context, so keep it for bindings
+					DataContext = window.DataContext,
 					// Gtk reports a window's colour as transparent, which would leave the form without a background
 					BackgroundColor = window.BackgroundColor.A > 0 ? window.BackgroundColor : Global.Theme.DesignerPanel,
 					Padding = window.Padding,

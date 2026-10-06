@@ -84,6 +84,8 @@ namespace Eto.DevExtension.PreviewHost
 			var hostTheme = new HostTheme(theme);
 			etoPlatform.Add<Eto.Designer.IPlatformTheme>(() => hostTheme);
 			Eto.Designer.Builders.BaseCompiledInterfaceBuilder.EtoAssemblyPath = ProjectAssemblies.EtoFile;
+			// by reflection since the project's Eto may predate it
+			typeof(Eto.Forms.Control).GetProperty("IsDesignMode", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)?.SetValue(null, true);
 
 			var app = new Eto.Forms.Application(etoPlatform);
 			app.Initialized += (sender, e) =>
