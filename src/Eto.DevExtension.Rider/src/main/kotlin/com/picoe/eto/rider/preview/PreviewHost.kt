@@ -32,6 +32,9 @@ private const val RENDER_TIMEOUT_MS = 30000L
 /** @param theme A theme name, or [DEFAULT_THEME]. */
 data class RenderRequest(val fileName: String, val text: String, val width: Int?, val height: Int?, val scale: Double, val theme: String = DEFAULT_THEME)
 
+/** Zero based lines and columns. */
+data class ErrorRange(val startLine: Int, val startColumn: Int, val endLine: Int, val endColumn: Int)
+
 data class RenderResult(
     /** Base64 png. */
     val image: String? = null,
@@ -39,6 +42,8 @@ data class RenderResult(
     val height: Int? = null,
     val errorMessage: String? = null,
     val errorDetails: String? = null,
+    /** Where the error is in the text, when the host knows. */
+    val errorRange: ErrorRange? = null,
     /** Label of the platform it was drawn with. */
     val platform: String? = null,
     /** Theme names the platform offers, if known. */
@@ -109,6 +114,7 @@ class PreviewHost(private val project: Project) : Disposable {
                     height = result.int("height"),
                     errorMessage = error?.string("message"),
                     errorDetails = error?.string("details"),
+                    errorRange = (error?.get("range") as? JsonObject)?.let(::readRange),
                     platform = launch.platform,
                     themes = (result.get("themes") as? JsonArray)?.mapNotNull { r -> r.takeIf { it.isJsonPrimitive }?.asString?.takeIf { it.isNotEmpty() } },
                     theme = result.string("theme"),
@@ -185,6 +191,12 @@ class PreviewHost(private val project: Project) : Disposable {
 }
 
 private fun error(message: String, details: String? = null) = RenderResult(errorMessage = message, errorDetails = details ?: message)
+
+private fun readRange(range: JsonObject): ErrorRange? {
+    val start = range.get("start") as? JsonObject ?: return null
+    val end = range.get("end") as? JsonObject ?: return null
+    return ErrorRange(start.int("line") ?: 0, start.int("character") ?: 0, end.int("line") ?: 0, end.int("character") ?: 0)
+}
 
 private fun JsonObject.string(name: String): String? = get(name)?.takeIf { it.isJsonPrimitive }?.asString
 private fun JsonObject.int(name: String): Int? = get(name)?.takeIf { it.isJsonPrimitive }?.asInt

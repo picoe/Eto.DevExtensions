@@ -31,6 +31,7 @@ export class PreviewPanel implements vscode.Disposable {
 	private static current: PreviewPanel | undefined;
 
 	private readonly panel: vscode.WebviewPanel;
+	private readonly diagnostics = vscode.languages.createDiagnosticCollection('eto.preview');
 	private readonly disposables: vscode.Disposable[] = [];
 	private document: vscode.TextDocument | undefined;
 	private size: { width: number; height: number } | undefined;
@@ -73,7 +74,9 @@ export class PreviewPanel implements vscode.Disposable {
 					this.setDocument(editor.document);
 				}
 			}),
-			host.onDidRequestRedraw(() => this.render())
+			vscode.workspace.onDidCloseTextDocument(document => this.diagnostics.delete(document.uri)),
+			host.onDidRequestRedraw(() => this.render()),
+			this.diagnostics
 		);
 	}
 
@@ -153,6 +156,20 @@ export class PreviewPanel implements vscode.Disposable {
 		}
 	}
 
+	private showDiagnostic(document: vscode.TextDocument, result: RenderResult): void {
+		const range = result.error?.range;
+		if (!range || document.isClosed) {
+			this.diagnostics.delete(document.uri);
+			return;
+		}
+		const diagnostic = new vscode.Diagnostic(
+			new vscode.Range(range.start.line, range.start.character, range.end.line, range.end.character),
+			result.error!.message,
+			vscode.DiagnosticSeverity.Error);
+		diagnostic.source = 'Eto Preview';
+		this.diagnostics.set(document.uri, [diagnostic]);
+	}
+
 	private schedule(): void {
 		clearTimeout(this.timer);
 		this.timer = setTimeout(() => this.render(), REFRESH_DELAY_MS);
@@ -183,6 +200,7 @@ export class PreviewPanel implements vscode.Disposable {
 				if (PreviewPanel.current !== this) {
 					return;
 				}
+				this.showDiagnostic(document, result);
 				if (result.themes) {
 					this.themes = result.themes;
 					this.drawnTheme = result.theme;
