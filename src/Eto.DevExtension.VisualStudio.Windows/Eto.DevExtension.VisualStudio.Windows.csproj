@@ -86,6 +86,7 @@
     <Compile Include="Editor\CodeEditorHost.cs" />
     <Compile Include="Editor\EditorFactory.cs" />
     <Compile Include="Editor\IVsFindTarget3.cs" />
+    <Compile Include="Editor\PreviewErrorTagger.cs" />
     <Compile Include="Editor\PreviewHostClient.cs" />
     <Compile Include="Editor\PreviewLayoutSettings.cs" />
     <Compile Include="Editor\PreviewPlatforms.cs" />

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Eto.Designer;
+using Eto.Designer.Builders;
 using Eto.Forms;
 
 namespace Eto.DevExtension.PreviewHost
@@ -41,6 +42,21 @@ namespace Eto.DevExtension.PreviewHost
 	{
 		public string Message { get; set; }
 		public string Details { get; set; }
+		/// <summary>Where in the text the error is, or null when not known.</summary>
+		public RenderRange Range { get; set; }
+	}
+
+	/// <summary>Zero based, like LSP.</summary>
+	class RenderRange
+	{
+		public RenderPosition Start { get; set; }
+		public RenderPosition End { get; set; }
+	}
+
+	class RenderPosition
+	{
+		public int Line { get; set; }
+		public int Character { get; set; }
 	}
 
 	/// <summary>Builds a designer file into a control and draws it to a PNG. Use from the UI thread only.</summary>
@@ -78,19 +94,22 @@ namespace Eto.DevExtension.PreviewHost
 					builderFile = request.FileName;
 				}
 				if (builder == null)
-					return Task.FromResult(Error(new NotSupportedException($"No designer for {Path.GetFileName(request.FileName)}")));
+					return Task.FromResult(Error(new NotSupportedException($"No designer for {Path.GetFileName(request.FileName)}"), null));
 
+				// code files are compiled, so line numbers in their errors are for other files
+				var text = builder is XamlInterfaceBuilder || builder is JsonInterfaceBuilder ? request.Text : null;
 				token?.Cancel();
 				token = builder.Create(
 					request.Text,
 					ProjectAssemblies.MainAssembly,
 					ProjectAssemblies.Paths,
-					control => Capture(control, request).ContinueWith(r => completion.TrySetResult(r.IsFaulted ? Error(r.Exception) : r.Result)),
-					ex => completion.TrySetResult(Error(ex)));
+					// once built, an error with a line number is from another file the control loaded
+					control => Capture(control, request).ContinueWith(r => completion.TrySetResult(r.IsFaulted ? Error(r.Exception, null) : r.Result)),
+					ex => completion.TrySetResult(Error(ex, text)));
 			}
 			catch (Exception ex)
 			{
-				completion.TrySetResult(Error(ex));
+				completion.TrySetResult(Error(ex, null));
 			}
 			return completion.Task;
 		}
@@ -107,11 +126,13 @@ namespace Eto.DevExtension.PreviewHost
 			}
 		}
 
-		static RenderResult Error(Exception ex)
+		/// <param name="text">The text that was built, to find where the error is in, or null to not look.</param>
+		static RenderResult Error(Exception ex, string text)
 		{
 			ex = (ex as AggregateException)?.Flatten().InnerException ?? ex;
 			var root = ex.GetBaseException();
-			return new RenderResult { Error = new RenderError { Message = root.Message, Details = ex.ToString() } };
+			var range = text != null ? ErrorLocation.Find(ex, text) : null;
+			return new RenderResult { Error = new RenderError { Message = root.Message, Details = ex.ToString(), Range = range } };
 		}
 	}
 

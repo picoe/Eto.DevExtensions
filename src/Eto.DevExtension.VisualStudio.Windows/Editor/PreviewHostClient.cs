@@ -131,7 +131,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			var error = result?["error"];
 			var image = (string)result?["image"];
 			var read = error != null && error.Type == JTokenType.Object
-				? Error((string)error["message"], (string)error["details"], platform)
+				? Error((string)error["message"], (string)error["details"], platform, ReadRange(error["range"]))
 				: new PreviewRenderResult
 				{
 					Image = string.IsNullOrEmpty(image) ? null : Convert.FromBase64String(image),
@@ -143,8 +143,21 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			return read;
 		}
 
-		static PreviewRenderResult Error(string message, string details, PreviewPlatform platform) =>
-			new PreviewRenderResult { Error = new DesignError { Message = message, Details = details ?? message }, Platform = platform.Label };
+		static DesignErrorRange ReadRange(JToken range)
+		{
+			if (range?.Type != JTokenType.Object)
+				return null;
+			return new DesignErrorRange
+			{
+				StartLine = (int?)range["start"]?["line"] ?? 0,
+				StartColumn = (int?)range["start"]?["character"] ?? 0,
+				EndLine = (int?)range["end"]?["line"] ?? 0,
+				EndColumn = (int?)range["end"]?["character"] ?? 0
+			};
+		}
+
+		static PreviewRenderResult Error(string message, string details, PreviewPlatform platform, DesignErrorRange range = null) =>
+			new PreviewRenderResult { Error = new DesignError { Message = message, Details = details ?? message, Range = range }, Platform = platform.Label };
 
 		async Task<JsonRpc> GetServerAsync(PreviewPlatform wanted)
 		{

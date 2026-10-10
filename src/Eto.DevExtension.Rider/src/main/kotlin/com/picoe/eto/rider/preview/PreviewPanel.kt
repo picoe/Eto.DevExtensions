@@ -55,6 +55,7 @@ private const val REFRESH_DELAY_MS = 500
 class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Disposable {
     private val host = project.service<PreviewHost>()
     private val state = project.service<PreviewPlatformState>()
+    private val errors = project.service<PreviewErrors>()
     private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
     private val platforms = CollectionComboBoxModel<PlatformOption>()
     private val platformBox = ComboBox(platforms)
@@ -170,6 +171,7 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
 
     override fun dispose() {
         disposed = true
+        errors.clear()
     }
 
     private fun updateScale() {
@@ -200,6 +202,7 @@ class PreviewPanel(private val project: Project) : JPanel(BorderLayout()), Dispo
             ApplicationManager.getApplication().invokeLater({
                 rendering = false
                 if (disposed) return@invokeLater
+                errors.set(file, result?.errorRange?.let { PreviewError(result.errorMessage ?: "", it) })
                 // results for a file the user already moved away from would only flicker
                 if (file == this.file)
                     show(result ?: RenderResult(errorMessage = "The preview could not be drawn.", errorDetails = e?.toString()))

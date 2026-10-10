@@ -28,6 +28,7 @@ using Microsoft.VisualStudio.Utilities;
 using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Editor.Internal;
+using ITextBuffer = Microsoft.VisualStudio.Text.ITextBuffer;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using System.Windows.Media;
@@ -51,6 +52,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		IVsFindTarget4
 	{
 		IVsTextLines textBuffer;
+		ITextBuffer documentBuffer;
 		CodeEditorHost editor;
 		EtoAddinPackage package;
 		PreviewEditorView preview;
@@ -131,11 +133,15 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			editorControl = new Panel();
 			editorControl.Content = editor.wpfElement.ToEto();
 
+			documentBuffer = Services.GetComponentService<IVsEditorAdaptersFactoryService>()?.GetDocumentBuffer(textBuffer);
 			var host = previewHost = PreviewHostClient.Acquire(projectKey);
 			host.ProjectChanged += PreviewHost_ProjectChanged;
 			var designHost = new RemoteDesignPanel(async request =>
 			{
+				var snapshot = documentBuffer?.CurrentSnapshot;
 				var result = await host.RenderAsync(request, await ProjectAssemblyPaths.GetAsync(fileName));
+				if (snapshot != null && !disposed)
+					PreviewErrorTagger.Get(documentBuffer).Show(result?.Error, snapshot);
 				if (result?.Platform != null && result.Platform != drawnPlatform)
 				{
 					drawnPlatform = result.Platform;
@@ -357,6 +363,10 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 					VSColorTheme.ThemeChanged -= VSColorTheme_ThemeChanged;
 
 					disposed = true;
+
+					// the buffer outlives the pane when the file is also open in a plain editor
+					if (documentBuffer != null)
+						PreviewErrorTagger.Get(documentBuffer).Show(null, documentBuffer.CurrentSnapshot);
 
 					// close the view before letting the document close
 					editor.Close();

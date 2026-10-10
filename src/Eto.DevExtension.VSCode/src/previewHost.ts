@@ -21,11 +21,17 @@ export interface RenderRequest {
 	theme?: string;
 }
 
+interface Position {
+	line: number;
+	character: number;
+}
+
 export interface RenderResult {
 	image?: string;
 	width?: number;
 	height?: number;
-	error?: { message: string; details?: string };
+	/** The range is zero based, and only there when the host knows where the error is. */
+	error?: { message: string; details?: string; range?: { start: Position; end: Position } };
 	/** Label of the platform it was drawn with. */
 	platform?: string;
 	/** Theme names the platform offers. */
