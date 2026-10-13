@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Build/">
+    <File Path="../Directory.Build.props" />
+  </Folder>
+  <Project Path="Eto.Designer/Eto.Designer.csproj" />
+  <Project Path="Eto.DevExtension.Shared/Eto.DevExtension.Shared.csproj" />
+  <Project Path="Eto.DevExtension.VisualStudio.Windows/Eto.DevExtension.VisualStudio.Windows.csproj" />
+</Solution>

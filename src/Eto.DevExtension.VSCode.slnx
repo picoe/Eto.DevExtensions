@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Build/">
+    <File Path="../Directory.Build.props" />
+  </Folder>
+  <Project Path="Eto.Designer/Eto.Designer.csproj" />
+  <Project Path="Eto.DevExtension.LanguageServer/Eto.DevExtension.LanguageServer.csproj" />
+  <Project Path="Eto.DevExtension.PreviewHost/Eto.DevExtension.PreviewHost.csproj" />
+</Solution>
