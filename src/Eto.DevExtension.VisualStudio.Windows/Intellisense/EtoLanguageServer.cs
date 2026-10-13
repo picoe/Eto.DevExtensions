@@ -175,6 +175,8 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 				{
 					Label = label,
 					InsertText = (string)entry["textEdit"]?["newText"] ?? label,
+					ValueText = (string)entry["data"]?["valueText"],
+					ValueReplaces = (int?)entry["data"]?["valueReplaces"] ?? 0,
 					NamespaceEdit = namespaceEdit,
 					Item = new Designer.Completion.CompletionItem
 					{

@@ -73,8 +73,20 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			span = FindTokenSpan(span);
 			var text = item.InsertText;
 			var result = CommitResult.Handled;
-			switch (typedChar)
+			// Tab, Enter or a typed '=' gives Text="" with the caret inside
+			var value = etoitem.ValueText != null && (typedChar == '\t' || typedChar == '\n' || typedChar == '=');
+			if (value)
 			{
+				text += etoitem.ValueText;
+				result = new CommitResult(true, CommitBehavior.SuppressFurtherTypeCharCommandHandlers);
+			}
+			else switch (typedChar)
+			{
+				case '>':
+					// a closing tag already ends with the '>' being typed
+					if (text.EndsWith(">"))
+						text = text.Substring(0, text.Length - 1);
+					break;
 				case '.':
 					if (!text.EndsWith("."))
 						text += ".";
@@ -107,6 +119,11 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 				case '.':
 					session.OpenOrUpdate(new CompletionTrigger(CompletionTriggerReason.Insertion, newSnapshot, '.'), endLocation, token);
 					break;
+			}
+			if (value)
+			{
+				textView.Caret.MoveTo(endLocation - (etoitem.ValueText.Length - etoitem.ValueCaret));
+				return result;
 			}
 			var ch = endLocation.GetChar();
 			if (ch == '\'' || ch == '"')

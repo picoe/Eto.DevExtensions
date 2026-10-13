@@ -15,6 +15,18 @@ namespace Eto.Designer.Completion
 
 		public string InsertText { get; set; }
 
+		/// <summary>
+		/// Empty value to add after <see cref="InsertText"/>, eg. ="", for editors that can place the caret,
+		/// which goes inside its closing quote when it has one; null when there is none.
+		/// </summary>
+		public string ValueText { get; set; }
+
+		/// <summary>Characters after the completed word that <see cref="ValueText"/> replaces, eg. a json key's closing quote.</summary>
+		public int ValueReplaces { get; set; }
+
+		/// <summary>Where the caret goes within <see cref="ValueText"/>.</summary>
+		public int ValueCaret => ValueText == null ? 0 : ValueText.EndsWith("\"") ? ValueText.Length - 1 : ValueText.Length;
+
 		/// <summary>Declaration to add to the root element so the item resolves, or null when none is needed.</summary>
 		public DocumentTextEdit NamespaceEdit { get; set; }
 	}
@@ -42,6 +54,9 @@ namespace Eto.Designer.Completion
 
 		/// <summary>Set when the cursor is inside other xaml markup, eg. {x:Static ...}.</summary>
 		public MarkupCompletion.Request Markup { get; set; }
+
+		/// <summary>Set to the element to close when the cursor follows "&lt;/".</summary>
+		public string ClosingTag { get; set; }
 	}
 
 	/// <summary>Text to insert at an offset of the document the completion was computed for.</summary>
@@ -88,6 +103,19 @@ namespace Eto.Designer.Completion
 				return new DocumentCompletionContext { Info = markupInfo, Format = format, Start = markup.Start, End = markup.End, Quoted = true, Text = text, ProjectAssemblies = projectAssemblies, Markup = markup };
 			}
 
+			if (jsonInfo == null && !quoted)
+			{
+				var nameStart = ScanBack(text, offset, IsTokenChar);
+				if (nameStart >= 2 && text[nameStart - 1] == '/' && text[nameStart - 2] == '<')
+				{
+					var element = XmlParser.GetUnclosedElement(text, nameStart - 2);
+					if (element == null)
+						return null;
+					var closingInfo = new ParseInfo { Nodes = new List<CompletionPathNode>(), Mode = CompletionMode.Value };
+					return new DocumentCompletionContext { Info = closingInfo, Format = format, Start = nameStart, End = ScanForward(text, offset, IsTokenChar), Text = text, ProjectAssemblies = projectAssemblies, ClosingTag = element };
+				}
+			}
+
 			ParseInfo info;
 			int start;
 			if (jsonInfo != null)
@@ -113,6 +141,13 @@ namespace Eto.Designer.Completion
 
 		public static List<DocumentCompletionItem> GetItems(DocumentCompletionContext context)
 		{
+			if (context.ClosingTag != null)
+			{
+				var closing = new CompletionItem { Name = context.ClosingTag, Type = CompletionType.Class, Description = $"Closes the <{context.ClosingTag}> element." };
+				var bracket = context.End < context.Text.Length && context.Text[context.End] == '>' ? string.Empty : ">";
+				return new List<DocumentCompletionItem> { new DocumentCompletionItem { Item = closing, Label = context.ClosingTag, InsertText = context.ClosingTag + bracket } };
+			}
+
 			if (context.Binding != null || context.Markup != null)
 			{
 				var items = context.Binding != null
@@ -128,7 +163,13 @@ namespace Eto.Designer.Completion
 			var format = context.Format;
 			// json keys and values are always quoted, so add them when the cursor isn't already in a string
 			var addQuotes = format == CompletionFormat.Json && !context.Quoted;
-			var addColon = addQuotes && info.Mode == CompletionMode.Property;
+			var next = NextNonSpace(context.Text, context.End);
+			// don't add a second separator when renaming a property that already has a value
+			var addColon = addQuotes && info.Mode == CompletionMode.Property && next != ':';
+			// "Te|" finishes the key, unless it already has a value
+			var closeKey = format == CompletionFormat.Json && context.Quoted && info.Mode == CompletionMode.Property
+				&& context.End < context.Text.Length && context.Text[context.End] == '"' && NextNonSpace(context.Text, context.End + 1) != ':';
+			var addEquals = format == CompletionFormat.Xaml && !context.Quoted && info.Mode == CompletionMode.Property && !info.IsChildProperty && next != '=';
 
 			var results = new List<DocumentCompletionItem>();
 			foreach (var item in Completion.GetCompletionItems(info.Namespaces, info.Mode, info.Path, info.Context, format, context.ProjectAssemblies).OrderBy(r => r.Name))
@@ -151,8 +192,15 @@ namespace Eto.Designer.Completion
 							insert += ": ";
 					}
 				}
+				string value = null;
+				if (closeKey)
+					value = item.Behavior.HasFlag(CompletionBehavior.StringValue) ? "\": \"\"" : "\": ";
+				else if (addColon && item.Behavior.HasFlag(CompletionBehavior.StringValue))
+					value = "\"\"";
+				else if (addEquals && IsAttribute(item))
+					value = "=\"\"";
 				var namespaceEdit = item.Namespace != null ? GetNamespaceDeclaration(context.Text, item.Namespace) : null;
-				results.Add(new DocumentCompletionItem { Item = item, Label = label, InsertText = insert, NamespaceEdit = namespaceEdit });
+				results.Add(new DocumentCompletionItem { Item = item, Label = label, InsertText = insert, ValueText = value, ValueReplaces = closeKey ? 1 : 0, NamespaceEdit = namespaceEdit });
 			}
 			return results;
 		}
@@ -233,6 +281,16 @@ namespace Eto.Designer.Completion
 					return -1;
 			}
 			return -1;
+		}
+
+		static bool IsAttribute(CompletionItem item) =>
+			(item.Type == CompletionType.Property || item.Type == CompletionType.Event || item.Type == CompletionType.Attribute)
+			&& (item.Behavior & (CompletionBehavior.ChildProperty | CompletionBehavior.PropertyElementOnly)) == 0;
+
+		static char NextNonSpace(string text, int offset)
+		{
+			var i = ScanForward(text, offset, char.IsWhiteSpace);
+			return i < text.Length ? text[i] : '\0';
 		}
 
 		static int ScanBack(string text, int offset, Func<char, bool> include)

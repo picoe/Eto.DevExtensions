@@ -46,6 +46,10 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			if (context == null)
 				return CompletionStartData.DoesNotParticipateInCompletion;
 
+			// a comma between properties is too early; the space or quote after it opens completion instead
+			if (trigger.Reason == CompletionTriggerReason.Insertion && trigger.Character == ',' && !context.Quoted)
+				return CompletionStartData.DoesNotParticipateInCompletion;
+
 			var span = new SnapshotSpan(triggerLocation.Snapshot, context.Start, context.End - context.Start);
 			return new CompletionStartData(CompletionParticipation.ProvidesItems, span);
 		}

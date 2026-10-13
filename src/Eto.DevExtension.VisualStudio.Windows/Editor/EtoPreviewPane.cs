@@ -52,7 +52,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		IVsFindTarget4
 	{
 		IVsTextLines textBuffer;
-		ITextBuffer documentBuffer;
+		Microsoft.VisualStudio.Text.ITextBuffer documentBuffer;
 		CodeEditorHost editor;
 		EtoAddinPackage package;
 		PreviewEditorView preview;

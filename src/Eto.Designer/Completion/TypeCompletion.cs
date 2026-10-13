@@ -307,6 +307,7 @@ namespace Eto.Designer.Completion
 
 					var underlyingType = Nullable.GetUnderlyingType(prop.PropertyType);
 					var suffix = underlyingType != null ? underlyingType.Name + "?" : prop.PropertyType.Name;
+					var behavior = settable ? GetValueBehavior(underlyingType ?? prop.PropertyType) : CompletionBehavior.PropertyElementOnly;
 
 					// todo: get friendly names for generic types
 
@@ -316,7 +317,7 @@ namespace Eto.Designer.Completion
 						Suffix = suffix,
 						Description = XmlComments.GetSummary(prop),
 						Type = CompletionType.Property,
-						Behavior = settable ? CompletionBehavior.None : CompletionBehavior.PropertyElementOnly
+						Behavior = behavior
 					};
 				}
 				foreach (var evt in type.GetEvents(BindingFlags.Public | BindingFlags.Instance))
@@ -325,10 +326,21 @@ namespace Eto.Designer.Completion
 					{
 						Name = evt.Name,
 						Description = XmlComments.GetSummary(evt),
-						Type = CompletionType.Event
+						Type = CompletionType.Event,
+						Behavior = CompletionBehavior.StringValue
 					};
 				}
 			}
+		}
+
+		// matches the types GetPropertyValues offers values for
+		static CompletionBehavior GetValueBehavior(Type type)
+		{
+			if (type == typeof(bool))
+				return CompletionBehavior.HasValues;
+			if (type == typeof(Color) || type.IsEnum)
+				return CompletionBehavior.HasValues | CompletionBehavior.StringValue;
+			return type == typeof(string) ? CompletionBehavior.StringValue : CompletionBehavior.None;
 		}
 
 		public override IEnumerable<CompletionItem> GetPropertyValues(string objectName, string propertyName, IEnumerable<string> path)

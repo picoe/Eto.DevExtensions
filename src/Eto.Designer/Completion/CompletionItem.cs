@@ -15,7 +15,13 @@ namespace Eto.Designer.Completion
 		ChildProperty = 1 << 0,
 
 		/// <summary>A read-only collection, which xaml can only fill using a property element.</summary>
-		PropertyElementOnly = 1 << 1
+		PropertyElementOnly = 1 << 1,
+
+		/// <summary>The value has its own completions, eg. an enum or bool.</summary>
+		HasValues = 1 << 2,
+
+		/// <summary>Json writes the value as a string, eg. a string, enum or color.</summary>
+		StringValue = 1 << 3
 	}
 
 	public class CompletionItem
