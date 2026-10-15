@@ -30,10 +30,19 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 				|| !session.Properties.TryGetProperty(JetoCompletionSource.SpanKey, out ITrackingSpan trackingSpan))
 				return CommitResult.Unhandled;
 
+			// a typed quote would close the empty value, so only Enter and Tab add it
+			var text = etoitem.InsertText;
+			var value = etoitem.ValueText != null && (typedChar == '\t' || typedChar == '\n');
+			if (value)
+				text += etoitem.ValueText;
+
 			var span = trackingSpan.GetSpan(buffer.CurrentSnapshot);
-			var newSnapshot = buffer.Replace(span, etoitem.InsertText);
+			if (value)
+				span = new SnapshotSpan(span.Start, span.Length + etoitem.ValueReplaces);
+			var newSnapshot = buffer.Replace(span, text);
+			var caret = value ? etoitem.InsertText.Length + etoitem.ValueCaret : text.Length;
 			if (newSnapshot.TextBuffer == textView.TextBuffer)
-				textView.Caret.MoveTo(new SnapshotPoint(newSnapshot, span.Start.Position + etoitem.InsertText.Length));
+				textView.Caret.MoveTo(new SnapshotPoint(newSnapshot, span.Start.Position + caret));
 
 			// Enter and Tab only commit, but a typed quote still goes through
 			return CommitResult.Handled;

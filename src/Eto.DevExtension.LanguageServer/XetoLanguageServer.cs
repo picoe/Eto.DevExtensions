@@ -18,6 +18,8 @@ namespace Eto.DevExtension.LanguageServer
 		readonly ConcurrentDictionary<string, List<string>> clientAssemblies = new ConcurrentDictionary<string, List<string>>(StringComparer.Ordinal);
 
 		bool warnedAboutVersion;
+		bool snippets;
+		string triggerSuggestCommand;
 
 		public XetoLanguageServer(LspConnection connection)
 		{
@@ -37,6 +39,9 @@ namespace Eto.DevExtension.LanguageServer
 
 		object Initialize(JsonNode parameters)
 		{
+			snippets = parameters?["capabilities"]?["textDocument"]?["completion"]?["completionItem"]?["snippetSupport"]?.GetValue<bool>() == true;
+			triggerSuggestCommand = parameters?["initializationOptions"]?["triggerSuggestCommand"]?.GetValue<string>();
+
 			var configured = parameters?["initializationOptions"]?["etoAssemblyPath"]?.GetValue<string>();
 			if (!string.IsNullOrWhiteSpace(configured))
 			{
@@ -55,7 +60,7 @@ namespace Eto.DevExtension.LanguageServer
 					completionProvider = new
 					{
 						resolveProvider = false,
-						triggerCharacters = new[] { "<", ".", " ", "\"", "'", ":", "{", ",", "=" }
+						triggerCharacters = new[] { "<", ".", " ", "\"", "'", ":", "{", ",", "=", "/" }
 					}
 				},
 				serverInfo = new { name = "Eto Designer Language Server", version = ThisVersion }
@@ -100,7 +105,7 @@ namespace Eto.DevExtension.LanguageServer
 		{
 			if (!TryGetContext(parameters, out var text, out var offset, out var format, out var rootType))
 				return new CompletionList();
-			return new CompletionList { Items = CompletionService.GetCompletions(text, offset, format, rootType, GetProjectAssemblies(parameters)) };
+			return new CompletionList { Items = CompletionService.GetCompletions(text, offset, format, rootType, GetProjectAssemblies(parameters), snippets, triggerSuggestCommand, parameters?["context"]?["triggerCharacter"]?.GetValue<string>()) };
 		}
 
 		object HoverAt(JsonNode parameters)

@@ -23,16 +23,26 @@ namespace Eto.DevExtension.LanguageServer
 			XmlComments.EncodeHtml = false;
 		}
 
-		public static List<Lsp.CompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null)
+		/// <param name="snippets">The client takes snippets, so property names get an empty value with the caret inside.</param>
+		/// <param name="triggerSuggestCommand">Client command that reopens completion, so a value list shows straight after its property.</param>
+		/// <param name="triggerCharacter">The character that opened completion, if any.</param>
+		public static List<Lsp.CompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null, bool snippets = false, string triggerSuggestCommand = null, string triggerCharacter = null)
 		{
 			var results = new List<Lsp.CompletionItem>();
 			var context = DocumentCompletion.GetContext(text, offset, format, rootTypeName, projectAssemblies);
 			if (context == null)
 				return results;
+			// '/' is only a trigger for "</", so it doesn't pop up in json comments or paths
+			if (triggerCharacter == "/" && context.ClosingTag == null)
+				return results;
+			// a comma between json properties is too early; the space or quote after it opens completion instead
+			if (triggerCharacter == "," && format == CompletionFormat.Json && !context.Quoted)
+				return results;
 
 			var range = ToRange(text, context.Start, context.End);
 			foreach (var item in DocumentCompletion.GetItems(context))
 			{
+				var snippet = snippets && item.ValueText != null;
 				results.Add(new Lsp.CompletionItem
 				{
 					Label = item.Label,
@@ -41,7 +51,15 @@ namespace Eto.DevExtension.LanguageServer
 					Documentation = ToMarkup(item.Item.Description),
 					SortText = item.Label,
 					FilterText = item.Label,
-					TextEdit = new TextEdit { Range = range, NewText = item.InsertText },
+					TextEdit = snippet
+						? new TextEdit { Range = ToRange(text, context.Start, context.End + item.ValueReplaces), NewText = ToSnippet(item) }
+						: new TextEdit { Range = range, NewText = item.InsertText },
+					InsertTextFormat = snippet ? Lsp.InsertTextFormat.Snippet : (int?)null,
+					Command = snippet && triggerSuggestCommand != null && item.Item.Behavior.HasFlag(CompletionBehavior.HasValues)
+						? new Command { Title = "Suggest", Name = triggerSuggestCommand }
+						: null,
+					// lets a client without snippets, such as Visual Studio, add the value itself
+					Data = item.ValueText == null ? null : new CompletionData { ValueText = item.ValueText, ValueReplaces = item.ValueReplaces },
 					AdditionalTextEdits = item.NamespaceEdit == null ? null : new List<TextEdit>
 					{
 						new TextEdit { Range = ToRange(text, item.NamespaceEdit.Offset, item.NamespaceEdit.Offset), NewText = item.NamespaceEdit.Text }
@@ -63,6 +81,12 @@ namespace Eto.DevExtension.LanguageServer
 				Range = ToRange(text, start, end)
 			};
 		}
+
+		static string ToSnippet(DocumentCompletionItem item) =>
+			EscapeSnippet(item.InsertText + item.ValueText.Substring(0, item.ValueCaret)) + "$0" + EscapeSnippet(item.ValueText.Substring(item.ValueCaret));
+
+		static string EscapeSnippet(string text) =>
+			text.Replace("\\", "\\\\").Replace("$", "\\$").Replace("}", "\\}");
 
 		static int GetKind(CompletionType type)
 		{

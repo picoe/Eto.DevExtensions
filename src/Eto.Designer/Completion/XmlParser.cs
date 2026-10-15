@@ -56,6 +56,71 @@ namespace Eto.Designer.Completion
 			return text.Substring(0, insertAt) + sb + text.Substring(insertAt);
 		}
 
+		/// <summary>Name of the innermost element still open at <paramref name="offset"/>, or null when all are closed.</summary>
+		public static string GetUnclosedElement(string text, int offset)
+		{
+			var open = new List<string>();
+			var i = 0;
+			while ((i = text.IndexOf('<', i)) >= 0 && i < offset)
+			{
+				if (Skip(text, ref i, "<!--", "-->") || Skip(text, ref i, "<![CDATA[", "]]>") || Skip(text, ref i, "<?", "?>") || Skip(text, ref i, "<!", ">"))
+					continue;
+
+				var closing = i + 1 < text.Length && text[i + 1] == '/';
+				var nameStart = closing ? i + 2 : i + 1;
+				var nameEnd = nameStart;
+				while (nameEnd < text.Length && (char.IsLetterOrDigit(text[nameEnd]) || text[nameEnd] == '_' || text[nameEnd] == ':' || text[nameEnd] == '.' || text[nameEnd] == '-'))
+					nameEnd++;
+				var name = text.Substring(nameStart, nameEnd - nameStart);
+
+				// find the tag's end, stepping over quoted values that may contain '>'
+				var quote = '\0';
+				var end = nameEnd;
+				for (; end < offset; end++)
+				{
+					var ch = text[end];
+					if (quote != '\0')
+					{
+						if (ch == quote)
+							quote = '\0';
+					}
+					else if (ch == '"' || ch == '\'')
+						quote = ch;
+					else if (ch == '>' || ch == '<')
+						break;
+				}
+				if (end >= offset || text[end] == '<')
+				{
+					// an unfinished start tag still needs closing
+					if (!closing && name.Length > 0)
+						open.Add(name);
+					i = end;
+					continue;
+				}
+
+				if (closing)
+				{
+					// closing an outer element also closes anything left open inside it
+					var index = open.LastIndexOf(name);
+					if (index >= 0)
+						open.RemoveRange(index, open.Count - index);
+				}
+				else if (name.Length > 0 && text[end - 1] != '/')
+					open.Add(name);
+				i = end + 1;
+			}
+			return open.Count > 0 ? open[open.Count - 1] : null;
+		}
+
+		static bool Skip(string text, ref int index, string start, string end)
+		{
+			if (string.CompareOrdinal(text, index, start, 0, start.Length) != 0)
+				return false;
+			var found = text.IndexOf(end, index + start.Length, StringComparison.Ordinal);
+			index = found < 0 ? text.Length : found + end.Length;
+			return true;
+		}
+
 		public static ParseInfo Read(string text)
 		{
 			var nodes = new List<CompletionPathNode>();

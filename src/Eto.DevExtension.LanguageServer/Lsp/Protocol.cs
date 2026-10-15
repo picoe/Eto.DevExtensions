@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Eto.DevExtension.LanguageServer.Lsp
 {
@@ -38,6 +39,23 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 		public string FilterText { get; set; }
 		public TextEdit TextEdit { get; set; }
 		public List<TextEdit> AdditionalTextEdits { get; set; }
+		public int? InsertTextFormat { get; set; }
+		public Command Command { get; set; }
+		public CompletionData Data { get; set; }
+	}
+
+	/// <summary>Extra detail for this server's own clients, which other clients ignore.</summary>
+	public class CompletionData
+	{
+		public string ValueText { get; set; }
+		public int ValueReplaces { get; set; }
+	}
+
+	public class Command
+	{
+		public string Title { get; set; }
+		[JsonPropertyName("command")]
+		public string Name { get; set; }
 	}
 
 	public class CompletionList
@@ -50,6 +68,13 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 	{
 		public MarkupContent Contents { get; set; }
 		public Range Range { get; set; }
+	}
+
+	/// <summary>LSP InsertTextFormat values.</summary>
+	public static class InsertTextFormat
+	{
+		public const int PlainText = 1;
+		public const int Snippet = 2;
 	}
 
 	/// <summary>LSP CompletionItemKind values.</summary>

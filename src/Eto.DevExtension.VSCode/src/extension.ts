@@ -85,7 +85,8 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
 			{ scheme: 'file', language: 'jeto' }
 		],
 		outputChannel: output,
-		initializationOptions: etoAssemblyPath ? { etoAssemblyPath } : {}
+		// reopens completion after a property name so its values show straight away
+		initializationOptions: { triggerSuggestCommand: 'editor.action.triggerSuggest', ...(etoAssemblyPath ? { etoAssemblyPath } : {}) }
 	};
 
 	const starting = new LanguageClient('eto', 'Eto.Forms Designer', serverOptions, clientOptions);

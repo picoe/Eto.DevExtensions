@@ -28,6 +28,18 @@
     "onLanguage:jeto"
   ],
   "contributes": {
+    "keybindings": [
+      {
+        "key": "=",
+        "command": "acceptSelectedSuggestion",
+        "when": "editorTextFocus && suggestWidgetVisible && suggestWidgetHasFocusedSuggestion && editorLangId == xeto"
+      },
+      {
+        "key": "shift+;",
+        "command": "acceptSelectedSuggestion",
+        "when": "editorTextFocus && suggestWidgetVisible && suggestWidgetHasFocusedSuggestion && editorLangId == jeto"
+      }
+    ],
     "languages": [
       {
         "id": "xeto",

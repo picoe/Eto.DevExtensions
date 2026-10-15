@@ -20,12 +20,14 @@ namespace Eto.Designer.Completion
 			{
 				Name = JsonParser.TypeProperty,
 				Type = CompletionType.Attribute,
+				Behavior = CompletionBehavior.StringValue | CompletionBehavior.HasValues,
 				Description = "The Eto.Forms type to create for this object."
 			};
 			yield return new CompletionItem
 			{
 				Name = JsonParser.NameProperty,
 				Type = CompletionType.Attribute,
+				Behavior = CompletionBehavior.StringValue,
 				Description = "Sets the ID of the object, which will automatically bind to a field or property of the same name in your backing class."
 			};
 			yield return new CompletionItem
