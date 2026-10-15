@@ -49,6 +49,8 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 					return new ImageElement(new ImageId(KnownImageIds.ImageCatalogGuid, KnownImageIds.Field));
 				case CompletionType.Attribute:
 					return new ImageElement(new ImageId(KnownImageIds.ImageCatalogGuid, KnownImageIds.Attribute));
+				case CompletionType.Method:
+					return new ImageElement(new ImageId(KnownImageIds.ImageCatalogGuid, KnownImageIds.Method));
 				default:
 				case CompletionType.Literal:
 					return new ImageElement(new ImageId(KnownImageIds.ImageCatalogGuid, KnownImageIds.Literal));

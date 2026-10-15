@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
 using Eto.DevExtension.LanguageServer.Lsp;
 using Eto.Designer.Completion;
@@ -34,7 +35,9 @@ namespace Eto.DevExtension.LanguageServer
 			connection.OnNotification("textDocument/didClose", DidClose);
 			connection.OnRequest("textDocument/completion", Complete);
 			connection.OnRequest("textDocument/hover", HoverAt);
+			connection.OnRequest("textDocument/definition", GoToDefinition);
 			connection.OnNotification("eto/setProjectAssemblies", SetProjectAssemblies);
+			connection.OnRequest("workspace/executeCommand", ExecuteCommand);
 		}
 
 		object Initialize(JsonNode parameters)
@@ -57,6 +60,8 @@ namespace Eto.DevExtension.LanguageServer
 				{
 					textDocumentSync = 1,
 					hoverProvider = true,
+					definitionProvider = true,
+					executeCommandProvider = new { commands = new[] { CompletionService.CreateEventHandlerCommand } },
 					completionProvider = new
 					{
 						resolveProvider = false,
@@ -105,7 +110,25 @@ namespace Eto.DevExtension.LanguageServer
 		{
 			if (!TryGetContext(parameters, out var text, out var offset, out var format, out var rootType))
 				return new CompletionList();
-			return new CompletionList { Items = CompletionService.GetCompletions(text, offset, format, rootType, GetProjectAssemblies(parameters), snippets, triggerSuggestCommand, parameters?["context"]?["triggerCharacter"]?.GetValue<string>()) };
+			var path = ToLocalPath(parameters["textDocument"]["uri"].GetValue<string>());
+			return new CompletionList { Items = CompletionService.GetCompletions(text, offset, format, rootType, GetProjectAssemblies(parameters), snippets, triggerSuggestCommand, parameters?["context"]?["triggerCharacter"]?.GetValue<string>(), path) };
+		}
+
+		/// <summary>Applies the code behind edit of a new event handler, for clients that don't apply it themselves.</summary>
+		object ExecuteCommand(JsonNode parameters)
+		{
+			var edit = (parameters?["arguments"] as JsonArray)?.FirstOrDefault();
+			if (parameters?["command"]?.GetValue<string>() == CompletionService.CreateEventHandlerCommand && edit != null)
+				connection.Request("workspace/applyEdit", new { label = "Create event handler", edit = edit.DeepClone() });
+			return null;
+		}
+
+		object GoToDefinition(JsonNode parameters)
+		{
+			if (!TryGetContext(parameters, out var text, out var offset, out var format, out var rootType))
+				return null;
+			var path = ToLocalPath(parameters["textDocument"]["uri"].GetValue<string>());
+			return CompletionService.GetDefinition(text, offset, format, rootType, GetProjectAssemblies(parameters), path);
 		}
 
 		object HoverAt(JsonNode parameters)
@@ -198,6 +221,8 @@ namespace Eto.DevExtension.LanguageServer
 		{
 			try
 			{
+				// VS Code escapes the drive colon (file:///c%3A/...), which Uri turns into c:\c:\...
+				uri = Regex.Replace(uri, "^file:///([a-zA-Z])%3[aA]", "file:///$1:");
 				var parsed = new Uri(uri);
 				return parsed.IsFile ? parsed.LocalPath : null;
 			}

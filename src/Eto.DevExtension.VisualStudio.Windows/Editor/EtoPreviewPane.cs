@@ -228,6 +228,9 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		}
 
 		const int NotSupported = (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
+
+		// a command the editor doesn't handle comes back to this pane, which would send it in again until the stack overflows
+		bool forwardingCommand;
         int IOleCommandTarget.Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
@@ -237,10 +240,23 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 				ViewCode();
 				return VSConstants.S_OK;
 			}
-			if (CodeEditorHasFocus && editor.viewAdapter != null)
+			// the code editor would swallow it, and a context menu takes focus from it
+			if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97 && nCmdID == (int)VSConstants.VSStd97CmdID.GotoDefn
+				&& WpfTextView != null && documentBuffer != null
+				&& GoToDefinitionHandler.TryGoTo(WpfTextView, documentBuffer, FileName))
+				return VSConstants.S_OK;
+			if (CodeEditorHasFocus && editor.viewAdapter != null && !forwardingCommand)
 			{
 				var cmdTarget = (IOleCommandTarget)editor.viewAdapter;
-				hr = cmdTarget.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+				forwardingCommand = true;
+				try
+				{
+					hr = cmdTarget.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+				}
+				finally
+				{
+					forwardingCommand = false;
+				}
 			}
 			return hr;
 		}
@@ -253,7 +269,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			{
 				for (int i = 0; i < prgCmds.Length; i++)
 				{
-					if (prgCmds[i].cmdID == (int)VSConstants.VSStd97CmdID.ViewCode)
+					if (prgCmds[i].cmdID == (int)VSConstants.VSStd97CmdID.ViewCode
+						|| (prgCmds[i].cmdID == (int)VSConstants.VSStd97CmdID.GotoDefn && WpfTextView != null))
 					{
 						prgCmds[i].cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
 						return VSConstants.S_OK;
@@ -261,10 +278,18 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 				}
 			}
 
-			if (CodeEditorHasFocus && editor.viewAdapter != null)
+			if (CodeEditorHasFocus && editor.viewAdapter != null && !forwardingCommand)
 			{
 				var cmdTarget = (IOleCommandTarget)editor.viewAdapter;
-				hr = cmdTarget.QueryStatus(ref pguidCmdGroup, cCmds, prgCmds, pCmdText);
+				forwardingCommand = true;
+				try
+				{
+					hr = cmdTarget.QueryStatus(ref pguidCmdGroup, cCmds, prgCmds, pCmdText);
+				}
+				finally
+				{
+					forwardingCommand = false;
+				}
 			}
 			return hr;
 		}

@@ -5,13 +5,15 @@ import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-	TransportKind
+	TransportKind,
+	WorkspaceEdit
 } from 'vscode-languageclient/node';
 import { AUTO, HostLauncher } from './hostLaunch';
 import { DEFAULT_THEME, isPreviewable, PlatformPicker, PreviewPanel } from './preview';
 import { PreviewHost } from './previewHost';
 
 const SERVER_DLL = 'Eto.DevExtension.LanguageServer.dll';
+const CREATE_EVENT_HANDLER = 'eto.createEventHandler';
 const PLATFORM_KEY = 'eto.preview.platform';
 const THEME_KEY = 'eto.preview.theme';
 
@@ -86,7 +88,11 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
 		],
 		outputChannel: output,
 		// reopens completion after a property name so its values show straight away
-		initializationOptions: { triggerSuggestCommand: 'editor.action.triggerSuggest', ...(etoAssemblyPath ? { etoAssemblyPath } : {}) }
+		initializationOptions: { triggerSuggestCommand: 'editor.action.triggerSuggest', ...(etoAssemblyPath ? { etoAssemblyPath } : {}) },
+		middleware: {
+			executeCommand: (command, args, next) =>
+				command === CREATE_EVENT_HANDLER ? createEventHandler(args[0]) : next(command, args)
+		}
 	};
 
 	const starting = new LanguageClient('eto', 'Eto.Forms Designer', serverOptions, clientOptions);
@@ -100,6 +106,24 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
 		vscode.window.showErrorMessage(
 			`Could not start the Eto language server using "${dotnet}". Install the .NET 8 runtime or set "eto.dotnetPath".`
 		);
+	}
+}
+
+/** Adds a new event handler to the code behind, saving it when it wasn't already open so it isn't left dirty out of sight. */
+async function createEventHandler(edit: WorkspaceEdit | undefined): Promise<void> {
+	if (!client || !edit) {
+		return;
+	}
+	const converted = await client.protocol2CodeConverter.asWorkspaceEdit(edit);
+	const openBefore = new Set(vscode.workspace.textDocuments.map(r => r.uri.toString()));
+	if (!await vscode.workspace.applyEdit(converted)) {
+		return;
+	}
+	for (const [uri] of converted.entries()) {
+		if (!openBefore.has(uri.toString())) {
+			const document = await vscode.workspace.openTextDocument(uri);
+			await document.save();
+		}
 	}
 }
 

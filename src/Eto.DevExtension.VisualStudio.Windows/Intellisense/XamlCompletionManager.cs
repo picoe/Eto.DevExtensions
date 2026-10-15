@@ -131,6 +131,9 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 				endLocation += 1;
 				textView.Caret.MoveTo(endLocation);
 			}
+			// commits always run on the UI thread
+			Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+			CodeBehindEdits.Apply(etoitem.CodeBehindEdit);
 			return result;
 		}
 	}

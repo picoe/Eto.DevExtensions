@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Eto.Designer.Completion;
 using Eto.DevExtension.LanguageServer.Lsp;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Eto.DevExtension.LanguageServer
 {
@@ -23,10 +26,13 @@ namespace Eto.DevExtension.LanguageServer
 			XmlComments.EncodeHtml = false;
 		}
 
+		public const string CreateEventHandlerCommand = "eto.createEventHandler";
+
 		/// <param name="snippets">The client takes snippets, so property names get an empty value with the caret inside.</param>
 		/// <param name="triggerSuggestCommand">Client command that reopens completion, so a value list shows straight after its property.</param>
 		/// <param name="triggerCharacter">The character that opened completion, if any.</param>
-		public static List<Lsp.CompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null, bool snippets = false, string triggerSuggestCommand = null, string triggerCharacter = null)
+		/// <param name="documentPath">Path of the document, used to find its code behind.</param>
+		public static List<Lsp.CompletionItem> GetCompletions(string text, int offset, CompletionFormat format, string rootTypeName = null, IList<Assembly> projectAssemblies = null, bool snippets = false, string triggerSuggestCommand = null, string triggerCharacter = null, string documentPath = null)
 		{
 			var results = new List<Lsp.CompletionItem>();
 			var context = DocumentCompletion.GetContext(text, offset, format, rootTypeName, projectAssemblies);
@@ -40,6 +46,13 @@ namespace Eto.DevExtension.LanguageServer
 				return results;
 
 			var range = ToRange(text, context.Start, context.End);
+			var eventRequest = EventCompletion.Read(context);
+			if (eventRequest != null)
+			{
+				AddEventHandlers(results, context, eventRequest, offset, range, documentPath);
+				return results;
+			}
+
 			foreach (var item in DocumentCompletion.GetItems(context))
 			{
 				var snippet = snippets && item.ValueText != null;
@@ -65,6 +78,85 @@ namespace Eto.DevExtension.LanguageServer
 						new TextEdit { Range = ToRange(text, item.NamespaceEdit.Offset, item.NamespaceEdit.Offset), NewText = item.NamespaceEdit.Text }
 					}
 				});
+			}
+			return results;
+		}
+
+		/// <summary>Methods in the code behind that can handle the event, and one to create a new handler.</summary>
+		static void AddEventHandlers(List<Lsp.CompletionItem> results, DocumentCompletionContext context, EventCompletion.Request request, int offset, Lsp.Range range, string documentPath)
+		{
+			var codeBehind = CodeBehind.Load(documentPath, context.Text);
+			if (codeBehind == null)
+				return;
+
+			// values are quoted, so add them when the cursor isn't already in a string, eg. after typing Click=
+			var addQuotes = !context.Quoted;
+			string Quote(string name) => addQuotes ? "\"" + name + "\"" : name;
+
+			var handlers = codeBehind.GetHandlers(request.Event).ToList();
+			foreach (var handler in handlers)
+			{
+				results.Add(new Lsp.CompletionItem
+				{
+					Label = handler,
+					Kind = CompletionItemKind.Method,
+					SortText = "1" + handler,
+					FilterText = handler,
+					TextEdit = new TextEdit { Range = range, NewText = Quote(handler) }
+				});
+			}
+
+			// a name typed before asking for completions is used for the new handler
+			var typed = context.Quoted ? context.Text.Substring(context.Start, Math.Max(offset - context.Start, 0)).Trim() : null;
+			var name = !string.IsNullOrEmpty(typed) && SyntaxFacts.IsValidIdentifier(typed) ? typed : request.SuggestedName;
+			if (handlers.Contains(name))
+				return;
+
+			var insert = codeBehind.AddHandler(name, request.Event);
+			if (insert == null)
+				return;
+
+			var position = codeBehind.GetPosition(insert.Value.Offset);
+			var at = new Position { Line = position.Line, Character = position.Character };
+			var fileName = Path.GetFileName(codeBehind.FilePath);
+			var edit = new WorkspaceEdit
+			{
+				Changes = new Dictionary<string, List<TextEdit>>
+				{
+					[new Uri(codeBehind.FilePath).AbsoluteUri] = new List<TextEdit> { new TextEdit { Range = new Lsp.Range { Start = at, End = at }, NewText = insert.Value.Text } }
+				}
+			};
+			results.Add(new Lsp.CompletionItem
+			{
+				Label = name,
+				Kind = CompletionItemKind.Event,
+				Detail = "Create in " + fileName,
+				Documentation = new MarkupContent { Value = $"Adds a `{name}` method to {fileName} to handle {request.Event.Name}." },
+				SortText = "0" + name,
+				FilterText = name,
+				TextEdit = new TextEdit { Range = range, NewText = Quote(name) },
+				Command = new Command { Title = "Create event handler", Name = CreateEventHandlerCommand, Arguments = new List<object> { edit } }
+			});
+		}
+
+		/// <summary>Where the handler named by an event's value is in the code behind.</summary>
+		/// <returns>The location, an empty list when the value names no method there, or null when the value isn't for an event.</returns>
+		public static List<Location> GetDefinition(string text, int offset, CompletionFormat format, string rootTypeName, IList<Assembly> projectAssemblies, string documentPath)
+		{
+			var context = DocumentCompletion.GetContext(text, offset, format, rootTypeName, projectAssemblies);
+			if (EventCompletion.Read(context) == null)
+				return null;
+
+			var results = new List<Location>();
+			var name = text.Substring(context.Start, context.End - context.Start).Trim();
+			var codeBehind = string.IsNullOrEmpty(name) ? null : CodeBehind.Load(documentPath, text);
+			var method = codeBehind?.FindMethod(name);
+			if (method != null)
+			{
+				var position = codeBehind.GetPosition(method.Value);
+				var start = new Position { Line = position.Line, Character = position.Character };
+				var end = new Position { Line = position.Line, Character = position.Character + name.Length };
+				results.Add(new Location { Uri = new Uri(codeBehind.FilePath).AbsoluteUri, Range = new Lsp.Range { Start = start, End = end } });
 			}
 			return results;
 		}
@@ -97,6 +189,7 @@ namespace Eto.DevExtension.LanguageServer
 				case CompletionType.Event: return CompletionItemKind.Event;
 				case CompletionType.Field: return CompletionItemKind.Field;
 				case CompletionType.Attribute: return CompletionItemKind.Property;
+				case CompletionType.Method: return CompletionItemKind.Method;
 				default: return CompletionItemKind.Value;
 			}
 		}

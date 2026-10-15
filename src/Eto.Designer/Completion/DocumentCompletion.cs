@@ -29,6 +29,21 @@ namespace Eto.Designer.Completion
 
 		/// <summary>Declaration to add to the root element so the item resolves, or null when none is needed.</summary>
 		public DocumentTextEdit NamespaceEdit { get; set; }
+
+		/// <summary>Text to add to the code behind when the item is chosen, eg. a new event handler.</summary>
+		public DocumentFileEdit CodeBehindEdit { get; set; }
+	}
+
+	/// <summary>Text to insert into another file, at a zero-based line and character.</summary>
+	public class DocumentFileEdit
+	{
+		public string FilePath { get; set; }
+
+		public int Line { get; set; }
+
+		public int Character { get; set; }
+
+		public string Text { get; set; }
 	}
 
 	/// <summary>What the cursor sits on, and the span of text a completion should replace.</summary>
