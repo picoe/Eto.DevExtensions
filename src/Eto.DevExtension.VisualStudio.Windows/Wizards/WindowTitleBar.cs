@@ -1,4 +1,6 @@
 using Microsoft.VisualStudio.PlatformUI;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -23,7 +25,16 @@ namespace Eto.DevExtension.VisualStudio.Windows.Wizards
 		public static void Attach(Window window)
 		{
 			void Apply() => ApplyTheme(window);
-			void ThemeChanged(ThemeChangedEventArgs e) => window.Dispatcher.BeginInvoke((Action)Apply);
+			void ThemeChanged(ThemeChangedEventArgs e)
+			{
+				// may be raised off the UI thread
+				var factory = EtoAddinPackage.Instance?.JoinableTaskFactory ?? ThreadHelper.JoinableTaskFactory;
+				factory.RunAsync(async () =>
+				{
+					await factory.SwitchToMainThreadAsync();
+					Apply();
+				}).Task.Forget();
+			}
 
 			if (new WindowInteropHelper(window).Handle != IntPtr.Zero)
 				Apply();

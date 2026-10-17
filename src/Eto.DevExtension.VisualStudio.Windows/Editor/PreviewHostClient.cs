@@ -1,5 +1,6 @@
 using Eto.Designer;
 using Eto.Drawing;
+using Microsoft.VisualStudio.Shell;
 using Newtonsoft.Json.Linq;
 using StreamJsonRpc;
 using System;
@@ -71,6 +72,8 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			await requestLock.WaitAsync();
 			try
 			{
+				// the platform and theme choices are read from VS settings
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 				// a second try covers a host that exited after a rebuild, or that serves an older build
 				var wanted = await PreviewPlatforms.ResolveAsync();
 				var theme = PreviewPlatforms.ThemeChoice;
