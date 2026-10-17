@@ -25,11 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- reads code behind to list and add event handlers -->
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- resolved at runtime from the user's project, so keep it out of the probing path -->
     <PackageReference Include="Eto.Forms" PrivateAssets="all" ExcludeAssets="runtime" GeneratePathProperty="true" />
     <PackageReference Include="Eto.Serialization.Xaml" PrivateAssets="all" ExcludeAssets="runtime" GeneratePathProperty="true" />
