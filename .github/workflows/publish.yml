@@ -101,7 +101,8 @@ jobs:
       run: npx --yes ovsx publish extensions/*.vsix
 
   rider:
-    if: github.event_name == 'release'
+    # disabled until JETBRAINS_MARKETPLACE_TOKEN is set up
+    if: false && github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
     - name: Download plugin
