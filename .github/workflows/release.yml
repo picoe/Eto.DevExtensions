@@ -2,9 +2,13 @@ name: Release
 
 # Closing a milestone named like 1.2.3 builds that version and makes a pre-release with the extensions.
 # Marking the pre-release as a full release publishes them, see publish.yml.
+# To retry after a failure, fix main then reopen and close the milestone; it replaces a pre-release left by an earlier run.
 on:
   milestone:
     types: [ closed ]
+
+permissions:
+  contents: read
 
 jobs:
   version:
@@ -14,13 +18,19 @@ jobs:
     steps:
     - id: version
       env:
+        GH_TOKEN: ${{ github.token }}
         TITLE: ${{ github.event.milestone.title }}
       run: |
-        if [[ "$TITLE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "version=$TITLE" >> "$GITHUB_OUTPUT"
-        else
+        if [[ ! "$TITLE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
           echo "::notice::Milestone '$TITLE' isn't a version like 1.2.3, so no release was made."
+          exit 0
         fi
+        # fail before the long build rather than after it
+        if [[ "$(gh release view "$TITLE" --repo "$GITHUB_REPOSITORY" --json isPrerelease --jq .isPrerelease 2>/dev/null)" == "false" ]]; then
+          echo "::error::$TITLE is already a full release, so it can't be replaced."
+          exit 1
+        fi
+        echo "version=$TITLE" >> "$GITHUB_OUTPUT"
 
   build:
     needs: version
@@ -48,6 +58,10 @@ jobs:
         VERSION: ${{ needs.version.outputs.version }}
         MILESTONE: ${{ github.event.milestone.html_url }}
       run: |
+        # replace a pre-release from an earlier attempt; full releases were rejected by the version job
+        if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+          gh release delete "$VERSION" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+        fi
         gh release create "$VERSION" extensions/*.vsix extensions/*.zip \
           --repo "$GITHUB_REPOSITORY" \
           --target "$GITHUB_SHA" \
