@@ -34,16 +34,16 @@
 
   <ItemGroup>
     <!-- resolved at runtime from the user's project, so keep them out of the bundle -->
-    <PackageReference Include="Eto.Forms" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.macOS" Version="2.12.0" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.12.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Portable.Xaml" Version="0.26.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Forms" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.macOS" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Xaml" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Json" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Portable.Xaml" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Newtonsoft.Json" ExcludeAssets="runtime" GeneratePathProperty="true" />
 
     <!-- the code builders compile .eto.cs/.eto.vb files -->
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
   </ItemGroup>
 
   <!-- fallback Eto used when the open project's copy can't be found, in Contents/Resources/eto -->

@@ -216,6 +216,21 @@ _vstemplatefullpath: $(_vstemplatefullpath)
       RootFolder="$(_vstemplatedir)"
       Condition=" '@(_templatefilestoadd)' != ' ' "/>
 
+    <!-- the wizard is loaded by its full assembly name, so templates say $(Version) and get the real one here -->
+    <PropertyGroup>
+      <_stampedvstemplatedir>$(IntermediateOutputPath)templates\$(_filename)\</_stampedvstemplatedir>
+      <_stampedvstemplate>$([System.IO.File]::ReadAllText('$(_vstemplatefullpath)').Replace('%24(Version)', '$(Version)'))</_stampedvstemplate>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_stampedvstemplatedir)%(VsTemplateFiles.Filename)%(VsTemplateFiles.Extension)" Lines="$([MSBuild]::Escape($(_stampedvstemplate)))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <_stampedtemplatefile Remove="@(_stampedtemplatefile)"/>
+      <_stampedtemplatefile Include="$(_stampedvstemplatedir)%(VsTemplateFiles.Filename)%(VsTemplateFiles.Extension)"/>
+    </ItemGroup>
+    <AddToZipTask
+      ZipFilePath="$(_zipoutfile)"
+      FilesToAdd="@(_stampedtemplatefile)"
+      RootFolder="$([System.IO.Path]::GetFullPath('$(_stampedvstemplatedir)'))" />
+
 
     <PropertyGroup>
       <_npdNode Condition=" '$(_npdNode)'=='' ">$(DefaultNewProjectNode)</_npdNode>

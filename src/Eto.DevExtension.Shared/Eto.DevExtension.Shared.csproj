@@ -4,8 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj" />
-    <PackageReference Include="Eto.Forms" Version="2.12.0" PrivateAssets="all" ExcludeAssets="runtime" />
-    <!-- <PackageReference Include="Eto.Forms" Version="2.12.0" /> -->
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    <PackageReference Include="Eto.Forms" PrivateAssets="all" ExcludeAssets="runtime" />
+    <!-- <PackageReference Include="Eto.Forms" /> -->
   </ItemGroup>
 </Project>

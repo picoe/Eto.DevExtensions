@@ -1,0 +1,49 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <EtoVersion>2.13.0</EtoVersion>
+    <GtkSharpVersion>3.24.24.95</GtkSharpVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Eto.Forms" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Forms.Templates" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Serialization.Json" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Serialization.Xaml" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Platform.Gtk" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Platform.Mac64" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Platform.macOS" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Platform.Windows" Version="$(EtoVersion)" />
+    <PackageVersion Include="Eto.Platform.Wpf" Version="$(EtoVersion)" />
+    <PackageVersion Include="Portable.Xaml" Version="0.26.0" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="AtkSharp" Version="$(GtkSharpVersion)" />
+    <PackageVersion Include="CairoSharp" Version="$(GtkSharpVersion)" />
+    <PackageVersion Include="GdkSharp" Version="$(GtkSharpVersion)" />
+    <PackageVersion Include="GioSharp" Version="$(GtkSharpVersion)" />
+    <PackageVersion Include="GLibSharp" Version="$(GtkSharpVersion)" />
+    <PackageVersion Include="GtkSharp" Version="$(GtkSharpVersion)" />
+    <PackageVersion Include="PangoSharp" Version="$(GtkSharpVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Extended.Wpf.Toolkit" Version="3.6.0" />
+    <PackageVersion Include="FSharp.Core" Version="5.0.1" />
+    <PackageVersion Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.8.0" />
+    <PackageVersion Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
+    <PackageVersion Include="System.Resources.Extensions" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 17.5 SDK keeps older VS 2022 releases supported -->
+    <PackageVersion Include="Microsoft.VisualStudio.SDK" Version="17.5.33428.388" />
+    <PackageVersion Include="Microsoft.VisualStudio.TemplateWizardInterface" Version="17.5.33428.366" />
+    <!-- 18.x build tools are needed to deploy to the VS 2026 experimental instance -->
+    <PackageVersion Include="Microsoft.VSSDK.BuildTools" Version="18.9.820" />
+  </ItemGroup>
+</Project>
