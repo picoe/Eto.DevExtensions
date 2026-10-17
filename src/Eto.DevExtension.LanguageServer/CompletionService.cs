@@ -44,6 +44,9 @@ namespace Eto.DevExtension.LanguageServer
 			// a comma between json properties is too early; the space or quote after it opens completion instead
 			if (triggerCharacter == "," && format == CompletionFormat.Json && !context.Quoted)
 				return results;
+			// a quote that ends a value has nothing to complete until the next space
+			if ((triggerCharacter == "\"" || triggerCharacter == "'") && !context.Quoted)
+				return results;
 
 			var range = ToRange(text, context.Start, context.End);
 			var eventRequest = EventCompletion.Read(context);
@@ -53,6 +56,11 @@ namespace Eto.DevExtension.LanguageServer
 				return results;
 			}
 
+			// typing the closing quote accepts a value, and the editor then steps over the one already there
+			var quote = context.Start > 0 ? text[context.Start - 1] : '\0';
+			var commitCharacters = context.Quoted && context.Info.Mode == CompletionMode.Value && context.Binding == null && context.Markup == null && (quote == '"' || quote == '\'')
+				? new List<string> { quote.ToString() }
+				: null;
 			foreach (var item in DocumentCompletion.GetItems(context))
 			{
 				var snippet = snippets && item.ValueText != null;
@@ -72,6 +80,7 @@ namespace Eto.DevExtension.LanguageServer
 						? new Command { Title = "Suggest", Name = triggerSuggestCommand }
 						: null,
 					// lets a client without snippets, such as Visual Studio, add the value itself
+					CommitCharacters = commitCharacters,
 					Data = item.ValueText == null ? null : new CompletionData { ValueText = item.ValueText, ValueReplaces = item.ValueReplaces },
 					AdditionalTextEdits = item.NamespaceEdit == null ? null : new List<TextEdit>
 					{
