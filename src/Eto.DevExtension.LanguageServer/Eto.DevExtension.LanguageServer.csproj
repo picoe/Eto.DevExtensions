@@ -9,10 +9,24 @@
     <UseAppHost>false</UseAppHost>
     <AssemblyName>Eto.DevExtension.LanguageServer</AssemblyName>
     <RootNamespace>Eto.DevExtension.LanguageServer</RootNamespace>
+    <!-- Roslyn's translated messages are never shown, so don't ship them -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Roslyn's translated messages are never shown, so don't ship them -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Eto.Designer\Eto.Designer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- reads code behind to list and add event handlers -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- reads code behind to list and add event handlers -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
   </ItemGroup>
 
   <ItemGroup>

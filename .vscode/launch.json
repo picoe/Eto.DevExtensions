@@ -34,7 +34,7 @@
             "preLaunchTask": "run-rider-debug"
         },
         {
-            "name": "Eto.DevExtension.VisualStudio.Windows.2022",
+            "name": "Eto.DevExtension.VisualStudio.2022",
             "type": "clr",
             "request": "launch",
             "preLaunchTask": "build-extension",
@@ -45,7 +45,7 @@
             ],
         },
         {
-            "name": "Eto.DevExtension.VisualStudio.Windows.2026",
+            "name": "Eto.DevExtension.VisualStudio.2026",
             "type": "clr",
             "request": "launch",
             "preLaunchTask": "build-extension",

@@ -15,7 +15,8 @@ namespace Eto.Designer.Completion
 		Event,
 		Field,
 		Attribute,
-		Literal
+		Literal,
+		Method
 	}
 	
 }

@@ -43,6 +43,9 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			var caret = value ? etoitem.InsertText.Length + etoitem.ValueCaret : text.Length;
 			if (newSnapshot.TextBuffer == textView.TextBuffer)
 				textView.Caret.MoveTo(new SnapshotPoint(newSnapshot, span.Start.Position + caret));
+			// commits always run on the UI thread
+			Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+			CodeBehindEdits.Apply(etoitem.CodeBehindEdit);
 
 			// Enter and Tab only commit, but a typed quote still goes through
 			return CommitResult.Handled;

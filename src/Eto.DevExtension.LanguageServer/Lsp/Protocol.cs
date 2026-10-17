@@ -56,6 +56,19 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 		public string Title { get; set; }
 		[JsonPropertyName("command")]
 		public string Name { get; set; }
+		public List<object> Arguments { get; set; }
+	}
+
+	public class Location
+	{
+		public string Uri { get; set; }
+		public Range Range { get; set; }
+	}
+
+	public class WorkspaceEdit
+	{
+		/// <summary>Edits keyed by document uri.</summary>
+		public Dictionary<string, List<TextEdit>> Changes { get; set; }
 	}
 
 	public class CompletionList
@@ -80,6 +93,7 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 	/// <summary>LSP CompletionItemKind values.</summary>
 	public static class CompletionItemKind
 	{
+		public const int Method = 2;
 		public const int Class = 7;
 		public const int Property = 10;
 		public const int Event = 23;

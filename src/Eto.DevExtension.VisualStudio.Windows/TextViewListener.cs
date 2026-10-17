@@ -72,6 +72,8 @@ namespace Eto.DevExtension.VisualStudio.Windows
 				//textView.Properties.AddProperty(ViewCodeKey, new AdapterCommand(textViewAdapter, ServiceProvider, VSConstants.GUID_VSStandardCommandSet97, (uint)VSConstants.VSStd97CmdID.ViewCode, () => ViewCode(document)));
 				if (string.Equals(info.Extension, ".xeto", StringComparison.OrdinalIgnoreCase))
 					textView.Properties.GetOrCreateSingletonProperty(() => new XamlCompletionHandler(textViewAdapter, textView, this));
+				if (string.Equals(info.Extension, ".xeto", StringComparison.OrdinalIgnoreCase) || string.Equals(info.Extension, ".jeto", StringComparison.OrdinalIgnoreCase))
+					VisualStudio.Intellisense.GoToDefinitionFilter.Attach(textViewAdapter, textView, document);
 			}
 			else if (BuilderInfo.IsCodeBehind(document.FilePath))
 			{

@@ -59,18 +59,7 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			await requestLock.WaitAsync(token);
 			try
 			{
-				var version = versions.AddOrUpdate(uri, 1, (key, value) => value + 1);
-				if (version == 1)
-					await server.NotifyWithParameterObjectAsync("textDocument/didOpen", new { textDocument = new { uri, languageId = "eto", version, text } });
-				else
-					await server.NotifyWithParameterObjectAsync("textDocument/didChange", new { textDocument = new { uri, version }, contentChanges = new[] { new { text } } });
-
-				var assemblyKey = assemblies == null ? string.Empty : string.Join("|", assemblies);
-				if (sentAssemblies.TryGetValue(uri, out var sent) ? sent != assemblyKey : assemblies != null)
-				{
-					await server.NotifyWithParameterObjectAsync("eto/setProjectAssemblies", new { textDocument = new { uri }, assemblies });
-					sentAssemblies[uri] = assemblyKey;
-				}
+				await SyncAsync(server, uri, text, assemblies);
 
 				var position = GetPosition(text, offset);
 				var result = await server.InvokeWithParameterObjectAsync<JToken>(
@@ -87,6 +76,62 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			finally
 			{
 				requestLock.Release();
+			}
+		}
+
+		/// <summary>Where the event handler named at <paramref name="offset"/> is in the code behind.</summary>
+		/// <returns>
+		/// The file and zero-based position, with a null path when there's no handler. IsEvent is true
+		/// when the offset is in an event's value, even when its handler wasn't found.
+		/// </returns>
+		public static async Task<(bool IsEvent, string FilePath, int Line, int Character)> GetDefinitionAsync(string filePath, string text, int offset, IList<string> assemblies, CancellationToken token)
+		{
+			var uri = ToUri(filePath);
+			var server = uri == null ? null : await GetServerAsync();
+			if (server == null)
+				return default;
+
+			await requestLock.WaitAsync(token);
+			try
+			{
+				await SyncAsync(server, uri, text, assemblies);
+
+				var position = GetPosition(text, offset);
+				var result = await server.InvokeWithParameterObjectAsync<JToken>(
+					"textDocument/definition",
+					new { textDocument = new { uri }, position = new { line = position.Line, character = position.Character } },
+					token);
+				var location = (result as JArray)?.FirstOrDefault() ?? (result as JObject);
+				var start = location?["range"]?["start"];
+				if (start == null || !Uri.TryCreate((string)location["uri"], UriKind.Absolute, out var target) || !target.IsFile)
+					return (result is JArray, null, 0, 0);
+				return (true, target.LocalPath, (int?)start["line"] ?? 0, (int?)start["character"] ?? 0);
+			}
+			catch (Exception ex) when (!(ex is OperationCanceledException))
+			{
+				Debug.WriteLine($"Eto language server request failed: {ex}");
+				return default;
+			}
+			finally
+			{
+				requestLock.Release();
+			}
+		}
+
+		/// <summary>Sends the document's text, and its project assemblies when they've changed.</summary>
+		static async Task SyncAsync(JsonRpc server, string uri, string text, IList<string> assemblies)
+		{
+			var version = versions.AddOrUpdate(uri, 1, (key, value) => value + 1);
+			if (version == 1)
+				await server.NotifyWithParameterObjectAsync("textDocument/didOpen", new { textDocument = new { uri, languageId = "eto", version, text } });
+			else
+				await server.NotifyWithParameterObjectAsync("textDocument/didChange", new { textDocument = new { uri, version }, contentChanges = new[] { new { text } } });
+
+			var assemblyKey = assemblies == null ? string.Empty : string.Join("|", assemblies);
+			if (sentAssemblies.TryGetValue(uri, out var sent) ? sent != assemblyKey : assemblies != null)
+			{
+				await server.NotifyWithParameterObjectAsync("eto/setProjectAssemblies", new { textDocument = new { uri }, assemblies });
+				sentAssemblies[uri] = assemblyKey;
 			}
 		}
 
@@ -178,6 +223,7 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 					ValueText = (string)entry["data"]?["valueText"],
 					ValueReplaces = (int?)entry["data"]?["valueReplaces"] ?? 0,
 					NamespaceEdit = namespaceEdit,
+					CodeBehindEdit = ReadCodeBehindEdit(entry["command"]),
 					Item = new Designer.Completion.CompletionItem
 					{
 						Name = label,
@@ -192,6 +238,25 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			return items;
 		}
 
+		/// <summary>The code behind insert of a "create event handler" command, which VS applies itself on commit.</summary>
+		static DocumentFileEdit ReadCodeBehindEdit(JToken command)
+		{
+			if ((string)command?["command"] != "eto.createEventHandler")
+				return null;
+			var change = (command["arguments"]?.FirstOrDefault()?["changes"] as JObject)?.Properties().FirstOrDefault();
+			var edit = (change?.Value as JArray)?.FirstOrDefault();
+			if (edit == null || !Uri.TryCreate(change.Name, UriKind.Absolute, out var uri) || !uri.IsFile)
+				return null;
+			var start = edit["range"]?["start"];
+			return new DocumentFileEdit
+			{
+				FilePath = uri.LocalPath,
+				Line = (int?)start?["line"] ?? 0,
+				Character = (int?)start?["character"] ?? 0,
+				Text = (string)edit["newText"]
+			};
+		}
+
 		// LSP CompletionItemKind values the server sends
 		static CompletionType GetType(int kind)
 		{
@@ -201,6 +266,7 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 				case 10: return CompletionType.Property;
 				case 23: return CompletionType.Event;
 				case 5: return CompletionType.Field;
+				case 2: return CompletionType.Method;
 				default: return CompletionType.Literal;
 			}
 		}
@@ -225,7 +291,7 @@ namespace Eto.DevExtension.VisualStudio.Intellisense
 			return (line, offset - lineStart);
 		}
 
-		static int GetOffset(string text, int line, int character)
+		internal static int GetOffset(string text, int line, int character)
 		{
 			var offset = 0;
 			for (var i = 0; i < line; i++)

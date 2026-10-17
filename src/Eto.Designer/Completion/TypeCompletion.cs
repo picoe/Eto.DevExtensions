@@ -327,7 +327,8 @@ namespace Eto.Designer.Completion
 						Name = evt.Name,
 						Description = XmlComments.GetSummary(evt),
 						Type = CompletionType.Event,
-						Behavior = CompletionBehavior.StringValue
+						// handlers in the code behind are its values
+						Behavior = CompletionBehavior.HasValues | CompletionBehavior.StringValue
 					};
 				}
 			}
@@ -342,6 +343,9 @@ namespace Eto.Designer.Completion
 				return CompletionBehavior.HasValues | CompletionBehavior.StringValue;
 			return type == typeof(string) ? CompletionBehavior.StringValue : CompletionBehavior.None;
 		}
+
+		public override EventInfo GetEvent(string objectName, string propertyName) =>
+			string.IsNullOrEmpty(propertyName) ? null : FindType(objectName)?.GetEvent(propertyName, BindingFlags.Public | BindingFlags.Instance);
 
 		public override IEnumerable<CompletionItem> GetPropertyValues(string objectName, string propertyName, IEnumerable<string> path)
 		{

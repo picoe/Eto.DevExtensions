@@ -10,6 +10,8 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <DefineConstants>$(DefineConstants);WINDOWS;VS$(VSVersion)</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- CI has no experimental instance to deploy to -->
+    <DeployExtension Condition="'$(DeployExtension)' == '' AND '$(CI)' != 'true'">true</DeployExtension>
   </PropertyGroup>
   <PropertyGroup>
     <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>

@@ -25,6 +25,7 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 		readonly Dictionary<string, Action<JsonNode>> notifications = new Dictionary<string, Action<JsonNode>>();
 
 		bool running = true;
+		int nextRequestId;
 
 		public LspConnection(Stream input, Stream output)
 		{
@@ -105,6 +106,18 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 			WriteMessage(new JsonObject
 			{
 				["jsonrpc"] = "2.0",
+				["method"] = method,
+				["params"] = ToNode(parameters)
+			});
+		}
+
+		/// <summary>Sends a request to the client, without waiting for its response.</summary>
+		public void Request(string method, object parameters)
+		{
+			WriteMessage(new JsonObject
+			{
+				["jsonrpc"] = "2.0",
+				["id"] = "eto-" + System.Threading.Interlocked.Increment(ref nextRequestId),
 				["method"] = method,
 				["params"] = ToNode(parameters)
 			});

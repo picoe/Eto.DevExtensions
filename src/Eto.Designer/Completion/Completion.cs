@@ -68,6 +68,9 @@ namespace Eto.Designer.Completion
 			yield break;
 		}
 
+		/// <summary>The event <paramref name="propertyName"/> names on the object, or null when it isn't one.</summary>
+		public virtual EventInfo GetEvent(string objectName, string propertyName) => null;
+
 		/// <summary>
 		/// Type name implied by the end of the path, for objects that don't name their own type.
 		/// </summary>
@@ -139,9 +142,7 @@ namespace Eto.Designer.Completion
 			}
 			else if (mode == CompletionMode.Value && context != null && context.Mode == CompletionMode.Property)
 			{
-				var lastPath = path.LastOrDefault();
-				if (lastPath != null && lastPath.Contains("."))
-					lastPath = GetImpliedTypeName(completions, path) ?? lastPath;
+				var lastPath = GetValueObjectName(completions, path);
 				items = completions.SelectMany(r => r.GetPropertyValues(lastPath, context.LocalName, path));
 			}
 			else
@@ -155,6 +156,24 @@ namespace Eto.Designer.Completion
 				items = items.Where(r => !r.Behavior.HasFlag(CompletionBehavior.ChildProperty));
 			}
 			return items;
+		}
+
+		/// <summary>The event a value is being typed for, or null when the value isn't for an event.</summary>
+		public static EventInfo GetEvent(IEnumerable<CompletionNamespace> namespaces, IEnumerable<string> path, CompletionPathNode context, CompletionFormat format = CompletionFormat.Xaml, IList<Assembly> projectAssemblies = null)
+		{
+			if (context == null || context.Mode != CompletionMode.Property)
+				return null;
+			var completions = GetCompletions(namespaces, format, projectAssemblies).ToList();
+			var objectName = GetValueObjectName(completions, path);
+			return completions.Select(r => r.GetEvent(objectName, context.LocalName)).FirstOrDefault(r => r != null);
+		}
+
+		static string GetValueObjectName(IEnumerable<Completion> completions, IEnumerable<string> path)
+		{
+			var lastPath = path.LastOrDefault();
+			if (lastPath != null && lastPath.Contains("."))
+				lastPath = GetImpliedTypeName(completions, path) ?? lastPath;
+			return lastPath;
 		}
 
 		static string GetImpliedTypeName(IEnumerable<Completion> completions, IEnumerable<string> path) =>
