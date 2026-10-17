@@ -10,7 +10,7 @@
         <License>LICENSE</License>
         <Icon>Icon.png</Icon>
         <PreviewImage>PreviewImage.png</PreviewImage>
-        <Tags>eto wpf mac osx gtk xamarin mono</Tags>
+        <Tags>eto;eto.forms;wpf;winforms;gtk;mac;macos;monomac</Tags>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[17.0,19.0)">
