@@ -33,8 +33,9 @@ jobs:
 
     - name: Show the identity to add to the publisher
       run: |
-        az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource "$MARKETPLACE_RESOURCE" \
-          --query "{id: id, name: displayName}"
+        # profiles/me only works for user accounts, not app identities
+        az rest -u https://app.vssps.visualstudio.com/_apis/connectionData --resource "$MARKETPLACE_RESOURCE" \
+          --query "{id: authenticatedUser.id, name: authenticatedUser.providerDisplayName}"
 
   visual-studio:
     if: github.event_name == 'release'
