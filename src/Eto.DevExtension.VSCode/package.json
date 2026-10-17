@@ -28,6 +28,14 @@
     "onLanguage:jeto"
   ],
   "contributes": {
+    "configurationDefaults": {
+      "[xeto]": {
+        "editor.autoClosingOvertype": "always"
+      },
+      "[jeto]": {
+        "editor.autoClosingOvertype": "always"
+      }
+    },
     "keybindings": [
       {
         "key": "=",

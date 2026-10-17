@@ -40,6 +40,7 @@ namespace Eto.DevExtension.LanguageServer.Lsp
 		public TextEdit TextEdit { get; set; }
 		public List<TextEdit> AdditionalTextEdits { get; set; }
 		public int? InsertTextFormat { get; set; }
+		public List<string> CommitCharacters { get; set; }
 		public Command Command { get; set; }
 		public CompletionData Data { get; set; }
 	}
