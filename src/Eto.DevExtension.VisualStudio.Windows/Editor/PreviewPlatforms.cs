@@ -86,9 +86,14 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		/// <summary>A platform id or <see cref="Auto"/>, remembered for each solution. Use on the UI thread.</summary>
 		public static string Choice
 		{
-			get => GetChoice(CollectionPath, Auto, unsavedChoice);
+			get
+			{
+				ThreadHelper.ThrowIfNotOnUIThread();
+				return GetChoice(CollectionPath, Auto, unsavedChoice);
+			}
 			set
 			{
+				ThreadHelper.ThrowIfNotOnUIThread();
 				if (SetChoice(CollectionPath, value ?? Auto, Auto, ref unsavedChoice))
 					ChoiceChanged?.Invoke(null, EventArgs.Empty);
 			}
@@ -97,9 +102,14 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		/// <summary>A theme name from the host, or <see cref="DefaultTheme"/>, remembered for each solution. Use on the UI thread.</summary>
 		public static string ThemeChoice
 		{
-			get => GetChoice(ThemeCollectionPath, DefaultTheme, unsavedTheme);
+			get
+			{
+				ThreadHelper.ThrowIfNotOnUIThread();
+				return GetChoice(ThemeCollectionPath, DefaultTheme, unsavedTheme);
+			}
 			set
 			{
+				ThreadHelper.ThrowIfNotOnUIThread();
 				if (SetChoice(ThemeCollectionPath, value ?? DefaultTheme, DefaultTheme, ref unsavedTheme))
 					ThemeChoiceChanged?.Invoke(null, EventArgs.Empty);
 			}

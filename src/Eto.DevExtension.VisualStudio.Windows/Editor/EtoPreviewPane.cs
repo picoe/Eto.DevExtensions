@@ -125,6 +125,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		public EtoPreviewPane(EtoAddinPackage package, string fileName, IVsTextLines textBuffer, string projectKey, CodeEditorHost codeEditor)
 			: base(package)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
 			this.editor = codeEditor;
 			this.package = package;
 			this.textBuffer = textBuffer;
@@ -138,6 +139,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			host.ProjectChanged += PreviewHost_ProjectChanged;
 			var designHost = new RemoteDesignPanel(async request =>
 			{
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 				var snapshot = documentBuffer?.CurrentSnapshot;
 				var result = await host.RenderAsync(request, await ProjectAssemblyPaths.GetAsync(fileName));
 				if (snapshot != null && !disposed)
@@ -163,7 +165,11 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 			};
 			preview = previewSplitter.Preview;
 			PreviewLayoutSettings.Load(previewSplitter);
-			previewSplitter.LayoutChanged += (sender, e) => PreviewLayoutSettings.Save(previewSplitter);
+			previewSplitter.LayoutChanged += (sender, e) =>
+			{
+				ThreadHelper.ThrowIfNotOnUIThread();
+				PreviewLayoutSettings.Save(previewSplitter);
+			};
 
 			platformDropDown = new DropDown { ToolTip = "Platform to draw the preview with" };
 			platformDropDown.SelectedKeyChanged += PlatformDropDown_SelectedKeyChanged;
@@ -307,7 +313,7 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 
 			// the document may not be registered yet while the frame is being created
 			if (!LockDocument())
-				ThreadHelper.JoinableTaskFactory.StartOnIdle(() => LockDocument());
+				_ = ThreadHelper.JoinableTaskFactory.StartOnIdle(() => LockDocument());
 
 			preview.Update();
 		}
@@ -581,7 +587,11 @@ namespace Eto.DevExtension.VisualStudio.Windows.Editor
 		public int GetViewClassID(out Guid pclsidView) => editor.codeWindow.GetViewClassID(out pclsidView);
 		public int SetBaseEditorCaption(string[] pszBaseEditorCaption) => editor.codeWindow.SetBaseEditorCaption(pszBaseEditorCaption);
 		public int GetEditorCaption(READONLYSTATUS dwReadOnly, out string pbstrEditorCaption) => editor.codeWindow.GetEditorCaption(dwReadOnly, out pbstrEditorCaption);
-		public int Close() => editor.Close();
+		public int Close()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+			return editor.Close();
+		}
 		public int GetLastActiveView(out IVsTextView ppView) => editor.codeWindow.GetLastActiveView(out ppView);
 
 		int IVsCodeWindowEx.Initialize(uint grfCodeWindowBehaviorFlags, VSUSERCONTEXTATTRIBUTEUSAGE usageAuxUserContext, string szNameAuxUserContext, string szValueAuxUserContext, uint InitViewFlags, INITVIEW[] pInitView) => ((IVsCodeWindowEx)editor.codeWindow).Initialize(grfCodeWindowBehaviorFlags, usageAuxUserContext, szNameAuxUserContext, szValueAuxUserContext, InitViewFlags, pInitView);
