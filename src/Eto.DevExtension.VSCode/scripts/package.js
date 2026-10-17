@@ -12,7 +12,9 @@ const props = fs.readFileSync(path.join(repo, 'Directory.Build.props'), 'utf8');
 const version = /<DevVersion>(.+?)<\/DevVersion>/.exec(props)[1];
 
 fs.mkdirSync(out, { recursive: true });
-execFileSync('npx', ['vsce', 'package', version, '--no-update-package-json', '--out', out + path.sep], {
+// named like the Visual Studio and Rider packages, rather than vsce's default of the extension id
+const file = path.join(out, `Eto.DevExtension.VSCode-${version}.vsix`);
+execFileSync('npx', ['vsce', 'package', version, '--no-update-package-json', '--out', file], {
 	cwd: root,
 	stdio: 'inherit',
 	shell: process.platform === 'win32'

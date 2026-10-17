@@ -70,7 +70,7 @@ jobs:
     environment: marketplace
     steps:
     - name: Download extension
-      run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "eto-forms-designer-*.vsix" --dir extensions
+      run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "Eto.DevExtension.VSCode-*.vsix" --dir extensions
 
     - uses: actions/setup-node@v4
       with:
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download extension
-      run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "eto-forms-designer-*.vsix" --dir extensions
+      run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "Eto.DevExtension.VSCode-*.vsix" --dir extensions
 
     - uses: actions/setup-node@v4
       with:
