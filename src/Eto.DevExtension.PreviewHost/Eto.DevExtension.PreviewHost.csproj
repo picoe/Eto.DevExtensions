@@ -32,38 +32,38 @@
 
   <ItemGroup>
     <!-- resolved at runtime from the user's project, so keep them out of the probing path -->
-    <PackageReference Include="Eto.Forms" Version="2.13.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.13.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.13.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Portable.Xaml" Version="0.26.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Forms" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Xaml" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Serialization.Json" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Portable.Xaml" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Newtonsoft.Json" ExcludeAssets="runtime" GeneratePathProperty="true" />
 
     <!-- the code builders compile .eto.cs/.eto.vb files -->
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
-    <PackageReference Include="Eto.Platform.Wpf" Version="2.13.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.Windows" Version="2.13.0" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Wpf" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Windows" ExcludeAssets="runtime" GeneratePathProperty="true" />
 
     <!-- Eto.Wpf and Eto.WinForms's own dependencies, which don't flow through when their runtime assets are excluded -->
-    <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" NoWarn="NU1701" />
-    <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />
-    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
+    <PackageReference Include="Extended.Wpf.Toolkit" NoWarn="NU1701" />
+    <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" />
+    <PackageReference Include="System.Resources.Extensions" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <!-- build assets excluded too, as they bundle apps and download Gtk -->
-    <PackageReference Include="Eto.Platform.Gtk" Version="2.13.0" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="Eto.Platform.Mac64" Version="2.13.0" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="GtkSharp" Version="3.24.24.95" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
-    <PackageReference Include="GdkSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="GLibSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="GioSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="AtkSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="PangoSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
-    <PackageReference Include="CairoSharp" Version="3.24.24.95" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Gtk" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="Eto.Platform.Mac64" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="GtkSharp" ExcludeAssets="runtime;build;buildTransitive" GeneratePathProperty="true" />
+    <PackageReference Include="GdkSharp" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="GLibSharp" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="GioSharp" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="AtkSharp" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="PangoSharp" ExcludeAssets="runtime" GeneratePathProperty="true" />
+    <PackageReference Include="CairoSharp" ExcludeAssets="runtime" GeneratePathProperty="true" />
   </ItemGroup>
 
   <!-- fallback Eto used when the open project's copy can't be found -->

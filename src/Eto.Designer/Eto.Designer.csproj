@@ -4,16 +4,16 @@
     <DefineConstants>Roslyn;RoslynCS;RoslynVB</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Forms" Version="2.13.0" PrivateAssets="all" ExcludeAssets="runtime" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.13.0" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.13.0" />
+    <PackageReference Include="Eto.Forms" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Eto.Serialization.Json" />
+    <PackageReference Include="Eto.Serialization.Xaml" />
   </ItemGroup>
   <ItemGroup>
-    <!-- <PackageReference Include="System.CodeDom" Version="6.0.0" Condtion="$(TargetFramework) == 'net472'" />
-    <PackageReference Include="FSharp.Compiler.CodeDom" Version="1.0.0.1" Condtion="$(TargetFramework) == 'net472'" /> -->
-    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" ExcludeAssets="runtime" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.10.0" ExcludeAssets="runtime" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.10.0" ExcludeAssets="runtime" PrivateAssets="all" />
-    <!-- <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" /> -->
+    <!-- <PackageReference Include="System.CodeDom" Condtion="$(TargetFramework) == 'net472'" />
+    <PackageReference Include="FSharp.Compiler.CodeDom" Condtion="$(TargetFramework) == 'net472'" /> -->
+    <PackageReference Include="System.ComponentModel.TypeConverter" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="3.10.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" VersionOverride="3.10.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <!-- <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="all" /> -->
   </ItemGroup>
 </Project>

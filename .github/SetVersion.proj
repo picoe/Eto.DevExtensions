@@ -1,4 +1,4 @@
-<!-- Sets every package in the checkout to one version, for release builds: dotnet msbuild .github/SetVersion.proj -p:ReleaseVersion=1.2.3 -->
+<!-- Sets the version every extension is built with, for release builds: dotnet msbuild .github/SetVersion.proj -p:ReleaseVersion=1.2.3 -->
 <Project DefaultTargets="SetVersion">
 
   <PropertyGroup>
@@ -33,10 +33,6 @@
     <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(ReleaseVersion)', '^\d+\.\d+\.\d+$'))" Text="Version '$(ReleaseVersion)' must look like 1.2.3" />
 
     <ReplaceInFile File="$(Root)Directory.Build.props" Pattern="&lt;DevVersion&gt;[^&lt;]*&lt;/DevVersion&gt;" Replacement="&lt;DevVersion&gt;$(ReleaseVersion)&lt;/DevVersion&gt;" />
-    <ReplaceInFile File="$(Root)Directory.Build.props" Pattern="(&lt;Version Condition=&quot;[^&quot;]*&quot;&gt;)[^&lt;]*" Replacement="${1}$(ReleaseVersion).0" />
-    <ReplaceInFile File="$(Root)src/Eto.DevExtension.VisualStudio.Windows/2022/source.extension.vsixmanifest" Pattern="(&lt;Identity [^&gt;]*Version=&quot;)[^&quot;]*" Replacement="${1}$(ReleaseVersion).0" />
-    <ReplaceInFile File="$(Root)src/Eto.DevExtension.VisualStudio.Windows/Templates/App-CSharp/App.vstemplate" Pattern="(Eto\.DevExtension\.VisualStudio\.Windows, Version=)[^,]*" Replacement="${1}$(ReleaseVersion).0" />
-    <ReplaceInFile File="$(Root)src/Eto.DevExtension.VSCode/package.json" Pattern="(&quot;version&quot;:\s*&quot;)[^&quot;]*" Replacement="${1}$(ReleaseVersion)" />
 
     <!-- without it the .NET builds add a -ci suffix to the version -->
     <WriteLinesToFile Condition="'$(GITHUB_ENV)' != ''" File="$(GITHUB_ENV)" Lines="SetVersion=$(ReleaseVersion)" />

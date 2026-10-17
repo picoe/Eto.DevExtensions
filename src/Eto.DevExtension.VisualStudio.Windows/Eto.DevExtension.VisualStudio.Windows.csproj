@@ -62,33 +62,33 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Eto.Forms" GeneratePathProperty="True" Version="2.13.0" />
-    <PackageReference Include="Eto.Platform.Wpf" Version="2.13.0" />
-    <PackageReference Include="Eto.Serialization.Json" Version="2.13.0" />
-    <PackageReference Include="Eto.Serialization.Xaml" Version="2.13.0" />
-    <PackageReference Include="Eto.Forms.Templates" Version="2.13.0" GeneratePathProperty="true" PrivateAssets="all" />
-    <PackageReference Include="FSharp.Core" Version="5.0.1" />
-    <PackageReference Include="Portable.Xaml" Version="0.26.0" />
-    <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" />
+    <PackageReference Include="Eto.Forms" GeneratePathProperty="True" />
+    <PackageReference Include="Eto.Platform.Wpf" />
+    <PackageReference Include="Eto.Serialization.Json" />
+    <PackageReference Include="Eto.Serialization.Xaml" />
+    <PackageReference Include="Eto.Forms.Templates" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="Portable.Xaml" />
+    <PackageReference Include="Extended.Wpf.Toolkit" />
   </ItemGroup>
   <Choose>
     <!-- covers VS 2022 and VS 2026, which loads 17.x extensions -->
     <When Condition="$(VSVersion) == '2022'">
       <ItemGroup>
-        <!-- 17.5 SDK keeps older VS 2022 releases supported -->
-        <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.5.33428.388" ExcludeAssets="runtime">
+        <PackageReference Include="Microsoft.VisualStudio.SDK" ExcludeAssets="runtime">
           <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <!-- 18.x build tools are needed to deploy to the VS 2026 experimental instance -->
-        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.9.820">
+        <PackageReference Include="Microsoft.VSSDK.BuildTools">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" Version="17.5.33428.366" />
+        <PackageReference Include="Microsoft.VisualStudio.TemplateWizardInterface" />
       </ItemGroup>
     </When>
   </Choose>
   <Import Project="Properties\wafflebuilder.targets" />
+  <!-- source.extension.vsixmanifest asks for this, so the version is only set in Directory.Build.props -->
+  <Target Name="GetVsixVersion" Returns="$(Version)" />
   <Target Name="UpdateNugetReferences" AfterTargets="PrepareResources">
     <!-- this updates our PackageReferences to be copy local -->
     <ItemGroup>

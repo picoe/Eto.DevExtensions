@@ -28,7 +28,7 @@
   <PropertyGroup>
     <DevVersion>2.13.0</DevVersion>
 
-    <Version Condition="$(Version) == ''">2.13.0.0</Version>
+    <Version Condition="$(Version) == ''">$(DevVersion).0</Version>
 
     <InformationalVersion Condition="$(SetVersion) != ''">$(SetVersion)</InformationalVersion>
     <!-- set version from tag -->
