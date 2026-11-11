@@ -72,6 +72,13 @@
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
+        <action id="Eto.SwitchDesignerCode" class="com.picoe.eto.rider.SwitchDesignerCodeAction"
+                text="Switch Between Eto Designer and Code"
+                description="Open the code behind of this Eto.Forms designer file, or the designer of this code behind">
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Eto.OpenPreview"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+            <add-to-group group-id="GoToMenu" anchor="last"/>
+        </action>
         <action id="Eto.RestartLanguageServer" class="com.picoe.eto.rider.lsp.RestartLanguageServerAction"
                 text="Restart Eto Language Server" description="Restart the Eto.Forms language server, to pick up a different Eto version">
             <add-to-group group-id="ToolsMenu" anchor="last"/>

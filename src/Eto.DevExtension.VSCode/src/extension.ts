@@ -8,6 +8,7 @@ import {
 	TransportKind,
 	WorkspaceEdit
 } from 'vscode-languageclient/node';
+import { registerSwitchDesignerCode } from './counterpart';
 import { AUTO, HostLauncher } from './hostLaunch';
 import { DEFAULT_THEME, isPreviewable, PlatformPicker, PreviewPanel } from './preview';
 import { PreviewHost } from './previewHost';
@@ -42,6 +43,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 			}
 		})
 	);
+
+	context.subscriptions.push(registerSwitchDesignerCode());
 
 	await start(context);
 }

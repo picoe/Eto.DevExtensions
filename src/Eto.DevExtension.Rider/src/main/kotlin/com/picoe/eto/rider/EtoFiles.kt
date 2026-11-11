@@ -21,6 +21,25 @@ object EtoFiles {
     /** Files the preview can draw. */
     fun isPreviewable(file: VirtualFile): Boolean = file.isInLocalFileSystem && previewable.containsMatchIn(file.name)
 
+    /** The code behind of a designer file, or the designer of a code behind, eg. MyForm.xeto ↔ MyForm.xeto.cs or MyForm.eto.cs ↔ MyForm.cs. */
+    fun counterpart(file: VirtualFile): VirtualFile? {
+        if (!file.isInLocalFileSystem) return null
+        val dir = file.parent ?: return null
+        val name = file.name
+        val codeExtensions = listOf(".cs", ".vb", ".fs")
+        val candidates = Regex("^(.+)\\.(xeto|jeto)$", RegexOption.IGNORE_CASE).find(name)?.let { m ->
+            // MyForm.cs is also accepted, like the language server does
+            codeExtensions.map { name + it } + codeExtensions.map { m.groupValues[1] + it }
+        } ?: Regex("^(.+\\.(xeto|jeto))\\.(cs|vb|fs)$", RegexOption.IGNORE_CASE).find(name)?.let { m ->
+            listOf(m.groupValues[1])
+        } ?: Regex("^(.+)\\.eto(\\.(cs|vb|fs))$", RegexOption.IGNORE_CASE).find(name)?.let { m ->
+            listOf(m.groupValues[1] + m.groupValues[2])
+        } ?: Regex("^(.+)(\\.(cs|vb|fs))$", RegexOption.IGNORE_CASE).find(name)?.let { m ->
+            listOf("${m.groupValues[1]}.eto${m.groupValues[2]}", "${m.groupValues[1]}.xeto", "${m.groupValues[1]}.jeto")
+        } ?: return null
+        return candidates.firstNotNullOfOrNull { dir.findChild(it) }
+    }
+
     val pluginDir: Path?
         get() = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))?.pluginPath
 

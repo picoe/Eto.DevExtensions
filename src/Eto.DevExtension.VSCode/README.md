@@ -12,6 +12,8 @@ A live preview, IntelliSense and syntax highlighting for building cross-platform
   controls. Picking one of your controls in a `.xeto` file adds the `xmlns` it needs.
 - **Hover documentation** from the Eto.Forms API docs.
 - **Syntax highlighting** for `.xeto` and `.jeto` files.
+- **Switch between designer and code**: press **Alt+O**, or use the button in the editor's title bar,
+  to jump between `MyForm.xeto` and `MyForm.xeto.cs`, `MyForm.jeto` and `MyForm.jeto.cs`, or `MyForm.eto.cs` and `MyForm.cs`.
 
 Everything matches the Eto.Forms version your project uses, so you see the API you're building against.
 
