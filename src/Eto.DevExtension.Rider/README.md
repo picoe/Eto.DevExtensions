@@ -12,6 +12,9 @@ with the same features as the VS Code extension. Needs Rider 2025.1 or newer.
 - Completion of controls, properties, events and values, including your own controls once the project is built
 - Hover documentation from the Eto.Forms xml docs
 - Syntax highlighting for both file types, using the VS Code extension's grammars
+- **Switch Between Eto Designer and Code** in the editor's right-click menu and **Navigate**, to jump between `MyForm.xeto`
+  and `MyForm.xeto.cs`, `MyForm.jeto` and `MyForm.jeto.cs`, or `MyForm.eto.cs` and `MyForm.cs`. Give it a shortcut in
+  **Settings | Keymap**
 
 Requires the [.NET 8 runtime](https://dotnet.microsoft.com/download) or newer. On Windows the preview also needs the
 .NET Desktop Runtime, and on Linux GTK 3.
